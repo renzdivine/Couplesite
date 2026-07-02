@@ -1,0 +1,211 @@
+/* ── Butterflies 360 ──────────────────────────────────────────────────────── */
+
+.bf360-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #0a1a2e;
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+}
+.bf360-root:active { cursor: grabbing; }
+
+/* Three.js canvas mount — fills root */
+.bf360-mount {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Vignette */
+.bf360-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.52) 100%);
+}
+
+/* Butterflies are now Three.js meshes inside the WebGL canvas — no DOM buttons */
+
+/* ── Opening overlay ──────────────────────────────────────────────────────── */
+.bf360-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.48);
+  backdrop-filter: blur(4px);
+  transition: opacity 1s ease, visibility 1s ease;
+  pointer-events: none;
+}
+.bf360-overlay--hidden { opacity: 0; visibility: hidden; }
+.bf360-overlay-inner {
+  text-align: center;
+  animation: bf360-overlay-in 0.8s ease both;
+}
+@keyframes bf360-overlay-in {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+.bf360-overlay-heart {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 12px;
+  animation: bf360-pulse 1.8s ease-in-out infinite;
+}
+@keyframes bf360-pulse {
+  0%,100% { transform: scale(1);    }
+  50%     { transform: scale(1.18); }
+}
+.bf360-overlay-names {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.6rem, 5vw, 2.6rem);
+  color: #fff;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  margin: 0 0 12px;
+  text-shadow: 0 2px 20px rgba(255,120,180,0.6);
+}
+.bf360-overlay-amp {
+  color: rgba(255,180,210,0.85);
+  font-size: 0.75em;
+  margin: 0 8px;
+}
+.bf360-overlay-hint {
+  font-family: Georgia, serif;
+  font-size: clamp(0.85rem, 2vw, 1.05rem);
+  color: rgba(255,220,240,0.8);
+  margin: 0;
+  letter-spacing: 0.06em;
+}
+
+/* ── Hint bar ─────────────────────────────────────────────────────────────── */
+.bf360-hint {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: rgba(0,0,0,0.38);
+  backdrop-filter: blur(6px);
+  border-radius: 22px;
+  padding: 6px 22px;
+  color: rgba(255,255,255,0.82);
+  font-size: 0.78rem;
+  font-family: Georgia, serif;
+  white-space: nowrap;
+  z-index: 30;
+  animation: bf360-hint-fade 6s ease-out 4s both;
+}
+@keyframes bf360-hint-fade {
+  0%,70% { opacity: 1; }
+  100%   { opacity: 0; }
+}
+
+/* ── Back button ──────────────────────────────────────────────────────────── */
+.bf360-back {
+  position: absolute;
+  top: 18px; left: 18px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0,0,0,0.42);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 22px;
+  padding: 7px 16px;
+  color: rgba(255,255,255,0.88);
+  font-family: Georgia, serif;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s;
+  letter-spacing: 0.02em;
+}
+.bf360-back:hover {
+  background: rgba(255,100,160,0.25);
+  border-color: rgba(255,160,200,0.4);
+  color: #fff;
+}
+
+/* ── No-WebGL fallback ────────────────────────────────────────────────────── */
+.bf360-no-webgl {
+  position: fixed;
+  inset: 0;
+  background: #1a0a18;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bf360-no-webgl-inner {
+  text-align: center;
+  color: rgba(255,220,240,0.9);
+  font-family: Georgia, serif;
+  padding: 32px;
+  max-width: 440px;
+}
+.bf360-no-webgl-inner h2 {
+  font-size: 1.3rem;
+  font-weight: 400;
+  margin: 16px 0 10px;
+  color: #fff;
+}
+.bf360-no-webgl-inner p {
+  font-size: 0.9rem;
+  color: rgba(255,200,220,0.7);
+  margin: 0 0 28px;
+}
+.bf360-no-webgl-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.bf360-no-webgl-nav button {
+  background: rgba(255,100,160,0.18);
+  border: 1px solid rgba(255,160,200,0.35);
+  border-radius: 20px;
+  padding: 9px 20px;
+  color: rgba(255,220,240,0.9);
+  font-family: Georgia, serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.bf360-no-webgl-nav button:hover {
+  background: rgba(255,100,160,0.35);
+}
+
+/* ── Hover label ──────────────────────────────────────────────────────────── */
+.bf360-hover-label {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 14px));
+  background: rgba(10, 5, 20, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 160, 210, 0.4);
+  border-radius: 20px;
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  z-index: 50;
+  white-space: nowrap;
+  animation: bf360-label-in 0.15s ease both;
+}
+@keyframes bf360-label-in {
+  from { opacity: 0; transform: translate(-50%, calc(-100% - 8px)) scale(0.92); }
+  to   { opacity: 1; transform: translate(-50%, calc(-100% - 14px)) scale(1); }
+}
+.bf360-hover-emoji { font-size: 1rem; }
+.bf360-hover-text {
+  font-family: Georgia, serif;
+  font-size: 0.82rem;
+  color: rgba(255, 220, 240, 0.95);
+  letter-spacing: 0.04em;
+}

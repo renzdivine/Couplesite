@@ -1,0 +1,356 @@
+/* ═══════════════════════════════════════════════════════════════
+   CoverHero.css  — Realistic scrapbook journal hero
+═══════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+/* ── Root layout ─────────────────────────────────────────────── */
+.ch-root {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 68px 1fr 1fr;
+  grid-template-rows: 1fr;
+  overflow: hidden;
+  isolation: isolate;
+  /* Fallback kraft colour */
+  background-color: #c8a96a;
+}
+
+/* ── Canvas grain — fills the whole section ─────────────────── */
+.ch-grain {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.55;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Paper aging vignette ────────────────────────────────────── */
+.ch-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(80,50,10,0.35) 100%),
+    radial-gradient(ellipse at 0% 0%,   rgba(100,65,15,0.25) 0%, transparent 50%),
+    radial-gradient(ellipse at 100% 100%, rgba(80,45,5,0.2) 0%, transparent 45%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Spine / spiral column ───────────────────────────────────── */
+.ch-spine {
+  grid-column: 1;
+  grid-row: 1;
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  padding: 44px 0;
+  background: linear-gradient(
+    to right,
+    rgba(100,80,55,0.35) 0%,
+    rgba(150,120,80,0.15) 70%,
+    transparent 100%
+  );
+  /* 3-D perspective for page depth */
+  transform: perspective(600px) rotateY(4deg);
+  transform-origin: left center;
+  box-shadow:
+    inset -4px 0 12px rgba(80,55,20,0.18),
+    4px 0 18px rgba(40,25,5,0.25);
+}
+
+.ch-spine-edge {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom,
+    transparent, rgba(80,55,20,0.4) 15%, rgba(80,55,20,0.4) 85%, transparent);
+}
+
+/* Individual ring */
+.ch-ring {
+  width: 38px;
+  height: 34px;
+  flex-shrink: 0;
+  /* Slight entrance stagger via animation-delay set in JSX */
+  animation: ringDrop 0.5s ease both;
+}
+.ch-ring svg { width: 100%; height: 100%; }
+
+@keyframes ringDrop {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* ── Content column (headline + subtitle) ───────────────────── */
+.ch-content {
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 72px 24px 72px 36px;
+  gap: 20px;
+}
+
+/* ── Headline ─────────────────────────────────────────────────── */
+.ch-headline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.ch-our-row { position: relative; }
+.ch-anniv-row { position: relative; }
+
+/* "Our" word */
+.ch-word-our-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.ch-word-our {
+  display: inline-block;
+  font-family: 'Playfair Display', 'Georgia', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: clamp(70px, 9.5vw, 128px);
+  line-height: 0.92;
+  color: #3d1e0a;
+  letter-spacing: -0.02em;
+  position: relative;
+  z-index: 2;
+  text-shadow:
+    1px 2px 0 rgba(255,255,255,0.15),
+    0 4px 12px rgba(0,0,0,0.12);
+}
+
+/* Pink highlight box behind last letter of "Our" */
+.ch-our-highlight {
+  position: absolute;
+  right: -0.01em;
+  top: 0.1em;
+  width: 0.44em;
+  height: 0.82em;
+  background: #e05882;
+  z-index: 1;
+  transform: rotate(-1.5deg);
+  border-radius: 2px;
+  box-shadow: 0 2px 6px rgba(180,40,80,0.35);
+}
+
+/* "50th" number */
+.ch-word-anniv-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.ch-word-anniv {
+  display: inline-block;
+  font-family: 'Playfair Display', 'Georgia', serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: clamp(82px, 12.5vw, 168px);
+  line-height: 0.88;
+  color: #7a3a10;
+  letter-spacing: -0.03em;
+  position: relative;
+  z-index: 2;
+  text-shadow:
+    2px 3px 0 rgba(255,240,200,0.25),
+    0 6px 20px rgba(0,0,0,0.18);
+}
+
+/* Outlined ring over the "0" */
+.ch-zero-ring {
+  position: absolute;
+  left: 0.36em;
+  top: 0.06em;
+  width: 0.44em;
+  height: 0.73em;
+  border: 0.058em solid #e05882;
+  border-radius: 50%;
+  z-index: 3;
+  pointer-events: none;
+  box-sizing: border-box;
+  /* Cross-hatch sketch fill */
+  background:
+    repeating-linear-gradient(
+      135deg,
+      transparent,
+      transparent 4px,
+      rgba(224,88,130,0.14) 4px,
+      rgba(224,88,130,0.14) 5px
+    ),
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      rgba(224,88,130,0.08) 4px,
+      rgba(224,88,130,0.08) 5px
+    );
+  box-shadow: 0 0 0 0.012em rgba(224,88,130,0.3);
+}
+
+/* ── Subtitle ─────────────────────────────────────────────────── */
+.ch-subtitle {
+  font-family: 'Playfair Display', 'Georgia', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(13px, 1.55vw, 19px);
+  line-height: 1.75;
+  color: #4a2810;
+  max-width: 320px;
+  margin: 0;
+  white-space: pre-line;
+  text-shadow: 0 1px 3px rgba(255,255,255,0.2);
+}
+
+/* ── Play button row ─────────────────────────────────────────── */
+.ch-play-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ch-play-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(50,30,10,0.72);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background 150ms ease, transform 120ms ease, box-shadow 120ms ease;
+  padding-left: 2px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+}
+.ch-play-btn:hover {
+  background: rgba(50,30,10,0.92);
+  transform: scale(1.08);
+  box-shadow: 0 5px 18px rgba(0,0,0,0.5);
+}
+
+/* ── Heart photo wrap — right column ────────────────────────── */
+.ch-heart-wrap {
+  grid-column: 3;
+  grid-row: 1;
+  position: relative;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  justify-self: center;
+  margin-right: 48px;
+  /* will-change helps browser composite the animated layer */
+  will-change: transform, opacity;
+}
+
+.ch-heart-svg {
+  width: clamp(260px, 32vw, 400px);
+  height: auto;
+  /* Additional drop shadow via CSS for extra depth */
+  filter: drop-shadow(8px 14px 22px rgba(30,10,0,0.5))
+          drop-shadow(2px 3px 5px rgba(80,40,0,0.3));
+}
+
+/* ── Dried leaf — absolute top-right ────────────────────────── */
+.ch-leaf-wrap {
+  position: absolute;
+  top: -18px;
+  right: 14px;
+  width: clamp(160px, 18vw, 240px);
+  height: auto;
+  z-index: 7;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.ch-leaf {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(3px 6px 8px rgba(30,40,0,0.35));
+}
+
+/* ── Bouquet — absolute bottom-right ────────────────────────── */
+.ch-bouquet-wrap {
+  position: absolute;
+  bottom: -28px;
+  right: 8px;
+  width: clamp(180px, 20vw, 270px);
+  height: auto;
+  z-index: 7;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.ch-bouquet {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(4px 8px 12px rgba(80,0,30,0.4));
+}
+
+/* ── Page curl — bottom-left corner ─────────────────────────── */
+.ch-page-curl {
+  position: absolute;
+  bottom: 0;
+  left: 62px; /* just past the spine */
+  width: 130px;
+  height: 70px;
+  z-index: 3;
+  pointer-events: none;
+}
+.ch-page-curl svg { width: 100%; height: 100%; }
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .ch-root {
+    grid-template-columns: 48px 1fr;
+    grid-template-rows: auto auto;
+    min-height: unset;
+    min-height: auto;
+    padding-bottom: 60px;
+  }
+  .ch-content {
+    grid-column: 2;
+    grid-row: 1;
+    padding: 48px 20px 24px 28px;
+  }
+  .ch-heart-wrap {
+    grid-column: 2;
+    grid-row: 2;
+    margin-right: 0;
+    margin-bottom: 32px;
+    justify-self: flex-end;
+    padding-right: 24px;
+  }
+  .ch-leaf-wrap  { width: clamp(110px, 22vw, 160px); right: 8px; top: -12px; }
+  .ch-bouquet-wrap { width: clamp(130px, 24vw, 190px); }
+  .ch-spine { transform: none; }
+}
+
+@media (max-width: 600px) {
+  .ch-spine { width: 40px; padding: 28px 0; }
+  .ch-ring  { width: 28px; height: 26px; }
+  .ch-heart-svg { width: clamp(200px, 60vw, 280px); }
+  .ch-word-our   { font-size: clamp(52px, 14vw, 80px); }
+  .ch-word-anniv { font-size: clamp(62px, 18vw, 100px); }
+}

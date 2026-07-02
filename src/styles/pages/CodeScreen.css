@@ -1,0 +1,302 @@
+/* ══════════════════════════════════════════════════════════════
+   CodeScreen — Love Anniversary Theme
+   Palette: deep crimson surface · blush rose accents · champagne text
+   60% crimson-glazed surface · 30% blush rose · 10% gold-rose accent
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Outer wrapper ── */
+.cs-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  position: relative;
+  z-index: 5;
+  width: 100%;
+  max-width: 340px;
+  padding: 32px 20px 28px;
+
+  /* Opacity-red surface — rich crimson glaze, not flat black */
+  background: rgba(110, 8, 18, 0.74);
+  border-radius: var(--radius-2xl, 22px);
+  border: 1.5px solid rgba(255, 160, 170, 0.28);
+  box-shadow:
+    0 8px 40px rgba(90, 0, 20, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 210, 215, 0.12);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  animation: csReveal 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── "Enter Code" heading ── */
+.cs-title {
+  font-family: 'Georgia', serif;
+  font-size: clamp(1.6rem, 5vw, 2.1rem);
+  font-weight: 800;
+  /* Warm champagne-ivory — romantic, not clinical white */
+  color: #fce8ea;
+  margin: 0 0 20px;
+  text-shadow:
+    0 2px 10px rgba(80, 0, 15, 0.7),
+    0 0 28px rgba(255, 130, 150, 0.35);
+  letter-spacing: 0.04em;
+}
+
+/* ── 4 display slots ── */
+.cs-slots {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.cs-slot {
+  width: 58px;
+  height: 62px;
+  /* Blush parchment — distinctly lighter than crimson container */
+  background: #fff0f2;
+  border: 2px solid rgba(180, 50, 70, 0.55);
+  border-radius: var(--radius-lg, 14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #8b0020;
+  font-family: 'Georgia', serif;
+  box-shadow:
+    0 2px 8px rgba(100, 0, 20, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition:
+    background var(--transition-base, 180ms ease),
+    transform var(--transition-fast, 100ms ease),
+    box-shadow var(--transition-base, 180ms ease);
+}
+
+.cs-slot--filled {
+  background: #ffe0e5;
+  color: #7a0018;
+  transform: scale(1.06);
+  border-color: rgba(160, 30, 50, 0.7);
+  box-shadow:
+    0 3px 12px rgba(140, 0, 30, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+/* Heart placeholder — warm rose, not harsh red */
+.cs-heart {
+  font-size: 1.4rem;
+  color: #d4556a;
+  line-height: 1;
+  filter: drop-shadow(0 1px 3px rgba(180, 30, 60, 0.4));
+}
+
+/* Shake on wrong code */
+@keyframes cs-shake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-8px); }
+  40%     { transform: translateX(8px); }
+  60%     { transform: translateX(-6px); }
+  80%     { transform: translateX(6px); }
+}
+.cs-shake {
+  animation: cs-shake 0.5s ease;
+}
+
+/* ── Hint / status text ── */
+.cs-hint {
+  font-family: 'Georgia', serif;
+  font-size: 0.83rem;
+  /* Warm blush ivory — readable against crimson glass */
+  color: rgba(255, 215, 220, 0.88);
+  text-align: center;
+  margin: 0 0 20px;
+  min-height: 1.2em;
+  padding: 0 8px;
+  font-style: italic;
+  text-shadow: 0 1px 4px rgba(80, 0, 15, 0.45);
+}
+
+/* ── Numpad container ── */
+.cs-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  /* Blush rose panel — clearly distinct from the crimson outer card */
+  background: rgba(255, 236, 238, 0.18);
+  padding: 16px;
+  border-radius: var(--radius-xl, 18px);
+  /* Visible rose border — not same-tone as background */
+  border: 1.5px solid rgba(230, 100, 120, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 200, 210, 0.15),
+    0 2px 8px rgba(80, 0, 20, 0.18);
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 18px;
+}
+
+/* ── Each key ── */
+.cs-key {
+  height: 56px;
+  /* Rose-crimson gradient — warm hue shift within 30°, never rainbow */
+  background: linear-gradient(160deg, #c2263c 0%, #9b0a20 100%);
+  border: none;
+  border-radius: var(--radius-md, 10px);
+  color: #ffe8ec;
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-family: 'Georgia', serif;
+  cursor: pointer;
+  /* Bottom shadow gives tactile depth — rose-tinted, not harsh black */
+  box-shadow:
+    0 4px 0 rgba(70, 0, 12, 0.75),
+    0 6px 16px rgba(120, 10, 30, 0.35);
+  transition:
+    transform var(--transition-fast, 100ms ease),
+    box-shadow var(--transition-fast, 100ms ease),
+    background var(--transition-base, 180ms ease);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  letter-spacing: 0.02em;
+}
+
+.cs-key:hover:not(:disabled) {
+  background: linear-gradient(160deg, #d43050 0%, #aa1428 100%);
+  transform: translateY(-1px);
+  box-shadow:
+    0 5px 0 rgba(70, 0, 12, 0.75),
+    0 8px 20px rgba(140, 10, 35, 0.4);
+}
+
+.cs-key:active:not(:disabled) {
+  transform: translateY(3px);
+  background: linear-gradient(160deg, #a81e30 0%, #870816 100%);
+  box-shadow:
+    0 1px 0 rgba(70, 0, 12, 0.75),
+    0 2px 6px rgba(100, 0, 20, 0.3);
+}
+
+.cs-key:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Dot key — ghosted, clearly non-functional */
+.cs-key--dot {
+  opacity: 0.25;
+  cursor: default;
+  background: linear-gradient(160deg, #8a1525 0%, #6b0010 100%);
+}
+
+/* DEL key — mauve tone, distinct from numeric keys */
+.cs-key--del {
+  font-size: 0.88rem;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  /* Dusty mauve — same hue family, clearly different role */
+  background: linear-gradient(160deg, #7a1630 0%, #5c0a1e 100%);
+  box-shadow:
+    0 4px 0 rgba(40, 0, 10, 0.7),
+    0 6px 14px rgba(90, 10, 30, 0.3);
+}
+.cs-key--del:hover:not(:disabled) {
+  background: linear-gradient(160deg, #8f1c38 0%, #6b1025 100%);
+  transform: translateY(-1px);
+}
+.cs-key--del:active:not(:disabled) {
+  background: linear-gradient(160deg, #6a1028 0%, #4e0818 100%);
+  transform: translateY(3px);
+  box-shadow:
+    0 1px 0 rgba(40, 0, 10, 0.7),
+    0 2px 6px rgba(80, 0, 20, 0.25);
+}
+
+/* ── Back link ── */
+.cl-back-to-scroll {
+  background: none;
+  border: none;
+  color: rgba(255, 190, 200, 0.4);
+  cursor: pointer;
+  font-size: var(--text-xs, 11px);
+  font-family: 'Georgia', serif;
+  font-style: italic;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+  transition: color var(--transition-base, 180ms ease);
+}
+.cl-back-to-scroll:hover {
+  color: rgba(255, 210, 215, 0.82);
+}
+
+/* ── CodeScreen entrance animation ── */
+@keyframes csReveal {
+  0%   { opacity: 0; transform: translateY(18px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+/* ── Admin edit-mode bar ── */
+.cs-admin-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 10px 16px;
+  /* Blush tint — visible contrast against crimson card */
+  background: rgba(255, 220, 225, 0.08);
+  border: 1px solid rgba(220, 100, 120, 0.32);
+  border-radius: var(--radius-lg, 14px);
+  width: 100%;
+  box-sizing: border-box;
+  flex-wrap: wrap;
+}
+
+.cs-admin-current {
+  font-size: 0.78rem;
+  color: rgba(255, 190, 200, 0.55);
+  font-family: system-ui, sans-serif;
+}
+
+.cs-admin-current strong {
+  color: #ffb3bf;
+  letter-spacing: 3px;
+  font-family: monospace;
+}
+
+/* Set New Code button — rose-to-deep-rose, 2 hues, within 20° on wheel */
+.cs-admin-set-btn {
+  padding: 7px 18px;
+  background: linear-gradient(135deg, #d63a5a, #a81535);
+  border: none;
+  border-radius: var(--radius-full, 9999px);
+  color: #ffe8ec;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: system-ui, sans-serif;
+  transition:
+    opacity var(--transition-base, 180ms ease),
+    transform var(--transition-fast, 100ms ease);
+  box-shadow: 0 4px 14px rgba(180, 20, 50, 0.4);
+  letter-spacing: 0.02em;
+}
+.cs-admin-set-btn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.cs-admin-cancel-btn {
+  padding: 7px 18px;
+  background: rgba(255, 200, 210, 0.08);
+  border: 1px solid rgba(220, 120, 140, 0.3);
+  border-radius: var(--radius-full, 9999px);
+  color: #ffb3bf;
+  font-size: 0.78rem;
+  cursor: pointer;
+  font-family: system-ui, sans-serif;
+  transition: background var(--transition-base, 180ms ease);
+}
+.cs-admin-cancel-btn:hover {
+  background: rgba(255, 200, 210, 0.14);
+}

@@ -1,0 +1,167 @@
+// ─────────────────────────────────────────────────────────────
+// data/couples.js  — Role-based data store
+// Roles: masterAdmin → admin (client) → user (visitor)
+// ─────────────────────────────────────────────────────────────
+
+// Master Admin credentials (website owner)
+export const masterAdminCredentials = {
+  username: 'masteradmin',
+  password: 'masteradmin123',
+};
+
+// Client accounts — each client has their own credentials + couple data
+export const defaultClients = [
+  {
+    id: 'client-renz-jane',
+    gmail: 'renzjane@gmail.com',
+    password: 'renzjane2024',
+    displayName: 'Renz',
+    activationCode: 'HL-2024-RENZ',
+    activated: true,
+    active: true,
+    approved: true,
+    createdAt: '2024-01-10',
+    subscription: 'Premium',
+    expiresAt: '2025-01-10',
+    coupleSlug: 'renz-jane',
+  },
+];
+
+// Couple/website data
+export const couplesData = [
+  {
+    id: 'renz-jane',
+    slug: 'renz-jane',
+    name1: 'Renz',
+    name2: 'Jane',
+    relationshipDate: '2023-02-14',
+    accessCode: '0214',
+    theme: 'rose',
+    package: 'Premium',
+    tagline: 'Two souls, one heartbeat',
+    photos: [
+      { id: 1, url: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=600&q=80', caption: 'Our first date 💕' },
+      { id: 2, url: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=600&q=80', caption: 'Summer adventure 🌸' },
+      { id: 3, url: 'https://images.unsplash.com/photo-1516589091380-5d8e87df6999?w=600&q=80', caption: 'Coffee mornings ☕' },
+      { id: 4, url: 'https://images.unsplash.com/photo-1474552226712-ac0f0961a954?w=600&q=80', caption: 'Sunset walk 🌅' },
+      { id: 5, url: 'https://images.unsplash.com/photo-1596460107916-430662021049?w=600&q=80', caption: 'Beach day 🌊' },
+      { id: 6, url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=80', caption: 'Cooking together 🍝' },
+    ],
+    lettersPhotos: [
+      { id: 1, url: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=600&q=80', caption: 'Our first date 💕' },
+      { id: 2, url: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=600&q=80', caption: 'Summer adventure 🌸' },
+      { id: 3, url: 'https://images.unsplash.com/photo-1516589091380-5d8e87df6999?w=600&q=80', caption: 'Coffee mornings ☕' },
+      { id: 4, url: 'https://images.unsplash.com/photo-1474552226712-ac0f0961a954?w=600&q=80', caption: 'Sunset walk 🌅' },
+      { id: 5, url: 'https://images.unsplash.com/photo-1596460107916-430662021049?w=600&q=80', caption: 'Beach day 🌊' },
+      { id: 6, url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=80', caption: 'Cooking together 🍝' },
+    ],
+    letters: [
+      { id: 1, from: 'Renz', to: 'Jane', subject: 'The day I knew', content: 'From the moment I first saw your smile, I knew my life had changed forever. You are the missing piece I never knew I was searching for. Every day with you feels like a beautiful dream I never want to wake from. I love you more than words could ever express.', date: '2024-02-14', unlockDate: null },
+      { id: 2, from: 'Jane', to: 'Renz', subject: 'My forever person', content: 'You make ordinary moments feel extraordinary. The way you laugh, the way you care, the way you make everything better just by being there — I am so grateful the universe brought us together. Here\'s to forever, my love.', date: '2024-02-14', unlockDate: null },
+    ],
+    song: { title: 'Perfect', artist: 'Ed Sheeran', embedUrl: 'https://open.spotify.com/embed/track/0tgVpDi06FyKpA1z0VMD4v', youtubeId: '2Vv-BfVoq4g', lyrics: "I found a love for me\nDarling just dive right in and follow my lead\nWell I found a girl beautiful and sweet\nOh I never knew you were the someone waiting for me" },
+    songs: [
+      { title: 'Perfect', artist: 'Ed Sheeran', albumArt: '', embedUrl: 'https://open.spotify.com/embed/track/0tgVpDi06FyKpA1z0VMD4v', youtubeId: '2Vv-BfVoq4g', reason: 'Our first dance song', lyrics: "I found a love for me\nDarling just dive right in and follow my lead\nWell I found a girl beautiful and sweet\nOh I never knew you were the someone waiting for me" },
+    ],
+    timeline: [
+      { id: 1, date: '2023-02-14', title: 'First Date 💕', description: 'We met at the coffee shop on Valentine\'s Day. A coincidence that changed everything.' },
+      { id: 2, date: '2023-06-15', title: 'Said "I Love You" 💬', description: 'Renz finally said the three words under the sunset bridge.' },
+      { id: 3, date: '2024-02-14', title: '1 Year Anniversary 🎉', description: 'Celebrated with a surprise dinner and a night of dancing.' },
+    ],
+    monthsaryMessages: [
+      { month: 1,  message: 'One month of pure bliss! You make every day worth living. ❤️' },
+      { month: 6,  message: 'Half a year of us! You are the best thing that has ever happened to me. 🌹' },
+      { month: 12, message: 'One whole year! Happy Anniversary, my love! 🎊' },
+    ],
+    timeCapsule: [
+      { id: 1, title: 'Message for our 1st Anniversary', content: 'By the time you read this, we\'ve made it a full year. I\'m so proud of us. I love you endlessly.', unlockDate: '2024-02-14' },
+      { id: 2, title: 'Message for our 2nd Anniversary', content: 'Two years of memories, laughs, and love. Here\'s to so many more adventures together!', unlockDate: '2025-02-14' },
+    ],
+    videoSlideshow: null,
+    qrGenerated: true,
+    active: true,
+    createdAt: '2024-01-10',
+    pageContent: {
+      login:     { titleTop: 'Happy', titleBottom: 'Anniversary', hintText: 'Tap the scroll to open your love page ✨', openingText: '💌 Opening your letter...', continueBtnText: 'Continue 💕' },
+      home:      { taglineOverride: '', coverPhotoUrl: '', coverPhotoCaption: '' },
+      memories:  { title: 'Our Memories',  subtitle: 'Every photo tells our story'            },
+      letters:   { title: 'Love Letters',  subtitle: 'Words written with our hearts'          },
+      song:      { title: 'Our Song',      subtitle: 'The melody of our love story'           },
+      video:     { title: 'Our Video',     subtitle: 'A romantic slideshow of our journey', pendingTitle: 'Your video is being created', pendingText: 'Our admin is crafting a beautiful romantic slideshow with your photos and song. Check back soon! 💕' },
+      monthsary: { title: 'Monthsary',     subtitle: 'Celebrating every month of us', inLoveText: 'of being in love', defaultMessage: "Every month with you is a gift I'll never take for granted. ❤️" },
+      capsule:   { title: 'Time Capsule',  subtitle: 'Messages from the past, for your future' },
+      // ── per-page editable content ──
+      codeScreen: {
+        title: 'Enter Code',
+        hint: 'The day you finally said "YES" to me.',
+        footer: 'Enter the 4-digit code from your invitation',
+      },
+      memoryGame: {
+        eyebrow: 'Mini game',
+        title: "Let's play a little game",
+        subtitle: 'Find all matching pairs to unlock your love page',
+        hint: 'Tap two cards to find matching pairs',
+      },
+      photos: {
+        heroTitle1: 'Our',
+        heroTitle2: 'MEMORIES',
+        tagline: 'Every photo tells our story',
+        slide2title: 'A Story of Love',
+        slide3title: 'Moments in Time',
+        slide4title: 'Our Favourite Moments',
+        slide5title: 'Beautiful Together',
+        slide6title: 'The Story of Us',
+        slide7title: 'Adventures Together',
+        slide8title: 'The Role of Love',
+        slide9title: 'Our Memories Collection',
+      },
+      lettersPage: {
+        coverTitle1: 'Happy',
+        coverTitle2: 'Anniversary',
+        coverSub: 'A celebration of love, growth, and beautiful moments.',
+        slide2Title: 'Our Journey',
+        slide2Body1: 'Every love story starts somewhere, and ours began with a simple hello — the kind of moment that felt ordinary at first, but ended up changing everything.',
+        slide2Body2: "What started as small moments slowly grew into something meaningful. Day by day, our connection strengthened in ways neither of us expected.",
+        slide3Title: 'The Moments',
+        slide3Cap1: "Our relationship isn't built on grand gestures — it's built on moments. Moments that seemed small at the time, but now mean everything.",
+        slide3Cap2: "It's the late-night talks, when the world is quiet and it's just us.",
+        slide3Cap3: "It's the shared laughter, the kind that comes unexpectedly, making our hearts feel lighter.",
+        slide4Title: 'What We Love',
+        slide4Body1: "What I love most about us is how naturally we understand each other. Even in silence, we feel connected — as if our hearts speak a language only we recognize.",
+        slide4Body2: "I love how we support each other's dreams. We celebrate every step forward, encourage every idea, and believe in each other even when doubts try to creep in.",
+        slide5Title: 'Favorite Things',
+        slide5Body: "There are so many things I love about you, but these are the ones that stay with me every single day.",
+        slide5Cap: 'You have a way of treating people with warmth, patience, and sincerity.',
+        slide6Title: 'Our Growth',
+        slide6Quote: "We learned how to speak honestly, even when the truth felt heavy. We learned how to listen, not just with our ears but with our hearts.",
+        slide6Cap: "When I look back at how far we've come, I realize that our love didn't just grow — we grew.",
+        slide7Title: 'Highlights of Our Year',
+        slide7Body: "This past year wasn't just a collection of days — it was a collection of moments that shaped us, strengthened us, and reminded us why our love matters.",
+        slide8Title: 'Gratitude',
+        slide8Body: "There are so many things I'm grateful for, but these are the ones that touch my heart the most.",
+        slide8Cap1: "Love isn't only about the easy days — it's about showing up when everything feels heavy. And you did.",
+        slide8Cap2: "Love is a choice, and you keep choosing this relationship with your actions, your patience, and your effort.",
+        slide9Title: 'My Promise',
+        slide9Body1: "As we celebrate another year together, I want to make promises that come from the deepest part of my heart — promises I intend to keep, not just today, but for every season of our life.",
+        slide9Body2: "Not just in the bright seasons, but in the cold ones too. I promise to love you through change, through challenges, through growth, and through every moment we face.",
+        slide10Title1: 'A Love',
+        slide10Title2: 'Still Growing',
+        slide10Body: "In the end, our story isn't defined by a single moment, but by all the quiet ones that led us here. Every step, every laugh, every challenge, every soft \"it's okay\".",
+      },
+      storyPage: {
+        boardTitle1: 'Songs',
+        boardTitle2: 'that',
+        boardTitle3: 'Remind Me of You',
+      },
+      wishPage: {
+        title: 'Wishes',
+        subtitle: 'Little wishes sent to you on butterfly wings',
+      },
+      wishes: [
+        { id: 1, title: 'Always by your side', message: 'No matter where life takes us, I wish for you to always feel safe, loved, and never alone. I am your constant — in every season, in every storm.', unlocked: true },
+        { id: 2, title: 'For every morning', message: 'I wish you a life full of mornings that feel like beginnings — where you wake up knowing you are deeply loved, exactly as you are.', unlocked: true },
+        { id: 3, title: 'A wish for our future', message: 'This one is sealed until our next anniversary. Some wishes are best kept close to the heart a little longer.', unlocked: false, unlockHint: 'Opens on our next anniversary' },
+      ],
+    },
+  },
+];

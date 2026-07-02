@@ -1,0 +1,186 @@
+/* ══════════════════════════════════════════
+   ImageCropper modal
+══════════════════════════════════════════ */
+
+/* ── Backdrop ── */
+.ic-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0, 0, 0, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  backdrop-filter: blur(6px);
+  animation: ic-fade-in 0.18s ease;
+}
+@keyframes ic-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal card ── */
+.ic-modal {
+  background: #120018;
+  border: 1px solid rgba(233, 30, 140, 0.3);
+  border-radius: 22px;
+  width: 100%;
+  max-width: 480px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(233,30,140,0.15);
+  animation: ic-slide-up 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes ic-slide-up {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── Header ── */
+.ic-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid rgba(255, 150, 180, 0.1);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.ic-header-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ff9ab5;
+  font-family: system-ui, sans-serif;
+}
+.ic-header-sub {
+  font-size: 0.72rem;
+  color: rgba(255, 180, 200, 0.4);
+  font-family: system-ui, sans-serif;
+}
+
+/* ── Crop window ── */
+.ic-crop-window {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  cursor: grab;
+  background: #000;
+  user-select: none;
+  touch-action: none;
+}
+.ic-crop-window:active { cursor: grabbing; }
+
+.ic-img {
+  position: absolute;
+  top: 50%; left: 50%;
+  /* translate(-50%,-50%) is baseline; additional offset/scale added inline */
+  translate: -50% -50%;
+  max-width: none;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* crop frame border */
+.ic-border {
+  position: absolute;
+  inset: 0;
+  border: 2px solid rgba(233, 30, 140, 0.6);
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+}
+
+/* rule-of-thirds grid lines */
+.ic-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+}
+.ic-grid-col {
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  grid-row: 1 / -1;
+}
+.ic-grid-col:last-of-type { border-right: none; }
+.ic-grid-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  grid-column: 1 / -1;
+}
+.ic-grid-row:last-of-type { border-bottom: none; }
+
+/* ── Zoom row ── */
+.ic-zoom-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-top: 1px solid rgba(255, 150, 180, 0.08);
+}
+.ic-zoom-icon { font-size: 0.9rem; flex-shrink: 0; }
+.ic-zoom-pct  {
+  font-size: 0.75rem;
+  color: rgba(255, 180, 200, 0.5);
+  font-family: system-ui, sans-serif;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* range slider */
+.ic-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: rgba(255, 150, 180, 0.2);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+.ic-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e91e8c, #9c27b0);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(233,30,140,0.4);
+}
+.ic-slider::-moz-range-thumb {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e91e8c, #9c27b0);
+  cursor: pointer;
+  border: none;
+}
+
+/* ── Action buttons ── */
+.ic-actions {
+  display: flex;
+  gap: 10px;
+  padding: 14px 20px 18px;
+  border-top: 1px solid rgba(255, 150, 180, 0.08);
+}
+.ic-btn {
+  flex: 1;
+  padding: 11px 0;
+  border-radius: 50px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: system-ui, sans-serif;
+  transition: opacity 0.15s, background 0.15s;
+}
+.ic-btn:disabled { opacity: 0.5; cursor: default; }
+
+.ic-btn--cancel {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 150, 180, 0.22);
+  color: #ff9ab5;
+}
+.ic-btn--cancel:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+
+.ic-btn--confirm {
+  background: linear-gradient(135deg, #e91e8c, #9c27b0);
+  border: none;
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(233,30,140,0.35);
+}
+.ic-btn--confirm:hover:not(:disabled) { opacity: 0.88; }

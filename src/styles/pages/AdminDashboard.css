@@ -1,0 +1,309 @@
+/* ══════════════════════════════════════════════════════
+   AdminDashboard.css
+   Real page flow — no dropdowns, no chrome
+══════════════════════════════════════════════════════ */
+
+/* ── Root — sits on top of everything ── */
+.ad-root {
+  min-height: 100vh;
+  background: #080010;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  /* top padding so content isn't hidden under the floating bar */
+  padding-top: 48px;
+}
+
+/* ── "No page" state ── */
+.ad-no-page {
+  min-height: 100vh;
+  background: #080010;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-family: system-ui, sans-serif;
+  padding: 40px;
+  text-align: center;
+}
+.ad-no-page h2 { color: #ff9ab5; margin: 0; }
+.ad-no-page p  { color: rgba(255,180,200,0.5); margin: 0; }
+.ad-no-page button {
+  margin-top: 8px;
+  padding: 9px 22px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,150,180,0.25);
+  border-radius: 50px;
+  color: #ff9ab5;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-family: system-ui, sans-serif;
+}
+
+/* ════════════════════════
+   FLOATING TOP BAR
+════════════════════════ */
+.ad-topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 9000;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  background: rgba(6, 0, 12, 0.92);
+  border-bottom: 1px solid rgba(255, 150, 180, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.ad-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.ad-topbar-name {
+  font-weight: 700;
+  font-size: 0.88rem;
+  background: linear-gradient(135deg, #ff9ab5, #d4a0ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  flex-shrink: 0;
+}
+.ad-topbar-divider {
+  width: 1px; height: 16px;
+  background: rgba(255,150,180,0.2);
+  flex-shrink: 0;
+}
+.ad-topbar-couple {
+  font-size: 0.82rem;
+  color: rgba(255,180,200,0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ad-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+/* green "Editing" pill */
+.ad-edit-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  color: #81c784;
+  font-size: 0.68rem;
+  font-family: system-ui, sans-serif;
+  letter-spacing: 0.3px;
+}
+
+.ad-topbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 13px;
+  border-radius: 18px;
+  font-size: 0.74rem;
+  cursor: pointer;
+  font-family: system-ui, sans-serif;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.ad-topbar-btn--copy {
+  background: rgba(255,150,180,0.1);
+  border: 1px solid rgba(255,150,180,0.22);
+  color: #ff9ab5;
+}
+.ad-topbar-btn--copy:hover { background: rgba(255,150,180,0.18); }
+
+.ad-topbar-btn--preview {
+  background: rgba(33,150,243,0.12);
+  border: 1px solid rgba(33,150,243,0.25);
+  color: #90caf9;
+}
+.ad-topbar-btn--preview:hover { background: rgba(33,150,243,0.2); }
+
+.ad-topbar-btn--logout {
+  background: rgba(233,30,140,0.1);
+  border: 1px solid rgba(233,30,140,0.22);
+  color: #ff9ab5;
+}
+.ad-topbar-btn--logout:hover { background: rgba(233,30,140,0.18); }
+
+/* ════════════════════════
+   PAGE SECTIONS
+════════════════════════ */
+.ad-section {
+  position: relative;
+}
+
+/* thin label stripe at the top of each section */
+.ad-section-label {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(233, 30, 140, 0.12);
+  border-bottom: 1px solid rgba(233, 30, 140, 0.22);
+  color: rgba(255, 180, 200, 0.65);
+  font-size: 0.68rem;
+  font-family: system-ui, sans-serif;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 5px 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  backdrop-filter: blur(4px);
+}
+
+/* code screen & game need their own background */
+.ad-cs-bg {
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 60% 40%, #2a0030 0%, #080010 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px 40px; /* top pad for the label */
+}
+
+.ad-game-bg {
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 60% 40%, #2a0030 0%, #080010 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px 40px;
+}
+
+/* ════════════════════════
+   TOAST
+════════════════════════ */
+.ad-toast {
+  position: fixed;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: rgba(12, 0, 22, 0.96);
+  border: 1px solid rgba(233, 30, 140, 0.3);
+  color: #ff9ab5;
+  padding: 8px 20px;
+  border-radius: 40px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 24px rgba(233, 30, 140, 0.15);
+  animation: ad-toast-in 0.2s ease;
+  font-family: system-ui, sans-serif;
+  pointer-events: none;
+}
+@keyframes ad-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ════════════════════════
+   RESPONSIVE
+════════════════════════ */
+@media (max-width: 600px) {
+  .ad-topbar         { padding: 0 12px; gap: 6px; }
+  .ad-topbar-couple  { display: none; }
+  .ad-topbar-btn span { display: none; } /* icon only on mobile */
+  .ad-topbar-btn     { padding: 5px 9px; }
+}
+
+/* ════════════════════════
+   BG SECTION (Code Screen + Memory Game)
+════════════════════════ */
+.ad-bg-section {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px 48px; /* top pad for the section label */
+  transition: background 0.3s;
+}
+
+/* Change Background button — bottom-right, appears on hover */
+.ad-bg-change-btn {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  background: rgba(12, 0, 22, 0.82);
+  border: 1px solid rgba(233, 30, 140, 0.45);
+  border-radius: 40px;
+  color: #ff9ab5;
+  font-size: 0.78rem;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 50;
+}
+.ad-bg-change-btn--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.ad-bg-change-btn:hover {
+  background: rgba(233, 30, 140, 0.2);
+  border-color: rgba(233, 30, 140, 0.7);
+}
+
+/* Remove bg button — bottom-right above the change button */
+.ad-bg-remove-btn {
+  position: absolute;
+  bottom: 60px;
+  right: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  background: rgba(180, 20, 60, 0.75);
+  border: 1px solid rgba(220, 60, 80, 0.4);
+  border-radius: 40px;
+  color: #ffb3c1;
+  font-size: 0.72rem;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  z-index: 50;
+  transition: background 0.15s;
+}
+.ad-bg-remove-btn:hover {
+  background: rgba(220, 30, 60, 0.85);
+}
+
+/* When a custom bg image is set, add a subtle dark overlay so
+   the CodeScreen card and MemoryGame panel stay readable */
+.ad-bg-section[style*="url("] > *:not(.ad-bg-change-btn):not(.ad-bg-remove-btn):not(input) {
+  position: relative;
+  z-index: 2;
+}
+.ad-bg-section[style*="url("]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1;
+}

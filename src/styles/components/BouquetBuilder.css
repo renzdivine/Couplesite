@@ -1,0 +1,320 @@
+/* ── Bouquet Builder (bb-*) ─────────────────────────────────────────────── */
+
+.bb-root {
+  max-width: 960px;
+  margin: 0 auto 48px;
+  padding: 0 24px;
+}
+
+.bb-intro {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.bb-title {
+  font-size: 26px;
+  font-weight: 400;
+  color: #e2d8f8;
+  margin: 0 0 6px;
+  letter-spacing: 0.02em;
+}
+
+.bb-subtitle {
+  font-size: 14px;
+  color: rgba(220, 210, 248, 0.52);
+  margin: 0;
+  font-style: italic;
+}
+
+.bb-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+/* ── Selector ── */
+.bb-selector {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(180, 160, 255, 0.18);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.bb-selector-title {
+  font-size: 18px;
+  font-weight: 400;
+  color: #e2d8f8;
+  margin: 0 0 4px;
+}
+
+.bb-selector-hint {
+  font-size: 13px;
+  color: rgba(180, 160, 255, 0.45);
+  margin: 0 0 20px;
+  font-style: italic;
+}
+
+.bb-flower-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bb-flower-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(180, 160, 255, 0.1);
+  transition: border-color var(--transition-base), background var(--transition-base);
+}
+
+.bb-flower-item:hover {
+  border-color: rgba(180, 160, 255, 0.22);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.bb-flower-preview {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  background: radial-gradient(circle at 50% 60%, rgba(60, 20, 50, 0.6), rgba(10, 0, 20, 0.9));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.bb-flower-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  user-select: none;
+}
+
+.bb-flower-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.bb-flower-name {
+  font-size: 16px;
+  color: #e2d8f8;
+}
+
+/* ── Quantity control ── */
+.bb-qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 9999px;
+  padding: 3px;
+  border: 1px solid rgba(180, 160, 255, 0.15);
+}
+
+.bb-qty-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(238, 230, 250, 0.85);
+  cursor: pointer;
+  transition: background var(--transition-base), color var(--transition-base), transform var(--transition-fast);
+}
+
+.bb-qty-btn:hover:not(:disabled) {
+  background: rgba(233, 30, 140, 0.25);
+  color: #fff;
+}
+
+.bb-qty-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.bb-qty-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.bb-qty-value {
+  min-width: 28px;
+  text-align: center;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  color: #eee6fa;
+}
+
+/* ── Preview column ── */
+.bb-preview-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bb-preview {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(180, 160, 255, 0.18);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.bb-preview--empty {
+  min-height: 380px;
+}
+
+.bb-preview-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: rgba(180, 160, 255, 0.4);
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.bb-preview-placeholder p {
+  font-size: 14px;
+  font-style: italic;
+  margin: 0;
+  max-width: 200px;
+  line-height: 1.5;
+}
+
+/* Single SVG canvas replaces the old stage/flowers-layer/sprite system */
+.bb-stage-svg {
+  overflow: visible;
+}
+
+.bb-preview-count {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: rgba(180, 160, 255, 0.45);
+  font-style: italic;
+  text-align: center;
+}
+
+/* ── Generate button ── */
+.bb-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bb-generate-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-dark) 100%);
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  box-shadow: 0 4px 18px var(--color-brand-glow);
+  transition: transform var(--transition-base), box-shadow var(--transition-base), opacity var(--transition-base);
+}
+
+.bb-generate-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(233, 30, 140, 0.35);
+}
+
+.bb-generate-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.bb-generate-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.bb-save-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 24px;
+  border: 1px solid rgba(180, 160, 255, 0.3);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(220, 210, 255, 0.9);
+  font-family: inherit;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: transform var(--transition-base), background var(--transition-base), border-color var(--transition-base);
+}
+
+.bb-save-btn:hover:not(:disabled) {
+  background: rgba(180, 160, 255, 0.14);
+  border-color: rgba(180, 160, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.bb-save-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .bb-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .bb-preview-col {
+    order: -1;
+  }
+
+  .bb-preview,
+  .bb-preview--empty {
+    min-height: 340px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bb-root {
+    padding: 0 16px;
+  }
+
+  .bb-selector,
+  .bb-preview {
+    padding: 16px;
+  }
+
+  .bb-flower-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
