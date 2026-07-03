@@ -1,4 +1,4 @@
-const DB_NAME    = 'heartlink_images';
+const DB_NAME    = 'lovegift_images';
 const DB_VERSION = 1;
 const STORE_NAME = 'blobs';
 

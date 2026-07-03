@@ -32,7 +32,7 @@ export default function MasterLogin() {
           <Heart size={26} color="#fff" fill="#fff" />
         </div>
 
-        <h1 style={styles.title}>HeartLink</h1>
+        <h1 style={styles.title}>LoveGift</h1>
         <p style={styles.subtitle}>Master Admin Panel</p>
 
         <form onSubmit={handleSubmit} style={{ width: '100%' }}>

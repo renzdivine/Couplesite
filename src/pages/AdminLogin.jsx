@@ -43,7 +43,7 @@ export default function AdminLogin() {
               <Heart size={26} color="hsl(330, 70%, 52%)" />
             </div>
             <h1 className="al-title">Client Login</h1>
-            <p className="al-subtitle">HeartLink · Access Your Love Page</p>
+            <p className="al-subtitle">LoveGift · Access Your Love Page</p>
           </div>
 
           <form onSubmit={handleSubmit}>

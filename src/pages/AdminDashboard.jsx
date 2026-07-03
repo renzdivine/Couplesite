@@ -61,7 +61,7 @@ export default function AdminDashboard() {
       <div className="ad-topbar">
         <div className="ad-topbar-left">
           <Heart size={15} color="#e91e8c" fill="#e91e8c"/>
-          <span className="ad-topbar-name">HeartLink</span>
+          <span className="ad-topbar-name">LoveGift</span>
           <span className="ad-topbar-divider"/>
         </div>
         <div className="ad-topbar-right">
@@ -582,7 +582,7 @@ function QrSection({ siteUrl, showToast }) {
       ctx.fillRect(0, 0, 300, 300);
       ctx.drawImage(img, 0, 0, 300, 300);
       const link = document.createElement('a');
-      link.download = 'heartlink-qr.png';
+      link.download = 'lovegift-qr.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
     };

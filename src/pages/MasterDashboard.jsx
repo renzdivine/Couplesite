@@ -117,7 +117,7 @@ export default function MasterDashboard() {
             <div style={{ width: 30, height: 30, borderRadius: 8, background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Heart size={14} color="#fff" fill="#fff" />
             </div>
-            <span style={{ fontWeight: 700, color: C.text, fontSize: '1rem', letterSpacing: -0.3 }}>HeartLink</span>
+            <span style={{ fontWeight: 700, color: C.text, fontSize: '1rem', letterSpacing: -0.3 }}>LoveGift</span>
           </div>
           <div style={{ fontSize: '0.7rem', color: C.textMuted, marginLeft: 39 }}>Master Admin</div>
         </div>

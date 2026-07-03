@@ -20,9 +20,9 @@ import {
 const AppContext = createContext(null);
 
 
-const LS_MASTER  = 'heartlink_master';
-const LS_CLIENT  = 'heartlink_client_session';
-const LS_COUPLE  = 'heartlink_couple_auth';
+const LS_MASTER  = 'lovegift_master';
+const LS_CLIENT  = 'lovegift_client_session';
+const LS_COUPLE  = 'lovegift_couple_auth';
 const lsGet = (k, fb) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } };
 const lsSet = (k, v)  => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 const lsDel = (k)     => localStorage.removeItem(k);
