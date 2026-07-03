@@ -1,5 +1,3 @@
-/* ── Bouquet Builder (bb-*) ─────────────────────────────────────────────── */
-
 .bb-root {
   max-width: 960px;
   margin: 0 auto 48px;
@@ -33,7 +31,6 @@
   align-items: start;
 }
 
-/* ── Selector ── */
 .bb-selector {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(180, 160, 255, 0.18);
@@ -114,7 +111,6 @@
   color: #e2d8f8;
 }
 
-/* ── Quantity control ── */
 .bb-qty {
   display: inline-flex;
   align-items: center;
@@ -161,7 +157,6 @@
   color: #eee6fa;
 }
 
-/* ── Preview column ── */
 .bb-preview-col {
   display: flex;
   flex-direction: column;
@@ -203,7 +198,6 @@
   line-height: 1.5;
 }
 
-/* Single SVG canvas replaces the old stage/flowers-layer/sprite system */
 .bb-stage-svg {
   overflow: visible;
 }
@@ -216,7 +210,6 @@
   text-align: center;
 }
 
-/* ── Generate button ── */
 .bb-actions {
   display: flex;
   flex-direction: column;
@@ -286,7 +279,6 @@
   cursor: not-allowed;
 }
 
-/* ── Responsive ── */
 @media (max-width: 768px) {
   .bb-layout {
     grid-template-columns: 1fr;

@@ -1,13 +1,9 @@
-// ButterflyAnimation.jsx
-// Butterflies burst from the gift box origin and glide smoothly
-// across the entire page in continuous organic arcs.
-
 import { useState, useMemo } from 'react';
 
 const BUTTERFLY_WIDTH  = 52;
 const BUTTERFLY_HEIGHT = 44;
 
-// ── Butterfly SVG ─────────────────────────────────────────────
+
 function Butterfly({ color, flapAngle, flapDuration, bobDuration, uid }) {
   return (
     <svg
@@ -39,10 +35,10 @@ function Butterfly({ color, flapAngle, flapDuration, bobDuration, uid }) {
           <stop offset="0%"   stopColor={color} />
           <stop offset="100%" stopColor="#4a0a2e" />
         </linearGradient>
-        {/* Keyframes are consolidated into a single shared <style> tag */}
+        {}
       </defs>
 
-      {/* Left wings */}
+      {}
       <g style={{ transformOrigin: '70px 58px', animation: `flapL${uid} ${flapDuration}ms ease-in-out infinite` }}>
         <ellipse cx="36"  cy="34" rx="34" ry="24" fill={`url(#UL${uid})`} />
         <line x1="70" y1="34" x2="14"  y2="18" stroke="rgba(80,0,40,0.5)" strokeWidth="1.4" />
@@ -52,7 +48,7 @@ function Butterfly({ color, flapAngle, flapDuration, bobDuration, uid }) {
         <ellipse cx="30"  cy="28" rx="14" ry="10" fill="rgba(255,255,255,0.13)" />
       </g>
 
-      {/* Right wings */}
+      {}
       <g style={{ transformOrigin: '70px 58px', animation: `flapR${uid} ${flapDuration}ms ease-in-out infinite` }}>
         <ellipse cx="104" cy="34" rx="34" ry="24" fill={`url(#UR${uid})`} />
         <line x1="70" y1="34" x2="126" y2="18" stroke="rgba(80,0,40,0.5)" strokeWidth="1.4" />
@@ -62,7 +58,7 @@ function Butterfly({ color, flapAngle, flapDuration, bobDuration, uid }) {
         <ellipse cx="110" cy="28" rx="14" ry="10" fill="rgba(255,255,255,0.13)" />
       </g>
 
-      {/* Body */}
+      {}
       <ellipse cx="70" cy="58" rx="4.5" ry="27" fill="#2d0010" />
       <ellipse cx="70" cy="58" rx="2.2" ry="26" fill={color} opacity="0.35" />
       <circle  cx="70" cy="31" r="6"  fill="#2d0010" />
@@ -84,7 +80,7 @@ const BUTTERFLY_COLORS = [
   '#ff80ab','#ea80fc',
 ];
 
-// ── ButterflyAnimation ────────────────────────────────────────
+
 export default function ButterflyAnimation({ active, origin }) {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
@@ -95,7 +91,7 @@ export default function ButterflyAnimation({ active, origin }) {
   const [groups] = useState(() => {
     const count = 50;
 
-    // Grid ensures full coverage — 10 cols × 5 rows
+    
     const cols  = 10;
     const rows  = 5;
     const cellW = vw / cols;
@@ -105,37 +101,37 @@ export default function ButterflyAnimation({ active, origin }) {
       const col    = i % cols;
       const row    = Math.floor(i / cols) % rows;
 
-      // Final resting spot inside its grid cell — padded so they don't hug edges
+      
       const finalX = (col * cellW + cellW * 0.15 + Math.random() * cellW * 0.7) - vw / 2;
       const finalY = (row * cellH + cellH * 0.15 + Math.random() * cellH * 0.7) - vh / 2;
 
-      // One smooth arc control point: pulls the flight path into a gentle curve.
-      // Halfway between spawn and final, with a perpendicular offset for the arc.
+      
+      
       const midX = (spawnX + finalX) / 2 + rnd(vw * 0.18);
       const midY = (spawnY + finalY) / 2 + rnd(vh * 0.18);
 
       return {
         finalX, finalY,
         midX, midY,
-        // Stagger: early butterflies spread out first, giving a wave effect
+        
         startDelay:   i * 0.06 + Math.random() * 0.2,
-        // Each butterfly travels at its own pace — slightly different durations
-        // prevent them all arriving at once (which looks mechanical)
+        
+        
         duration:     5.5 + Math.random() * 3.0,
         color:        BUTTERFLY_COLORS[i % BUTTERFLY_COLORS.length],
         flapAngle:    45 + Math.random() * 35,
         flapDuration: 700  + Math.random() * 550,
         bobDuration:  600  + Math.random() * 500,
-        // Gentle rotation lean while flying
+        
         tilt:         rnd(22),
         uid:          `bf${i}`,
       };
     });
   });
 
-  // Build ALL keyframes in a single string — memoized so it's only computed once
+  
   const allKeyframes = useMemo(() => {
-    // Per-butterfly SVG keyframes (flap + bob)
+    
     const svgKF = groups.map((b) => `
       @keyframes flapL${b.uid} {
         0%,100% { transform: perspective(300px) rotateY(0deg); }
@@ -152,7 +148,7 @@ export default function ButterflyAnimation({ active, origin }) {
       }
     `).join('');
 
-    // Flight path keyframes
+    
     const tr = (x, y, scale = 1) =>
       `translate(calc(-50% + ${x.toFixed(1)}px), calc(-50% + ${y.toFixed(1)}px)) scale(${scale})`;
 
@@ -198,16 +194,16 @@ export default function ButterflyAnimation({ active, origin }) {
               top: 0, left: 0,
               opacity: 0,
               willChange: 'transform, opacity',
-              // Single smooth arc: spawn → mid-arc → final
-              // cubic-bezier(0.25, 0.1, 0.25, 1) = smooth ease
-              // The 3-stop keyframe (0 → 45% → 100%) creates one organic curve
+              
+              
+              
               animation: [
                 `${b.uid}Fly  ${b.duration}s cubic-bezier(0.2, 0.6, 0.4, 1) ${b.startDelay}s forwards`,
                 `${b.uid}Fade ${b.duration * 0.15}s ease-out ${b.startDelay}s forwards`,
               ].join(', '),
             }}
           >
-            {/* Tilt wrapper — leans into the flight direction */}
+            {}
             <div style={{
               animation: `${b.uid}Tilt ${b.duration}s ease-in-out ${b.startDelay}s forwards`,
             }}>
@@ -223,9 +219,8 @@ export default function ButterflyAnimation({ active, origin }) {
         ))}
       </div>
 
-      {/* Single consolidated <style> tag for ALL keyframes */}
+      {}
       <style>{allKeyframes}</style>
     </>
   );
 }
-

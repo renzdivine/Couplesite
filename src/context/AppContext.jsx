@@ -1,34 +1,25 @@
-// ─────────────────────────────────────────────────────────────
-// AppContext.jsx  — Role-based state management (Supabase-backed)
-//
-// Roles:
-//   masterAdmin  — website owner, full system access
-//   admin        — client, access only their own couple page
-//   user         — visitor, no login required
-//
-// Security:
-//   - Client sessions are token-based (stored in Supabase)
-//   - Each new login issues a fresh session_token, revoking any
-//     existing session on another device/browser
-//   - Session is validated against DB every time the app loads
-// ─────────────────────────────────────────────────────────────
-
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   masterAdminLogin   as dbMasterLogin,
-  fetchClients, createClient as dbCreateClient, updateClient as dbUpdateClient,
-  deleteClient as dbDeleteClient, regenerateActivationCode as dbRegenCode,
+  fetchClients, fetchTrashedClients,
+  createClient as dbCreateClient, updateClient as dbUpdateClient,
+  deleteClient as dbDeleteClient, restoreClient as dbRestoreClient,
+  permanentDeleteClient as dbPermDeleteClient,
+  regenerateActivationCode as dbRegenCode,
   validateActivationCode as dbValidateCode, clientRegister as dbClientRegister,
   clientLogin    as dbClientLogin, clientLogout   as dbClientLogout,
   validateClientSession,
-  fetchCouples, fetchCoupleBySlug, addCouple as dbAddCouple,
-  updateCouple as dbUpdateCouple, deleteCouple as dbDeleteCouple,
+  fetchCouples, fetchTrashedCouples,
+  fetchCoupleBySlug, addCouple as dbAddCouple,
+  updateCouple as dbUpdateCouple,
+  deleteCouple as dbDeleteCouple, restoreCouple as dbRestoreCouple,
+  permanentDeleteCouple as dbPermDeleteCouple,
   coupleLogin as dbCoupleLogin, saveBouquet as dbSaveBouquet,
 } from '../lib/db';
 
 const AppContext = createContext(null);
 
-/* ─── localStorage helpers (session tokens only — no bulk data) ─── */
+
 const LS_MASTER  = 'heartlink_master';
 const LS_CLIENT  = 'heartlink_client_session';
 const LS_COUPLE  = 'heartlink_couple_auth';
@@ -37,71 +28,73 @@ const lsSet = (k, v)  => { try { localStorage.setItem(k, JSON.stringify(v)); } c
 const lsDel = (k)     => localStorage.removeItem(k);
 
 export function AppProvider({ children }) {
-  /* ── data ── */
-  const [couples,      setCouples]      = useState([]);
-  const [clients,      setClients]      = useState([]);
-  const [loading,      setLoading]      = useState(true);
+  
+  const [couples,        setCouples]        = useState([]);
+  const [clients,        setClients]        = useState([]);
+  const [trashedCouples, setTrashedCouples] = useState([]);
+  const [trashedClients, setTrashedClients] = useState([]);
+  const [loading,        setLoading]        = useState(true);
 
-  /* ── master admin ── */
+  
   const [masterLoggedIn, setMasterLoggedIn] = useState(
     () => localStorage.getItem(LS_MASTER) === 'true'
   );
 
-  /* ── client session ── */
+  
   const [clientSession, setClientSession] = useState(
     () => lsGet(LS_CLIENT, null)
   );
 
-  /* ── visitor couple auth ── */
+  
   const [coupleAuth, setCoupleAuth] = useState(
     () => lsGet(LS_COUPLE, null)
   );
 
-  /* ═══════════════════════════════════════
-     INITIAL DATA LOAD
-  ═══════════════════════════════════════ */
+  
   useEffect(() => {
     async function loadData() {
-      const [couplesData, clientsData] = await Promise.all([
+      const [couplesData, clientsData, trashedCouplesData, trashedClientsData] = await Promise.all([
         fetchCouples(),
         fetchClients(),
+        fetchTrashedCouples(),
+        fetchTrashedClients(),
       ]);
       setCouples(couplesData);
       setClients(clientsData);
+      setTrashedCouples(trashedCouplesData);
+      setTrashedClients(trashedClientsData);
       setLoading(false);
     }
     loadData();
   }, []);
 
-  /* ═══════════════════════════════════════
-     CLIENT SESSION SECURITY CHECK
-     Runs on app load — if the session token no longer matches
-     what's in the DB (another device logged in), force logout.
-  ═══════════════════════════════════════ */
+  
   useEffect(() => {
     if (!clientSession?.clientId || !clientSession?.sessionToken) return;
 
     validateClientSession(clientSession.clientId, clientSession.sessionToken).then(valid => {
       if (!valid) {
-        // Session was invalidated (another device logged in, or account disabled)
+        
         setClientSession(null);
         lsDel(LS_CLIENT);
       }
     });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); 
 
-  /* ═══════════════════════════════════════
-     MASTER ADMIN AUTH
-  ═══════════════════════════════════════ */
+  
   const masterLogin = async (username, password) => {
     const result = await dbMasterLogin(username, password);
     if (result.success) {
       setMasterLoggedIn(true);
       localStorage.setItem(LS_MASTER, 'true');
-      // Reload data fresh from DB on master login
-      const [couplesData, clientsData] = await Promise.all([fetchCouples(), fetchClients()]);
+      
+      const [couplesData, clientsData, trashedCouplesData, trashedClientsData] = await Promise.all([
+        fetchCouples(), fetchClients(), fetchTrashedCouples(), fetchTrashedClients(),
+      ]);
       setCouples(couplesData);
       setClients(clientsData);
+      setTrashedCouples(trashedCouplesData);
+      setTrashedClients(trashedClientsData);
     }
     return result.success;
   };
@@ -111,9 +104,7 @@ export function AppProvider({ children }) {
     lsDel(LS_MASTER);
   };
 
-  /* ═══════════════════════════════════════
-     CLIENT AUTH
-  ═══════════════════════════════════════ */
+  
   const validateActivationCode = async (code) => {
     return dbValidateCode(code);
   };
@@ -121,7 +112,7 @@ export function AppProvider({ children }) {
   const clientRegister = async (gmail, password, activationCode) => {
     const result = await dbClientRegister(gmail, password, activationCode);
     if (result.success) {
-      // Refresh clients list
+      
       const updated = await fetchClients();
       setClients(updated);
     }
@@ -133,7 +124,7 @@ export function AppProvider({ children }) {
     if (result.success) {
       setClientSession(result.session);
       lsSet(LS_CLIENT, result.session);
-      // Load the couple for this client into state
+      
       if (result.session.coupleSlug) {
         const couple = await fetchCoupleBySlug(result.session.coupleSlug);
         if (couple) {
@@ -160,17 +151,16 @@ export function AppProvider({ children }) {
     lsDel(LS_CLIENT);
   };
 
-  /* ═══════════════════════════════════════
-     VISITOR AUTH
-  ═══════════════════════════════════════ */
+  
   const coupleLogin = async (slug, code) => {
     const auth = await dbCoupleLogin(slug, code);
-    if (auth) {
+    
+    if (auth && !auth.error) {
       setCoupleAuth(auth);
       lsSet(LS_COUPLE, auth);
-      return true;
+      return { success: true };
     }
-    return false;
+    return { success: false, error: auth?.error || 'Wrong code. Try again.' };
   };
 
   const coupleLogout = () => {
@@ -178,9 +168,7 @@ export function AppProvider({ children }) {
     lsDel(LS_COUPLE);
   };
 
-  /* ═══════════════════════════════════════
-     MASTER ADMIN — CLIENT MANAGEMENT
-  ═══════════════════════════════════════ */
+  
   const createClient = async (data) => {
     const newClient = await dbCreateClient(data);
     if (newClient) setClients(prev => [newClient, ...prev]);
@@ -188,9 +176,17 @@ export function AppProvider({ children }) {
   };
 
   const updateClient = async (clientId, updates) => {
-    await dbUpdateClient(clientId, updates);
+    
     setClients(prev => prev.map(c => c.id === clientId ? { ...c, ...updates } : c));
-    // Refresh session if the logged-in client was updated
+    try {
+      await dbUpdateClient(clientId, updates);
+    } catch {
+      
+      const fresh = await fetchClients();
+      setClients(fresh);
+      return;
+    }
+    
     if (clientSession?.clientId === clientId) {
       const updated = { ...clientSession, ...updates };
       setClientSession(updated);
@@ -200,7 +196,21 @@ export function AppProvider({ children }) {
 
   const deleteClient = async (clientId) => {
     await dbDeleteClient(clientId);
+    const trashed = clients.find(c => c.id === clientId);
     setClients(prev => prev.filter(c => c.id !== clientId));
+    if (trashed) setTrashedClients(prev => [{ ...trashed, deletedAt: new Date().toISOString() }, ...prev]);
+  };
+
+  const restoreClient = async (clientId) => {
+    await dbRestoreClient(clientId);
+    const item = trashedClients.find(c => c.id === clientId);
+    setTrashedClients(prev => prev.filter(c => c.id !== clientId));
+    if (item) setClients(prev => [{ ...item, deletedAt: null, active: true }, ...prev]);
+  };
+
+  const permanentDeleteClient = async (clientId) => {
+    await dbPermDeleteClient(clientId);
+    setTrashedClients(prev => prev.filter(c => c.id !== clientId));
   };
 
   const regenerateActivationCode = async (clientId) => {
@@ -220,9 +230,7 @@ export function AppProvider({ children }) {
     await updateClient(clientId, { password: newPassword });
   };
 
-  /* ═══════════════════════════════════════
-     COUPLE DATA MANAGEMENT
-  ═══════════════════════════════════════ */
+  
   const addCouple = async (coupleData) => {
     const newCouple = await dbAddCouple(coupleData);
     if (newCouple) setCouples(prev => [newCouple, ...prev]);
@@ -230,22 +238,36 @@ export function AppProvider({ children }) {
   };
 
   const updateCouple = useCallback(async (slug, updates) => {
-    // Optimistic update — update local state immediately
+    
     setCouples(prev => prev.map(c => {
       if (c.slug !== slug) return c;
-      // For pageContent, merge properly
+      
       if (updates.pageContent) {
         return { ...c, ...updates, pageContent: { ...c.pageContent, ...updates.pageContent } };
       }
       return { ...c, ...updates };
     }));
-    // Persist to DB
+    
     await dbUpdateCouple(slug, updates);
   }, []);
 
   const deleteCouple = async (slug) => {
     await dbDeleteCouple(slug);
+    const trashed = couples.find(c => c.slug === slug);
     setCouples(prev => prev.filter(c => c.slug !== slug));
+    if (trashed) setTrashedCouples(prev => [{ ...trashed, deletedAt: new Date().toISOString() }, ...prev]);
+  };
+
+  const restoreCouple = async (slug) => {
+    await dbRestoreCouple(slug);
+    const item = trashedCouples.find(c => c.slug === slug);
+    setTrashedCouples(prev => prev.filter(c => c.slug !== slug));
+    if (item) setCouples(prev => [{ ...item, deletedAt: null, active: true }, ...prev]);
+  };
+
+  const permanentDeleteCouple = async (slug) => {
+    await dbPermDeleteCouple(slug);
+    setTrashedCouples(prev => prev.filter(c => c.slug !== slug));
   };
 
   const getCoupleBySlug = (slug) => couples.find(c => c.slug === slug);
@@ -257,53 +279,59 @@ export function AppProvider({ children }) {
     ));
   };
 
-  /* ── derived: couple belonging to logged-in client ── */
+  
   const myCouple = clientSession?.coupleSlug
     ? couples.find(c => c.slug === clientSession.coupleSlug) || null
     : null;
 
   return (
     <AppContext.Provider value={{
-      /* loading state */
+      
       loading,
 
-      /* data */
+      
       couples,
       clients,
+      trashedCouples,
+      trashedClients,
       myCouple,
 
-      /* master admin */
+      
       masterLoggedIn,
       masterLogin,
       masterLogout,
 
-      /* client auth */
+      
       clientSession,
       clientLogin,
       clientLogout,
       clientRegister,
       validateActivationCode,
 
-      /* master admin — client management */
+      
       createClient,
       updateClient,
       deleteClient,
+      restoreClient,
+      permanentDeleteClient,
       regenerateActivationCode,
       resetClientPassword,
 
-      /* visitor auth */
+      
       coupleAuth,
       coupleLogin,
       coupleLogout,
 
-      /* couple data */
+      
       addCouple,
       updateCouple,
       deleteCouple,
+      restoreCouple,
+      permanentDeleteCouple,
       getCoupleBySlug,
       saveBouquet,
 
-      // legacy compat
+      
       adminLoggedIn: masterLoggedIn,
       adminLogin:    masterLogin,
       adminLogout:   masterLogout,

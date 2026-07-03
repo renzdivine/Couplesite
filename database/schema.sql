@@ -1,11 +1,3 @@
--- ═══════════════════════════════════════════════════════════════
--- HeartLink Database Schema (Supabase / PostgreSQL)
--- Run this in your Supabase SQL Editor to create all tables
--- ═══════════════════════════════════════════════════════════════
-
--- ───────────────────────────────────────────────────────────────
--- TABLE: clients  (Admin accounts — one per couple page)
--- ───────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS clients (
   id                TEXT PRIMARY KEY DEFAULT ('client-' || gen_random_uuid()::text),
   gmail             TEXT UNIQUE,
@@ -19,15 +11,15 @@ CREATE TABLE IF NOT EXISTS clients (
   subscription      TEXT DEFAULT 'Basic',
   expires_at        DATE,
   couple_slug       TEXT,
-  -- Session security
-  session_token     TEXT UNIQUE,          -- locked session per device/browser
+  
+  session_token     TEXT UNIQUE,          
   session_created   TIMESTAMP,
-  device_fingerprint TEXT                 -- simple device lock
+  device_fingerprint TEXT,                
+  
+  deleted_at        TIMESTAMP DEFAULT NULL
 );
 
--- ───────────────────────────────────────────────────────────────
--- TABLE: couples  (Love pages / websites for each couple)
--- ───────────────────────────────────────────────────────────────
+
 CREATE TABLE IF NOT EXISTS couples (
   id                 TEXT PRIMARY KEY,
   slug               TEXT UNIQUE NOT NULL,
@@ -42,7 +34,7 @@ CREATE TABLE IF NOT EXISTS couples (
   created_at         TIMESTAMP DEFAULT NOW(),
   qr_generated       BOOLEAN DEFAULT FALSE,
   
-  -- JSON content
+  
   photos             JSONB DEFAULT '[]'::jsonb,
   letters_photos     JSONB DEFAULT '[]'::jsonb,
   letters            JSONB DEFAULT '[]'::jsonb,
@@ -53,12 +45,12 @@ CREATE TABLE IF NOT EXISTS couples (
   page_content       JSONB DEFAULT '{}'::jsonb,
   video_slideshow    TEXT,
   bouquet            JSONB DEFAULT '{}'::jsonb,
-  memory_game_photos JSONB DEFAULT '[]'::jsonb
+  memory_game_photos JSONB DEFAULT '[]'::jsonb,
+  
+  deleted_at         TIMESTAMP DEFAULT NULL
 );
 
--- ───────────────────────────────────────────────────────────────
--- TABLE: master_admin  (Single website owner / super admin)
--- ───────────────────────────────────────────────────────────────
+
 CREATE TABLE IF NOT EXISTS master_admin (
   id         SERIAL PRIMARY KEY,
   username   TEXT UNIQUE NOT NULL,
@@ -66,9 +58,7 @@ CREATE TABLE IF NOT EXISTS master_admin (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
--- ───────────────────────────────────────────────────────────────
--- Indexes for performance
--- ───────────────────────────────────────────────────────────────
+
 CREATE INDEX IF NOT EXISTS idx_clients_gmail ON clients(gmail);
 CREATE INDEX IF NOT EXISTS idx_clients_activation_code ON clients(activation_code);
 CREATE INDEX IF NOT EXISTS idx_clients_couple_slug ON clients(couple_slug);
@@ -76,16 +66,9 @@ CREATE INDEX IF NOT EXISTS idx_clients_session_token ON clients(session_token);
 CREATE INDEX IF NOT EXISTS idx_couples_slug ON couples(slug);
 CREATE INDEX IF NOT EXISTS idx_couples_access_code ON couples(access_code);
 
--- ───────────────────────────────────────────────────────────────
--- Seed data: Master Admin (website owner)
--- ───────────────────────────────────────────────────────────────
-INSERT INTO master_admin (username, password) 
-VALUES ('masteradmin', 'masteradmin123')
-ON CONFLICT (username) DO NOTHING;
 
--- ───────────────────────────────────────────────────────────────
--- Seed data: Default Client + Couple
--- ───────────────────────────────────────────────────────────────
+
+
 INSERT INTO clients (
   id, gmail, password, display_name, activation_code,
   activated, active, approved, created_at, subscription,
@@ -169,13 +152,110 @@ INSERT INTO couples (
   }'::jsonb
 ) ON CONFLICT (id) DO NOTHING;
 
--- ───────────────────────────────────────────────────────────────
--- Row Level Security (RLS) — Optional but recommended
--- ───────────────────────────────────────────────────────────────
--- For production, enable RLS and create policies to restrict
--- who can read/write which rows. For now, we trust the backend.
 
--- Example (commented out):
--- ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
--- ALTER TABLE couples ENABLE ROW LEVEL SECURITY;
--- CREATE POLICY "Clients can only read their own data" ON clients FOR SELECT USING (auth.uid() = id::uuid);
+
+
+ALTER TABLE clients      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE couples      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE master_admin ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "master_admin: deny all anon" ON master_admin
+  AS RESTRICTIVE FOR ALL TO anon USING (false);
+
+
+CREATE POLICY "clients: anon read for auth only" ON clients
+  FOR SELECT TO anon
+  USING (true)
+  
+  
+  
+  ;
+
+
+CREATE POLICY "clients: anon register" ON clients
+  FOR UPDATE TO anon
+  USING (activated = false AND gmail = '');
+
+
+CREATE POLICY "clients: anon admin update" ON clients
+  FOR UPDATE TO anon
+  USING (true)
+  WITH CHECK (true);
+
+
+CREATE POLICY "clients: anon insert" ON clients
+  FOR INSERT TO anon WITH CHECK (true);
+
+CREATE POLICY "clients: deny anon delete" ON clients
+  AS RESTRICTIVE FOR DELETE TO anon USING (false);
+
+
+CREATE POLICY "couples: anon read active" ON couples
+  FOR SELECT TO anon
+  USING (active = true);
+
+
+CREATE POLICY "couples: anon insert" ON couples
+  FOR INSERT TO anon WITH CHECK (true);
+
+CREATE POLICY "couples: anon update" ON couples
+  FOR UPDATE TO anon USING (true) WITH CHECK (true);
+
+CREATE POLICY "couples: anon delete" ON couples
+  FOR DELETE TO anon USING (true);
+
+
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL;
+ALTER TABLE couples ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP DEFAULT NULL;
+
+
+CREATE INDEX IF NOT EXISTS idx_clients_deleted_at ON clients(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_couples_deleted_at ON couples(deleted_at);
+
+
+DROP POLICY IF EXISTS "clients: anon register" ON clients;
+DROP POLICY IF EXISTS "clients: anon admin update" ON clients;
+
+CREATE POLICY "clients: anon register" ON clients
+  FOR UPDATE TO anon
+  USING (activated = false AND gmail = '');
+
+CREATE POLICY "clients: anon admin update" ON clients
+  FOR UPDATE TO anon
+  USING (true)
+  WITH CHECK (true);
+
+
+
+
+DROP POLICY IF EXISTS "clients: deny anon insert" ON clients;
+DROP POLICY IF EXISTS "clients: anon insert" ON clients;
+CREATE POLICY "clients: anon insert" ON clients
+  FOR INSERT TO anon WITH CHECK (true);
+
+
+DROP POLICY IF EXISTS "clients: deny anon delete" ON clients;
+CREATE POLICY "clients: anon delete" ON clients
+  FOR DELETE TO anon USING (true);
+
+
+DROP POLICY IF EXISTS "couples: deny anon insert" ON couples;
+DROP POLICY IF EXISTS "couples: deny anon update" ON couples;
+DROP POLICY IF EXISTS "couples: deny anon delete" ON couples;
+DROP POLICY IF EXISTS "couples: anon insert" ON couples;
+DROP POLICY IF EXISTS "couples: anon update" ON couples;
+DROP POLICY IF EXISTS "couples: anon delete" ON couples;
+
+CREATE POLICY "couples: anon insert" ON couples
+  FOR INSERT TO anon WITH CHECK (true);
+
+CREATE POLICY "couples: anon update" ON couples
+  FOR UPDATE TO anon USING (true) WITH CHECK (true);
+
+CREATE POLICY "couples: anon delete" ON couples
+  FOR DELETE TO anon USING (true);
+
+
+
+ALTER TABLE couples ADD COLUMN IF NOT EXISTS bg_music TEXT DEFAULT NULL;

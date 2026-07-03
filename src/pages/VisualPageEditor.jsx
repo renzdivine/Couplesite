@@ -1,23 +1,7 @@
-/**
- * VisualPageEditor — Full editable replica of all visitor butterfly pages.
- *
- * The client sees every page exactly as the visitor will.
- * Every photo = click to change via file picker or URL.
- * Every text = click to edit inline via popover.
- *
- * Pages:
- *   Cover     → ButterflyLetters slide 1 (dark red, stamps, big title)
- *   Letters   → ButterflyLetters slides 2–10 (scrapbook slides)
- *   Gallery   → ButterflyPhotos  (art gallery wall)
- *   Songs     → ButterflyStory   (vinyl scrapboard)
- *   Wishes    → ButterflyWish    (wish capsules)
- */
 import { useState, useRef, useEffect } from 'react';
 import { Edit3, X, FolderOpen, Camera, ChevronLeft, ChevronRight } from 'lucide-react';
 
-/* ═══════════════════════════════════════
-   HELPERS
-═══════════════════════════════════════ */
+
 function readFile(file) {
   return new Promise((res, rej) => {
     const r = new FileReader();
@@ -27,9 +11,7 @@ function readFile(file) {
   });
 }
 
-/* ═══════════════════════════════════════
-   IMAGE PICKER POPOVER
-═══════════════════════════════════════ */
+
 function ImgPopover({ anchor, current, onSave, onClose }) {
   const [val, setVal] = useState(current || '');
   const ref = useRef();
@@ -78,9 +60,7 @@ function ImgPopover({ anchor, current, onSave, onClose }) {
   );
 }
 
-/* ═══════════════════════════════════════
-   TEXT EDIT POPOVER
-═══════════════════════════════════════ */
+
 function TextPopover({ anchor, label, current, textarea, onSave, onClose }) {
   const [val, setVal] = useState(current || '');
   const ref = useRef();
@@ -112,11 +92,9 @@ function TextPopover({ anchor, label, current, textarea, onSave, onClose }) {
   );
 }
 
-/* ═══════════════════════════════════════
-   EDITABLE WRAPPERS
-═══════════════════════════════════════ */
 
-/* Clickable photo stamp — shows camera icon + edit ring on hover */
+
+
 function EditablePhoto({ src, alt, onClick, style = {}, stampStyle = {}, innerStyle = {} }) {
   const [hov, setHov] = useState(false);
   const fallback = 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=400&q=60';
@@ -132,7 +110,7 @@ function EditablePhoto({ src, alt, onClick, style = {}, stampStyle = {}, innerSt
         ...style
       }}
     >
-      {/* stamp perforated border */}
+      {}
       <div style={{
         display:'inline-block', background:'#fff',
         padding:'8px 8px 22px', position:'relative',
@@ -144,7 +122,7 @@ function EditablePhoto({ src, alt, onClick, style = {}, stampStyle = {}, innerSt
           <img src={src || fallback} alt={alt || ''} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} onError={e=>e.target.src=fallback}/>
         </div>
       </div>
-      {/* hover overlay */}
+      {}
       {hov && (
         <div style={{ position:'absolute', inset:0, background:'rgba(233,30,140,0.35)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:10, borderRadius:2 }}>
           <div style={{ background:'rgba(0,0,0,0.7)', borderRadius:8, padding:'8px 14px', display:'flex', alignItems:'center', gap:6, color:'#fff', fontSize:'0.78rem', fontFamily:'system-ui,sans-serif' }}>
@@ -156,7 +134,7 @@ function EditablePhoto({ src, alt, onClick, style = {}, stampStyle = {}, innerSt
   );
 }
 
-/* Clickable text — shows dashed outline on hover with edit badge */
+
 function EditableText({ children, onClick, tag: Tag = 'span', style = {}, label = 'Edit' }) {
   const [hov, setHov] = useState(false);
   return (
@@ -181,9 +159,7 @@ function EditableText({ children, onClick, tag: Tag = 'span', style = {}, label 
   );
 }
 
-/* ═══════════════════════════════════════
-   STAMP PERFORATED BORDER (for non-photo-stamp elements)
-═══════════════════════════════════════ */
+
 function StampBorder({ bgColor = '#7b1828' }) {
   return (
     <div style={{
@@ -198,14 +174,12 @@ function StampBorder({ bgColor = '#7b1828' }) {
   );
 }
 
-/* ═══════════════════════════════════════
-   MAIN EXPORT
-═══════════════════════════════════════ */
+
 export default function VisualPageEditor({ couple, updateCouple, showToast }) {
   const pc = couple.pageContent || {};
-  const [page,    setPage]    = useState('cover');   // which page/tab
-  const [imgPop,  setImgPop]  = useState(null);      // { anchor, key, path }
-  const [txtPop,  setTxtPop]  = useState(null);      // { anchor, label, key, path, textarea }
+  const [page,    setPage]    = useState('cover');   
+  const [imgPop,  setImgPop]  = useState(null);      
+  const [txtPop,  setTxtPop]  = useState(null);      
 
   const PAGES = [
     { id:'cover',   label:'Cover' },
@@ -215,7 +189,7 @@ export default function VisualPageEditor({ couple, updateCouple, showToast }) {
     { id:'wishes',  label:'Wishes' },
   ];
 
-  /* ── helpers to open popovers ── */
+  
   const openImg = (e, pathArr, key) => {
     e.stopPropagation();
     const r = e.currentTarget.getBoundingClientRect();
@@ -227,15 +201,15 @@ export default function VisualPageEditor({ couple, updateCouple, showToast }) {
     setTxtPop({ anchor:{ x:r.left+r.width/2, y:r.bottom }, pathArr, key, label, textarea });
   };
 
-  /* ── deep read from couple data ── */
+  
   const getVal = (pathArr, key) => {
-    // pathArr = ['pageContent','login'] or ['photos',0,'url'] etc.
+    
     let obj = couple;
     for (const p of pathArr) obj = obj?.[p];
     return obj?.[key] ?? '';
   };
 
-  /* ── save helper ── */
+  
   const saveVal = (pathArr, key, value) => {
     if (pathArr[0] === 'pageContent') {
       const section = pathArr[1];
@@ -252,11 +226,11 @@ export default function VisualPageEditor({ couple, updateCouple, showToast }) {
     showToast('Saved!');
   };
 
-  /* ── photo shortcut ── */
+  
   const photo = (i) => couple.photos?.[i]?.url || '';
   const caption = (i) => couple.photos?.[i]?.caption || '';
 
-  /* ── login / home page content ── */
+  
   const login = { titleTop:'Happy', titleBottom:'Anniversary', hintText:'Tap the scroll to open your love page', continueBtnText:'Continue', ...(pc.login||{}) };
   const letters0 = couple.letters?.[0] || {};
   const letters1 = couple.letters?.[1] || {};
@@ -269,7 +243,7 @@ export default function VisualPageEditor({ couple, updateCouple, showToast }) {
     <div style={{ display:'flex', flexDirection:'column', height:'100%', minHeight:600, background:'#080010', fontFamily:"system-ui,sans-serif" }}>
       <style>{fonts}</style>
 
-      {/* ── Top bar ── */}
+      {}
       <div style={{ background:'rgba(233,30,140,0.14)', backdropFilter:'blur(10px)', borderBottom:'1px solid rgba(233,30,140,0.22)', padding:'8px 14px', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
         <span style={{ color:'#ff9ab5', fontSize:'0.75rem', fontWeight:600, display:'flex', alignItems:'center', gap:5 }}>
           <Edit3 size={11}/> Live Editor — <span style={{ fontWeight:400, opacity:0.7 }}>click any photo or text to edit it</span>
@@ -277,7 +251,7 @@ export default function VisualPageEditor({ couple, updateCouple, showToast }) {
         <span style={{ fontSize:'0.68rem', color:'rgba(255,180,200,0.4)' }}>{couple.name1} &amp; {couple.name2}</span>
       </div>
 
-      {/* ── Page tabs ── */}
+      {}
       <div style={{ display:'flex', background:'rgba(0,0,0,0.4)', borderBottom:'1px solid rgba(255,150,180,0.08)', padding:'0 4px', flexShrink:0, overflowX:'auto' }}>
         {PAGES.map(p => (
           <button key={p.id} onClick={() => setPage(p.id)} style={{ padding:'10px 18px', border:'none', background:'none', color: page===p.id ? '#ff9ab5' : 'rgba(255,180,200,0.38)', cursor:'pointer', fontSize:'0.8rem', fontFamily:'system-ui,sans-serif', borderBottom: page===p.id ? '2px solid #e91e8c' : '2px solid transparent', transition:'color 0.15s', whiteSpace:'nowrap' }}>
@@ -286,7 +260,7 @@ export default function VisualPageEditor({ couple, updateCouple, showToast }) {
         ))}
       </div>
 
-      {/* ── Page preview ── */}
+      {}
       <div style={{ flex:1, overflowY:'auto', overflowX:'hidden' }}>
         {page === 'cover'   && <CoverPage   couple={couple} login={login} photo={photo} caption={caption} openImg={openImg} openTxt={openTxt} pc={pc}/>}
         {page === 'letters' && <LettersPage couple={couple} letters0={letters0} letters1={letters1} photo={photo} openImg={openImg} openTxt={openTxt}/>}
@@ -295,7 +269,7 @@ export default function VisualPageEditor({ couple, updateCouple, showToast }) {
         {page === 'wishes'  && <WishesPage  couple={couple} openImg={openImg} openTxt={openTxt} pc={pc}/>}
       </div>
 
-      {/* ── Popovers ── */}
+      {}
       {imgPop && (
         <ImgPopover
           anchor={imgPop.anchor}
@@ -318,9 +292,7 @@ export default function VisualPageEditor({ couple, updateCouple, showToast }) {
   );
 }
 
-/* ═══════════════════════════════════════
-   PAGE: COVER  (ButterflyLetters slide 1)
-═══════════════════════════════════════ */
+
 function CoverPage({ couple, login, photo, caption, openImg, openTxt, pc }) {
   const home = { taglineOverride:'', coverPhotoUrl:'', coverPhotoCaption:'', ...(pc.home||{}) };
   const coverUrl = home.coverPhotoUrl || photo(0);
@@ -328,12 +300,12 @@ function CoverPage({ couple, login, photo, caption, openImg, openTxt, pc }) {
   return (
     <div style={{ fontFamily:"'Cormorant Garamond','Georgia',serif", background:'#7b1828', backgroundImage:'radial-gradient(ellipse at 30% 20%,#9b2232 0%,transparent 60%),radial-gradient(ellipse at 70% 80%,#5a1018 0%,transparent 60%)', minHeight:'100vh', position:'relative', overflow:'hidden', color:'#f0e8d8' }}>
 
-      {/* Couple names top-left */}
+      {}
       <EditableText onClick={e => openTxt(e,['pageContent','home'],'taglineOverride','Couple tagline')} style={{ position:'absolute', top:32, left:40, fontFamily:"'Playfair Display',Georgia,serif", fontStyle:'italic', fontSize:20, color:'#f0e8d8', zIndex:5 }}>
         {couple.name1} &amp; {couple.name2}
       </EditableText>
 
-      {/* Top-right stamp photo */}
+      {}
       <div style={{ position:'absolute', top:24, right:40, zIndex:4 }}
            onClick={e => openImg(e, ['photos',1], 'url')}>
         <EditablePhoto
@@ -344,7 +316,7 @@ function CoverPage({ couple, login, photo, caption, openImg, openTxt, pc }) {
         />
       </div>
 
-      {/* Center title */}
+      {}
       <div style={{ position:'absolute', left:'50%', top:'50%', transform:'translate(-50%,-50%)', textAlign:'center', zIndex:3, pointerEvents:'none' }}>
         <EditableText onClick={e => openTxt(e,['pageContent','login'],'titleTop','Top title')} style={{ display:'block', fontFamily:"'Playfair Display',Georgia,serif", fontStyle:'italic', fontWeight:400, fontSize:'clamp(52px,8vw,90px)', color:'#f0e8d8', lineHeight:1.05, pointerEvents:'all' }}>
           {login.titleTop}
@@ -354,7 +326,7 @@ function CoverPage({ couple, login, photo, caption, openImg, openTxt, pc }) {
         </EditableText>
       </div>
 
-      {/* Bottom-left stamp photo */}
+      {}
       <div style={{ position:'absolute', bottom:80, left:32, zIndex:4 }}
            onClick={e => openImg(e, ['photos',0], 'url')}>
         <EditablePhoto
@@ -365,12 +337,12 @@ function CoverPage({ couple, login, photo, caption, openImg, openTxt, pc }) {
         />
       </div>
 
-      {/* Curved line decoration */}
+      {}
       <svg style={{ position:'absolute', bottom:60, left:0, width:'50%', opacity:0.4, pointerEvents:'none' }} viewBox="0 0 300 200" fill="none">
         <path d="M10 180 Q80 20 160 100 Q240 180 290 40" stroke="#f0e8d8" strokeWidth="1.5" fill="none"/>
       </svg>
 
-      {/* Bottom-right subtitle */}
+      {}
       <EditableText onClick={e => openTxt(e,['pageContent','login'],'hintText','Hint text')} tag="p" style={{ position:'absolute', bottom:40, right:40, fontFamily:"'Cormorant Garamond',Georgia,serif", fontSize:14, color:'rgba(240,232,216,0.65)', textAlign:'right', lineHeight:1.6, margin:0 }}>
         {login.hintText || 'A celebration of love, growth,\nand beautiful moments.'}
       </EditableText>
@@ -378,9 +350,7 @@ function CoverPage({ couple, login, photo, caption, openImg, openTxt, pc }) {
   );
 }
 
-/* ═══════════════════════════════════════
-   PAGE: LETTERS  (ButterflyLetters slides 2+)
-═══════════════════════════════════════ */
+
 function LettersPage({ couple, photo, openImg, openTxt }) {
   const [slide, setSlide] = useState(0);
   const slides = ['Our Journey', 'The Moments', 'What We Love', 'My Promise'];
@@ -388,17 +358,17 @@ function LettersPage({ couple, photo, openImg, openTxt }) {
 
   return (
     <div style={{ fontFamily:"'Cormorant Garamond','Georgia',serif" }}>
-      {/* Slide nav */}
+      {}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 16px', background:'rgba(0,0,0,0.3)', borderBottom:'1px solid rgba(240,220,180,0.1)' }}>
         <button onClick={() => setSlide(s => (s-1+total)%total)} style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,220,180,0.2)', borderRadius:20, padding:'5px 12px', color:'rgba(240,220,180,0.7)', cursor:'pointer', display:'flex', alignItems:'center', gap:5, fontSize:'0.8rem' }}><ChevronLeft size={14}/></button>
         <span style={{ fontSize:'0.75rem', color:'rgba(240,220,180,0.55)', fontFamily:'system-ui,sans-serif' }}>{slides[slide]} ({slide+1}/{total})</span>
         <button onClick={() => setSlide(s => (s+1)%total)} style={{ background:'rgba(255,255,255,0.07)', border:'1px solid rgba(255,220,180,0.2)', borderRadius:20, padding:'5px 12px', color:'rgba(240,220,180,0.7)', cursor:'pointer', display:'flex', alignItems:'center', gap:5, fontSize:'0.8rem' }}><ChevronRight size={14}/></button>
       </div>
 
-      {/* Slide 0 — Our Journey (cream background with stamps) */}
+      {}
       {slide === 0 && (
         <div style={{ background:'#f0ebe0', minHeight:'80vh', display:'flex', alignItems:'stretch', gap:40, padding:'60px 48px', boxSizing:'border-box', position:'relative', color:'#5a3a2a', overflow:'hidden' }}>
-          {/* compass */}
+          {}
           <svg style={{ position:'absolute', top:24, right:40, opacity:0.6, width:60, height:60, pointerEvents:'none' }} viewBox="0 0 80 80" fill="none">
             <circle cx="40" cy="40" r="38" stroke="#b5956a" strokeWidth="1.5" strokeDasharray="4 3"/>
             <circle cx="40" cy="40" r="28" stroke="#b5956a" strokeWidth="1" strokeDasharray="3 4"/>
@@ -406,12 +376,12 @@ function LettersPage({ couple, photo, openImg, openTxt }) {
             <polygon points="40,8 43,22 40,18 37,22" fill="#b5956a" opacity="0.8"/>
           </svg>
 
-          {/* Left stamp */}
+          {}
           <div style={{ alignSelf:'flex-start', marginTop:40, flexShrink:0 }} onClick={e => openImg(e,['photos',2],'url')}>
             <EditablePhoto src={photo(2)} alt="journey photo" style={{ background:'none', outline:'none' }} stampStyle={{ background:'#fff', padding:'8px 8px 22px' }} innerStyle={{ width:200, height:250 }}/>
           </div>
 
-          {/* Content */}
+          {}
           <div style={{ flex:1, maxWidth:480, paddingTop:40 }}>
             <EditableText onClick={e => openTxt(e,['pageContent','memories'],'title','Section title')} tag="h2" style={{ fontFamily:"'Playfair Display',Georgia,serif", fontStyle:'italic', fontSize:'clamp(32px,4vw,56px)', color:'#7b1828', margin:'0 0 20px', lineHeight:1.1 }}>
               {couple.pageContent?.memories?.title || 'Our Journey'}
@@ -424,14 +394,14 @@ function LettersPage({ couple, photo, openImg, openTxt }) {
             </EditableText>
           </div>
 
-          {/* Right stamp */}
+          {}
           <div style={{ alignSelf:'flex-end', marginBottom:40, flexShrink:0 }} onClick={e => openImg(e,['photos',3],'url')}>
             <EditablePhoto src={photo(3)} alt="journey photo 2" style={{ background:'none', outline:'none' }} stampStyle={{ background:'#fff', padding:'8px 8px 22px' }} innerStyle={{ width:190, height:215 }}/>
           </div>
         </div>
       )}
 
-      {/* Slide 1 — The Moments */}
+      {}
       {slide === 1 && (
         <div style={{ background:'#f0ebe0', minHeight:'80vh', display:'flex', flexDirection:'column', alignItems:'center', gap:32, padding:'60px 48px', boxSizing:'border-box', color:'#5a3a2a' }}>
           <div style={{ display:'flex', alignItems:'center', gap:20 }}>
@@ -452,10 +422,10 @@ function LettersPage({ couple, photo, openImg, openTxt }) {
         </div>
       )}
 
-      {/* Slide 2 — What We Love (dark) */}
+      {}
       {slide === 2 && (
         <div style={{ background:'#2a1a10', backgroundImage:'radial-gradient(ellipse at 50% 0%,#4a2820 0%,#1a0e08 70%)', minHeight:'80vh', display:'flex', gap:48, alignItems:'center', padding:'60px 48px', boxSizing:'border-box', color:'#f0e8d8' }}>
-          {/* Letter card */}
+          {}
           <div style={{ flex:1, maxWidth:480, background:'#f5ede0', padding:'36px 44px', boxShadow:'0 8px 36px rgba(0,0,0,0.5)', position:'relative', border:'8px solid #f5ede0', outline:'2px solid rgba(180,140,100,0.35)', color:'#5a3a2a' }}>
             <EditableText onClick={e => openTxt(e,['pageContent','letters'],'title','Letter section title')} tag="h2" style={{ fontFamily:"'Playfair Display',Georgia,serif", fontStyle:'italic', fontSize:'clamp(28px,3.5vw,46px)', color:'#7b1828', margin:'0 0 20px' }}>
               {couple.pageContent?.letters?.title || 'What We Love'}
@@ -464,7 +434,7 @@ function LettersPage({ couple, photo, openImg, openTxt }) {
               {couple.letters?.[0]?.content || couple.pageContent?.letters?.subtitle || 'What I love most about us is how naturally we understand each other. Even in silence, we feel connected.'}
             </EditableText>
           </div>
-          {/* Stamps */}
+          {}
           <div style={{ display:'flex', flexDirection:'column', gap:16, alignItems:'flex-end' }}>
             {[1,2].map((photoIdx,i) => (
               <div key={i} onClick={e => openImg(e,['photos',photoIdx],'url')}>
@@ -475,7 +445,7 @@ function LettersPage({ couple, photo, openImg, openTxt }) {
         </div>
       )}
 
-      {/* Slide 3 — My Promise (cream) */}
+      {}
       {slide === 3 && (
         <div style={{ background:'#f0ebe0', minHeight:'80vh', display:'flex', flexDirection:'column', padding:'60px 48px', boxSizing:'border-box', color:'#5a3a2a', gap:28 }}>
           <EditableText onClick={e => openTxt(e,['pageContent','capsule'],'title','Promise title')} tag="h2" style={{ fontFamily:"'Playfair Display',Georgia,serif", fontStyle:'italic', fontSize:'clamp(32px,4vw,56px)', color:'#7b1828', margin:0 }}>
@@ -505,23 +475,21 @@ function LettersPage({ couple, photo, openImg, openTxt }) {
   );
 }
 
-/* ═══════════════════════════════════════
-   PAGE: GALLERY  (ButterflyPhotos style)
-═══════════════════════════════════════ */
+
 function GalleryPage({ couple, photo, openImg, openTxt, pc }) {
   const [slide, setSlide] = useState(0);
   const SLIDES = ['Gallery Wall', 'Our Story', 'Timeline', 'Collection'];
 
   return (
     <div style={{ fontFamily:"'Georgia','Times New Roman',serif" }}>
-      {/* nav */}
+      {}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 16px', background:'rgba(0,0,0,0.5)', borderBottom:'1px solid rgba(210,170,100,0.1)' }}>
         <button onClick={() => setSlide(s => (s-1+SLIDES.length)%SLIDES.length)} style={{ background:'rgba(4,1,1,0.85)', border:'1px solid rgba(210,165,60,0.45)', borderRadius:20, padding:'5px 12px', color:'#f0d878', cursor:'pointer', display:'flex', alignItems:'center', gap:5, fontSize:'0.8rem' }}><ChevronLeft size={14}/></button>
         <span style={{ fontSize:'0.75rem', color:'rgba(240,210,140,0.55)', fontFamily:'system-ui,sans-serif' }}>{SLIDES[slide]} ({slide+1}/{SLIDES.length})</span>
         <button onClick={() => setSlide(s => (s+1)%SLIDES.length)} style={{ background:'rgba(4,1,1,0.85)', border:'1px solid rgba(210,165,60,0.45)', borderRadius:20, padding:'5px 12px', color:'#f0d878', cursor:'pointer', display:'flex', alignItems:'center', gap:5, fontSize:'0.8rem' }}><ChevronRight size={14}/></button>
       </div>
 
-      {/* Gallery Wall */}
+      {}
       {slide === 0 && (
         <div style={{ background:'url(/bggallery.png) center/cover no-repeat', backgroundImage:'url(/bggallery.png),linear-gradient(135deg,#1a0010,#2a0018)', minHeight:'75vh', display:'flex', alignItems:'center', justifyContent:'center', gap:20, padding:'40px 60px', boxSizing:'border-box' }}>
           <div style={{ flex:'0 0 18%', display:'flex', flexDirection:'column', gap:14 }}>
@@ -536,7 +504,7 @@ function GalleryPage({ couple, photo, openImg, openTxt, pc }) {
               </div>
             ))}
           </div>
-          {/* Center large frame */}
+          {}
           <div style={{ flex:'0 0 34%', maxWidth:320, position:'relative' }} onClick={e => openImg(e,['photos',4],'url')}>
             <div style={{ background:'rgba(6,1,1,0.85)', border:'2px solid rgba(210,165,60,0.5)', padding:10, boxShadow:'0 8px 40px rgba(0,0,0,0.9)', cursor:'pointer', position:'relative' }}>
               <img src={photo(4)||photo(0)} alt="" style={{ width:'100%', height:280, objectFit:'cover', display:'block' }} onError={e=>e.target.src='https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&q=60'}/>
@@ -561,7 +529,7 @@ function GalleryPage({ couple, photo, openImg, openTxt, pc }) {
         </div>
       )}
 
-      {/* Our Story */}
+      {}
       {slide === 1 && (
         <div style={{ background:'url(/bggallery.png) center/cover,linear-gradient(135deg,#1a0010,#2a0018)', minHeight:'75vh', display:'flex', alignItems:'center', justifyContent:'center', gap:28, padding:'40px 60px', boxSizing:'border-box', flexWrap:'wrap' }}>
           {[0,2,4].map((photoIdx,i) => (
@@ -577,7 +545,7 @@ function GalleryPage({ couple, photo, openImg, openTxt, pc }) {
         </div>
       )}
 
-      {/* Timeline */}
+      {}
       {slide === 2 && (
         <div style={{ background:'url(/bggallery.png) center/cover,linear-gradient(135deg,#1a0010,#2a0018)', minHeight:'75vh', display:'flex', alignItems:'center', justifyContent:'center', gap:0, padding:'40px 60px', boxSizing:'border-box' }}>
           <div style={{ flex:'0 0 30%', paddingRight:28 }}>
@@ -605,7 +573,7 @@ function GalleryPage({ couple, photo, openImg, openTxt, pc }) {
         </div>
       )}
 
-      {/* Collection */}
+      {}
       {slide === 3 && (
         <div style={{ background:'url(/bggallery.png) center/cover,linear-gradient(135deg,#1a0010,#2a0018)', minHeight:'75vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:20, padding:'40px 60px', boxSizing:'border-box' }}>
           <EditableText onClick={e => openTxt(e,['pageContent','memories'],'title','Collection title')} tag="h2" style={{ fontFamily:"'Georgia',serif", fontSize:'clamp(22px,3vw,42px)', fontWeight:700, color:'#fff8e8', textAlign:'center', textShadow:'0 2px 10px rgba(0,0,0,0.95)', margin:0 }}>
@@ -626,9 +594,7 @@ function GalleryPage({ couple, photo, openImg, openTxt, pc }) {
   );
 }
 
-/* ═══════════════════════════════════════
-   PAGE: SONGS  (ButterflyStory style)
-═══════════════════════════════════════ */
+
 function SongsPage({ couple, openTxt }) {
   const song = couple.song || {};
   const songs = couple.songs?.length ? couple.songs : (song.title ? [song] : []);
@@ -637,14 +603,14 @@ function SongsPage({ couple, openTxt }) {
 
   return (
     <div style={{ background:'#d6cfa8', padding:'24px 16px 40px', display:'flex', flexDirection:'column', alignItems:'center', minHeight:'75vh', fontFamily:"'Georgia',serif" }}>
-      {/* outer cream frame */}
+      {}
       <div style={{ width:'100%', maxWidth:860, background:'#e8e0c0', borderRadius:14, padding:10, boxShadow:'0 4px 24px rgba(0,0,0,0.25)', border:'1px solid rgba(180,160,100,0.4)' }}>
-        {/* dark red board */}
+        {}
         <div style={{ position:'relative', background:'#7a0c0c', borderRadius:10, display:'grid', gridTemplateColumns:'90px 1fr 200px', minHeight:360, overflow:'hidden' }}>
-          {/* Board depth */}
+          {}
           <div style={{ position:'absolute', inset:0, borderRadius:10, pointerEvents:'none', boxShadow:'inset 0 0 60px rgba(0,0,0,0.35)', zIndex:2 }}/>
 
-          {/* Left stickers */}
+          {}
           <div style={{ position:'relative', zIndex:3, display:'flex', flexDirection:'column', alignItems:'center', gap:6, padding:'16px 6px 60px 8px' }}>
             <div style={{ fontSize:44, filter:'drop-shadow(0 3px 6px rgba(0,0,0,0.55))', lineHeight:1 }}>🤍</div>
             <div style={{ fontSize:34, filter:'drop-shadow(0 3px 6px rgba(0,0,0,0.6))', transform:'rotate(-5deg)' }}>📼</div>
@@ -653,7 +619,7 @@ function SongsPage({ couple, openTxt }) {
             <div style={{ fontSize:26, filter:'drop-shadow(0 2px 5px rgba(0,0,0,0.5))', transform:'rotate(-5deg)' }}>🍓</div>
           </div>
 
-          {/* Center */}
+          {}
           <div style={{ position:'relative', zIndex:3, padding:'22px 14px 18px 6px', display:'flex', flexDirection:'column', gap:12 }}>
             <div style={{ lineHeight:1.1, marginBottom:4 }}>
               <EditableText onClick={e => openTxt(e,['pageContent','song'],'title','Song section title')} tag="span" style={{ fontFamily:"'Georgia',serif", fontStyle:'italic', fontSize:'clamp(1.7rem,3.5vw,2.4rem)', color:'#fff', textShadow:'0 2px 10px rgba(0,0,0,0.4)' }}>
@@ -664,7 +630,7 @@ function SongsPage({ couple, openTxt }) {
               </span>
             </div>
 
-            {/* Song cards */}
+            {}
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
               {songs.length > 0 ? songs.map((s,i) => (
                 <div key={i} onClick={() => setActive(i)} style={{ display:'flex', alignItems:'center', gap:10, background: active===i ? 'rgba(130,30,50,0.75)' : 'rgba(55,55,65,0.88)', border:`1px solid ${active===i ? 'rgba(255,180,180,0.2)' : 'rgba(255,255,255,0.06)'}`, borderRadius:8, padding:'8px 10px', cursor:'pointer' }}>
@@ -686,7 +652,7 @@ function SongsPage({ couple, openTxt }) {
               )}
             </div>
 
-            {/* Spotify embed */}
+            {}
             {cur.embedUrl && (
               <div style={{ borderRadius:10, overflow:'hidden', border:'1px solid rgba(255,180,180,0.12)' }}>
                 <iframe src={cur.embedUrl} width="100%" height="80" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media" loading="lazy" style={{ display:'block', borderRadius:10 }}/>
@@ -694,7 +660,7 @@ function SongsPage({ couple, openTxt }) {
             )}
           </div>
 
-          {/* Right: vinyl */}
+          {}
           <div style={{ position:'relative', zIndex:3, display:'flex', alignItems:'center', justifyContent:'center', padding:'12px 12px 12px 4px' }}>
             <div style={{ fontSize:52, position:'absolute', top:6, left:-2, filter:'drop-shadow(0 4px 8px rgba(0,0,0,0.5))', transform:'rotate(-10deg)', lineHeight:1, zIndex:5, pointerEvents:'none' }}>🌸</div>
             <div style={{ background:'#e8e0c6', borderRadius:4, padding:'10px 10px 32px', boxShadow:'5px 6px 22px rgba(0,0,0,0.6)', display:'flex', alignItems:'center', justifyContent:'center', width:'100%', boxSizing:'border-box' }}>
@@ -715,9 +681,7 @@ function SongsPage({ couple, openTxt }) {
   );
 }
 
-/* ═══════════════════════════════════════
-   PAGE: WISHES  (ButterflyWish style)
-═══════════════════════════════════════ */
+
 function WishesPage({ couple, openTxt, pc }) {
   const capsules = couple.timeCapsule || [];
   const today = new Date();

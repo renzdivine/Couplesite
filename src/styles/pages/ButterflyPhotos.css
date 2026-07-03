@@ -1,10 +1,3 @@
-/* ═══════════════════════════════════════════════════════════════════════════
-   ButterflyPhotos — Art Gallery Wall
-   art_bg.png fills every slide. Frames look hung on the wall.
-   Text panels look like museum placards mounted beside them.
-═══════════════════════════════════════════════════════════════════════════ */
-
-/* ── root / stage ─────────────────────────────────────────────────────── */
 .agv-root {
   width: 100vw;
   height: 100vh;
@@ -23,11 +16,11 @@
   overflow: hidden;
 }
 
-/* no veil — art_bg shows at full strength on every slide */
+
 .agv-stage::before { display: none; }
 .agv-stage.is-hero::before { display: none; }
 
-/* ── corner flourishes ────────────────────────────────────────────────── */
+
 .agv-flourish {
   position: absolute;
   width: 72px;
@@ -41,7 +34,7 @@
 .agv-flourish--bl { bottom: 8px; left: 8px;  transform: rotate(270deg); }
 .agv-flourish--br { bottom: 8px; right: 8px; transform: rotate(180deg); }
 
-/* ── top / bottom bars ────────────────────────────────────────────────── */
+
 .agv-topbar {
   display: flex;
   align-items: center;
@@ -95,7 +88,7 @@
   color: rgba(210, 170, 100, 0.45);
 }
 
-/* ── slide content area ───────────────────────────────────────────────── */
+
 .agv-content {
   flex: 1;
   overflow: visible;
@@ -108,35 +101,32 @@
 }
 .agv-content:has(.agv-slide--hero) { padding: 0; }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   TRANSITION ANIMATIONS
-   Frame anims: physical, dramatic  |  Text anims: elegant, light
-══════════════════════════════════════════════════════════════════════════ */
 
-/* shared: all anim classes start invisible until their keyframe fires */
+
+
 [class*="agv-anim-"] {
   animation-duration: 0.65s;
   animation-fill-mode: both;
   animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-/* ── FRAME ANIMATIONS ── */
 
-/* Rise up from below */
+
+
 @keyframes kf-rise {
   from { opacity: 0; transform: translateY(60px) scale(0.95); }
   to   { opacity: 1; transform: translateY(0)   scale(1); }
 }
 .agv-anim-rise { animation-name: kf-rise; }
 
-/* Drop from above */
+
 @keyframes kf-drop {
   from { opacity: 0; transform: translateY(-60px) scale(0.95); }
   to   { opacity: 1; transform: translateY(0)     scale(1); }
 }
 .agv-anim-drop { animation-name: kf-drop; }
 
-/* Swing in from left — like a painting being hung */
+
 @keyframes kf-swing-l {
   0%   { opacity: 0; transform: translateX(-80px) rotate(-6deg); }
   60%  { transform: translateX(8px) rotate(1.5deg); }
@@ -144,7 +134,7 @@
 }
 .agv-anim-swing-l { animation-name: kf-swing-l; animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
 
-/* Swing in from right */
+
 @keyframes kf-swing-r {
   0%   { opacity: 0; transform: translateX(80px) rotate(6deg); }
   60%  { transform: translateX(-8px) rotate(-1.5deg); }
@@ -152,65 +142,65 @@
 }
 .agv-anim-swing-r { animation-name: kf-swing-r; animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
 
-/* Zoom in from small */
+
 @keyframes kf-zoom-in {
   from { opacity: 0; transform: scale(0.6) rotate(-3deg); }
   to   { opacity: 1; transform: scale(1)   rotate(0deg); }
 }
 .agv-anim-zoom-in { animation-name: kf-zoom-in; animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); }
 
-/* Tilt in — tilts and rights itself */
+
 @keyframes kf-tilt-in {
   from { opacity: 0; transform: rotate(-12deg) translateY(40px); }
   to   { opacity: 1; transform: rotate(0deg)   translateY(0); }
 }
 .agv-anim-tilt-in { animation-name: kf-tilt-in; }
 
-/* Blur to sharp */
+
 @keyframes kf-blur-in {
   from { opacity: 0; filter: blur(14px); transform: scale(1.05); }
   to   { opacity: 1; filter: blur(0);    transform: scale(1); }
 }
 .agv-anim-blur-in { animation-name: kf-blur-in; }
 
-/* ── TEXT ANIMATIONS ── */
 
-/* Fade up */
+
+
 @keyframes kf-fade-up {
   from { opacity: 0; transform: translateY(24px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .agv-anim-fade-up { animation-name: kf-fade-up; }
 
-/* Fade from left */
+
 @keyframes kf-fade-left {
   from { opacity: 0; transform: translateX(-32px); }
   to   { opacity: 1; transform: translateX(0); }
 }
 .agv-anim-fade-left { animation-name: kf-fade-left; }
 
-/* Fade from right */
+
 @keyframes kf-fade-right {
   from { opacity: 0; transform: translateX(32px); }
   to   { opacity: 1; transform: translateX(0); }
 }
 .agv-anim-fade-right { animation-name: kf-fade-right; }
 
-/* Letter pop — scale up from tiny */
+
 @keyframes kf-letter-pop {
   from { opacity: 0; transform: scale(0.75) translateY(10px); letter-spacing: 0.3em; }
   to   { opacity: 1; transform: scale(1)    translateY(0);    letter-spacing: inherit; }
 }
 .agv-anim-letter-pop { animation-name: kf-letter-pop; animation-timing-function: cubic-bezier(0.34, 1.4, 0.64, 1); }
 
-/* Float in — gentle drift from slightly above */
+
 @keyframes kf-float-in {
   from { opacity: 0; transform: translateY(-18px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .agv-anim-float-in { animation-name: kf-float-in; }
 
-/* ── museum placard — used for text sections beside frames ── */
+
 .agv-placard {
   background: rgba(6, 1, 1, 0.82);
   border: 1px solid rgba(210, 165, 60, 0.5);
@@ -219,7 +209,7 @@
   box-shadow: 0 4px 24px rgba(0,0,0,0.7), 0 1px 4px rgba(0,0,0,0.5);
 }
 
-/* ── shared type tokens ───────────────────────────────────────────────── */
+
 .agv-script {
   font-family: 'Brush Script MT', 'Segoe Script', cursive;
   font-size: 26px;
@@ -301,11 +291,7 @@
 
 .agv-content > img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   FRAMED PHOTO COMPONENT
-   Frames look hung on the wall: drop-shadow creates depth,
-   a subtle bottom shadow simulates cast light from the frame.
-══════════════════════════════════════════════════════════════════════════ */
+
 .agv-fp {
   position: relative;
   width: 100%;
@@ -313,15 +299,18 @@
   background: transparent;
 }
 
-/* inner box — sits exactly inside each frame's opening, clips content */
+
 .agv-fp-inner {
   position: absolute;
-  background: #1a0a0a;
+  background: #c9adb5;
   overflow: hidden;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Tune these insets to match each frame PNG's inner opening */
+
 .agv-fp--rect   .agv-fp-inner { top: 17%; left: 18%; right: 18%; bottom: 17%; border-radius: 2px; }
 .agv-fp--square .agv-fp-inner { top: 20%; left: 20%; right: 20%; bottom: 20%; border-radius: 2px; }
 .agv-fp--oval   .agv-fp-inner { top: 14%; left: 16%; right: 16%; bottom: 14%; border-radius: 50%; }
@@ -333,7 +322,7 @@
   );
 }
 
-/* frame PNG via ::after — sits on top of everything */
+
 .agv-fp::after {
   content: '';
   position: absolute;
@@ -352,13 +341,13 @@
 .agv-fp--oval::after   { background-image: url('/Frame3_oval.png'); }
 .agv-fp--heart::after  { background-image: url('/Frame4_heart.png'); }
 
-/* aspect ratios */
-.agv-fp--rect   { aspect-ratio: 3 / 4; overflow: visible; max-height: 62vh; max-width: 340px; }
-.agv-fp--square { aspect-ratio: 1 / 1; overflow: visible; max-height: 60vh; max-width: 480px; }
-.agv-fp--oval   { aspect-ratio: 1 / 1; overflow: visible; max-height: 60vh; max-width: 480px; }
-.agv-fp--heart  { aspect-ratio: 1 / 1; overflow: visible; max-height: 60vh; max-width: 480px; }
 
-/* ensure agv-fp always stretches to fill its wrapper width so aspect-ratio kicks in */
+.agv-fp--rect   { aspect-ratio: 3 / 4; overflow: visible; max-height: 72vh; max-width: 420px; }
+.agv-fp--square { aspect-ratio: 1 / 1; overflow: visible; max-height: 70vh; max-width: 580px; }
+.agv-fp--oval   { aspect-ratio: 1 / 1; overflow: visible; max-height: 70vh; max-width: 580px; }
+.agv-fp--heart  { aspect-ratio: 1 / 1; overflow: visible; max-height: 70vh; max-width: 580px; }
+
+
 .agv-fp { width: 100%; align-self: stretch; }
 
 .agv-fp-photo {
@@ -367,13 +356,135 @@
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center center;
+  background: #1a0a0e;
+}
+
+
+.agv-fp-drag-hint {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+  font-size: 0.55rem;
+  font-family: system-ui, sans-serif;
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s;
+  z-index: 10;
+  letter-spacing: 0.04em;
+}
+.agv-fp:hover .agv-fp-drag-hint {
+  opacity: 1;
+}
+
+
+.agv-fp-remove-btn {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(140, 10, 30, 0.9);
+  color: #fce8ea;
+  font-size: 0.65rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  transition: background 0.15s, transform 0.15s;
+}
+.agv-fp-remove-btn:hover {
+  background: rgba(200, 10, 30, 1);
+  transform: scale(1.15);
+}
+
+
+.agv-fp-zoom-btns {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.agv-fp:hover .agv-fp-zoom-btns {
+  opacity: 1;
+}
+.agv-fp-zoom-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.72);
+  color: #fff;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: system-ui, sans-serif;
+  transition: background 0.12s;
+  padding: 0;
+}
+.agv-fp-zoom-btn:hover {
+  background: rgba(233,30,140,0.85);
+}
+.agv-fp-zoom-val {
+  font-size: 0.5rem;
+  color: rgba(255,255,255,0.75);
+  font-family: system-ui, sans-serif;
+  background: rgba(0,0,0,0.55);
+  padding: 1px 4px;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+
+.agv-fp-placeholder {
+  position: absolute;
+  inset: 0;
+  background: #c9adb5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.agv-fp-placeholder--editing {
+  background: rgba(210, 175, 185, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  border: 2px dashed rgba(233, 30, 140, 0.55);
+  transition: background 0.2s, border-color 0.2s;
+}
+.agv-fp-placeholder--editing:hover {
+  background: rgba(233, 30, 140, 0.15);
+  border-color: rgba(233, 30, 140, 0.9);
 }
 
 .agv-fp-frame { display: none; }
 
-/* photo containers — overflow visible, constrained by max-width on their .agv-fp child */
+
 .agv-intro-photo1,.agv-intro-photo2,.agv-intro-photo3,
 .agv-tl-center-photo,
 .agv-dual-photo1,.agv-dual-photo2,
@@ -384,12 +495,10 @@
   overflow: visible;
   height: auto !important;
   flex-shrink: 0;
-  display: block; /* block so .agv-fp width:100% fills the container */
+  display: block; 
 }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   SLIDE 1 — HERO (gallery wall, full bleed)
-══════════════════════════════════════════════════════════════════════════ */
+
 .agv-slide { width: 100%; display: flex; align-items: center; justify-content: center; gap: 24px; }
 
 .agv-slide--hero {
@@ -428,15 +537,15 @@
   flex: 0 0 18%;
   display: flex; flex-direction: column;
   gap: 14px; justify-content: center;
-  max-width: 240px;
+  max-width: 300px;
 }
-.agv-hw-sm-frame { width: 100%; max-height: 36vh; }
+.agv-hw-sm-frame { width: 100%; max-height: 42vh; }
 .agv-hw-sm-frame--tl { transform: rotate(-1.5deg); }
 .agv-hw-sm-frame--bl { transform: rotate(1deg); }
 .agv-hw-sm-frame--tr { transform: rotate(1.5deg); }
 .agv-hw-sm-frame--br { transform: rotate(-1deg); }
 
-.agv-hw-center-frame { flex: 0 0 34%; position: relative; max-width: 420px; }
+.agv-hw-center-frame { flex: 0 0 34%; position: relative; max-width: 520px; }
 
 .agv-hw-title-overlay {
   position: absolute;
@@ -446,6 +555,7 @@
   z-index: 4;
   background: rgba(0,0,0,0.48);
   text-align: center; gap: 2px;
+  pointer-events: none;   
 }
 .agv-hw-eyebrow {
   font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
@@ -466,38 +576,35 @@
   text-shadow: 0 2px 16px rgba(0,0,0,0.9);
 }
 
-/* hidden leftovers */
+
 .agv-hw-bg,.agv-hw-damask,.agv-hw-floor,.agv-hw-stanchions,
 .agv-hw-post,.agv-hw-post-ball,.agv-hw-post-pole,.agv-hw-post-base,
 .agv-hw-rope,.agv-hero-bg,.agv-hero-spotlight,.agv-hero-fog,
 .agv-hero-frame,.agv-hero-text,.agv-hero-script,.agv-hero-caps,
 .agv-hero-sub,.agv-hero-byline { display: none; }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   SLIDES 2–9 — content on the gallery wall
-   Layout: framed photos float on the wall, text in dark placard panels
-══════════════════════════════════════════════════════════════════════════ */
 
-/* ── 2. INTRO ── */
+
+
 .agv-slide--intro { align-items: center; gap: 28px; justify-content: center; }
 .agv-intro-left {
   flex: 0 0 22%;
   display: flex; flex-direction: column; gap: 12px;
 }
 .agv-intro-left .agv-placard { padding: 12px 14px; }
-.agv-intro-photo1 { width: 100%; max-width: 240px; transform: rotate(-2deg); }
+.agv-intro-photo1 { width: 100%; max-width: 300px; transform: rotate(-2deg); }
 .agv-intro-center {
   flex: 0 0 30%;
   display: flex; flex-direction: column; gap: 10px; align-items: flex-start;
 }
-.agv-intro-photo2 { width: 100%; max-width: 320px; }
+.agv-intro-photo2 { width: 100%; max-width: 400px; }
 .agv-intro-right {
   flex: 0 0 26%;
   display: flex; flex-direction: column; gap: 12px;
 }
-.agv-intro-photo3 { width: 100%; max-width: 280px; transform: rotate(1.5deg); }
+.agv-intro-photo3 { width: 100%; max-width: 360px; transform: rotate(1.5deg); }
 
-/* ── 3. TIMELINE ── */
+
 .agv-slide--timeline { gap: 0; align-items: center; justify-content: center; }
 .agv-tl-left {
   flex: 0 0 28%; padding-right: 28px;
@@ -505,7 +612,7 @@
 }
 .agv-tl-left .agv-placard { padding: 14px 16px; }
 .agv-tl-center-photo {
-  flex: 0 0 26%; max-width: 300px;
+  flex: 0 0 30%; max-width: 380px;
   padding: 0 8px;
   border-left: 1px solid rgba(180,140,70,0.2);
   border-right: 1px solid rgba(180,140,70,0.2);
@@ -531,15 +638,15 @@
   text-shadow: 0 1px 6px rgba(0,0,0,0.95);
 }
 
-/* ── 4. DUAL ── */
+
 .agv-slide--dual { align-items: center; gap: 28px; justify-content: center; }
 .agv-dual-left {
   flex: 0 0 28%;
   display: flex; flex-direction: column; gap: 14px;
 }
-.agv-dual-photo2 { width: 100%; max-width: 280px; transform: rotate(-1deg); }
+.agv-dual-photo2 { width: 100%; max-width: 360px; transform: rotate(-1deg); }
 .agv-dual-right { flex: 0 0 50%; display: flex; flex-direction: column; gap: 14px; }
-.agv-dual-photo1 { width: 100%; max-width: 380px; }
+.agv-dual-photo1 { width: 100%; max-width: 480px; }
 .agv-dual-desc-row { display: flex; gap: 10px; }
 .agv-dual-desc {
   flex: 1; padding: 10px 12px;
@@ -549,21 +656,21 @@
 }
 .agv-dual-desc--dark { background: rgba(2,0,0,0.9); }
 
-/* ── 5. FEATURE ── */
+
 .agv-slide--feature { align-items: center; gap: 16px; justify-content: center; }
 .agv-feat-left {
   flex: 0 0 22%;
   display: flex; flex-direction: column; gap: 10px; align-items: center;
 }
-.agv-feat-photo1 { width: 100%; max-width: 280px; transform: rotate(2deg); }
+.agv-feat-photo1 { width: 100%; max-width: 340px; transform: rotate(2deg); }
 .agv-feat-center-photo {
   flex: 0 0 30%;
-  display: flex; flex-direction: column; gap: 8px; max-width: 360px;
+  display: flex; flex-direction: column; gap: 8px; max-width: 440px;
 }
 .agv-feat-right { flex: 0 0 28%; display: flex; flex-direction: column; gap: 10px; align-items: center; }
-.agv-feat-photo2 { width: 100%; max-width: 300px; transform: rotate(-1.5deg); }
+.agv-feat-photo2 { width: 100%; max-width: 380px; transform: rotate(-1.5deg); }
 
-/* ── 6. BULLETS ── */
+
 .agv-slide--bullets { align-items: center; gap: 36px; justify-content: center; }
 .agv-bul-left {
   flex: 0 0 40%;
@@ -584,9 +691,9 @@
   flex-shrink: 0; width: 7px; height: 7px;
   border-radius: 50%; background: #f5d878; margin-top: 5px;
 }
-.agv-bul-photo { flex: 0 0 36%; max-width: 380px; }
+.agv-bul-photo { flex: 0 0 36%; max-width: 460px; }
 
-/* ── 7. TECH ── */
+
 .agv-slide--tech { align-items: center; gap: 0; justify-content: center; }
 .agv-tech-left {
   flex: 0 0 22%; padding-right: 20px;
@@ -596,10 +703,10 @@
   flex: 0 0 40%; padding: 0 24px;
   display: flex; flex-direction: column; align-items: center; text-align: center;
 }
-.agv-tech-photo { width: 100%; max-width: 380px; margin-top: 12px; }
+.agv-tech-photo { width: 100%; max-width: 480px; margin-top: 12px; }
 .agv-tech-right { flex: 0 0 22%; padding-left: 20px; border-left: 1px solid rgba(180,140,70,0.2); }
 
-/* ── 8. ROLE ── */
+
 .agv-slide--role { align-items: center; gap: 22px; justify-content: center; }
 .agv-role-left {
   flex: 0 0 24%;
@@ -611,11 +718,11 @@
   border-left: 3px solid rgba(210,165,60,0.7);
   padding: 8px 12px; margin: 0;
 }
-.agv-role-center-photo { flex: 0 0 24%; max-width: 300px; }
+.agv-role-center-photo { flex: 0 0 26%; max-width: 380px; }
 .agv-role-right { flex: 0 0 30%; display: flex; flex-direction: column; gap: 12px; justify-content: center; }
-.agv-role-photo2 { width: 100%; max-width: 300px; transform: rotate(1deg); }
+.agv-role-photo2 { width: 100%; max-width: 380px; transform: rotate(1deg); }
 
-/* ── 9. COLLECTION ── */
+
 .agv-slide--collection {
   flex-direction: column; align-items: center;
   gap: 16px; justify-content: center; width: 100%;
@@ -625,11 +732,9 @@
   display: flex; gap: 24px;
   width: 100%; align-items: center; justify-content: center;
 }
-.agv-col-photo { flex: 0 0 auto; width: 26%; max-width: 320px; }
+.agv-col-photo { flex: 0 0 auto; width: 28%; max-width: 400px; }
 
-/* ══════════════════════════════════════════════════════════════════════════
-   NAVIGATION
-══════════════════════════════════════════════════════════════════════════ */
+
 .agv-nav {
   position: absolute; top: 50%; transform: translateY(-50%);
   z-index: 20; width: 40px; height: 40px; border-radius: 50%;
@@ -667,7 +772,7 @@
 }
 .agv-back:hover { background: rgba(10,2,2,0.95); color: #fff8e8; }
 
-/* ── responsive ── */
+
 @media (max-width: 768px) {
   .agv-content { padding: 0 20px; }
   .agv-topbar, .agv-bottombar { padding-left: 48px; padding-right: 48px; }

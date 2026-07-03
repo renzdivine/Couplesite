@@ -1,10 +1,3 @@
-// ─────────────────────────────────────────────────────────────
-// AdminLogin.jsx  — Client (Admin) login
-// Route: /admin/login
-// Clients log in with Gmail + password to access their
-// own couple page dashboard.
-// ─────────────────────────────────────────────────────────────
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
@@ -44,19 +37,19 @@ export default function AdminLogin() {
     <div className="al-root">
       <div className="al-container">
         <div className="al-card">
-          {/* Header */}
+
           <div className="al-header">
             <div className="al-header-icon">
-              <Heart size={28} color="#ff9ab5" />
+              <Heart size={26} color="hsl(330, 70%, 52%)" />
             </div>
             <h1 className="al-title">Client Login</h1>
-            <p className="al-subtitle">HeartLink — Access Your Love Page</p>
+            <p className="al-subtitle">HeartLink · Access Your Love Page</p>
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* Gmail */}
+
             <div style={{ position: 'relative' }}>
-              <Mail size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,180,200,0.4)', zIndex: 1 }} />
+              <Mail size={15} className="al-icon-mail" aria-hidden="true" />
               <input
                 type="email"
                 placeholder="yourname@gmail.com"
@@ -69,7 +62,6 @@ export default function AdminLogin() {
               />
             </div>
 
-            {/* Password */}
             <div style={{ position: 'relative' }}>
               <input
                 type={showPw ? 'text' : 'password'}
@@ -84,8 +76,8 @@ export default function AdminLogin() {
               <button
                 type="button"
                 onClick={() => setShowPw(v => !v)}
-                style={{ position: 'absolute', top: '50%', right: 14, transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,180,200,0.5)', cursor: 'pointer', padding: 4 }}
-                aria-label="Toggle password"
+                className="al-icon-pw-toggle"
+                aria-label={showPw ? 'Hide password' : 'Show password'}
               >
                 {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
@@ -100,26 +92,21 @@ export default function AdminLogin() {
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
+
           </form>
 
-          <div className="al-demo-hint">
-            Demo: <code className="al-demo-code">renzjane@gmail.com</code> / <code className="al-demo-code">renzjane2024</code>
-          </div>
-
-          <div style={{ borderTop: '1px solid rgba(255,150,180,0.1)', marginTop: 20, paddingTop: 16, textAlign: 'center' }}>
-            <p style={{ color: 'rgba(255,180,200,0.4)', fontSize: '0.82rem', margin: '0 0 10px' }}>
+          <div className="al-footer">
+            <p className="al-footer-text">
               New client?{' '}
-              <button onClick={() => navigate('/register')} style={{ background: 'none', border: 'none', color: '#ff9ab5', cursor: 'pointer', fontSize: '0.82rem', padding: 0, textDecoration: 'underline' }}>
+              <button
+                onClick={() => navigate('/register')}
+                className="al-register-btn"
+              >
                 Register with activation code →
               </button>
             </p>
-            <p style={{ color: 'rgba(255,180,200,0.25)', fontSize: '0.75rem', margin: 0 }}>
-              Website owner?{' '}
-              <button onClick={() => navigate('/master')} style={{ background: 'none', border: 'none', color: 'rgba(255,180,200,0.4)', cursor: 'pointer', fontSize: '0.75rem', padding: 0, textDecoration: 'underline' }}>
-                Master Admin →
-              </button>
-            </p>
           </div>
+
         </div>
       </div>
     </div>

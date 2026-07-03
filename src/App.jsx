@@ -1,34 +1,16 @@
-// ─────────────────────────────────────────────────────────────
-// App.jsx  — Role-based routing
-//
-//  /master              → Master Admin login
-//  /master/dashboard    → Master Admin dashboard (full system)
-//  /register            → Client self-registration (activation code)
-//  /admin/login         → Client login
-//  /admin               → Client dashboard (manage own couple page)
-//
-//  /love/:slug          → Visitor entry: code screen → memory game → butterflies
-//  /butterflies360      → 360° butterfly world
-//  /butterfly/0         → Butterfly Letters (love letter scrapbook)
-//  /butterfly/1         → Butterfly Photos  (animated gallery slideshow)
-//  /butterfly/2         → Butterfly Story   (song / vinyl board)
-//  /butterfly/3         → Butterfly Wish    (wishes / time capsule)
-//
-//  *                    → Redirect to /admin/login
-// ─────────────────────────────────────────────────────────────
-
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
+import { MusicProvider } from './context/MusicContext';
+import BgMusicPlayer from './components/BgMusicPlayer';
+import MusicLoader   from './components/MusicLoader';
 
-// Auth & admin — lazy loaded (each becomes its own chunk)
 const MasterLogin     = lazy(() => import('./pages/MasterLogin'));
 const MasterDashboard = lazy(() => import('./pages/MasterDashboard'));
 const ClientRegister  = lazy(() => import('./pages/ClientRegister'));
 const AdminLogin      = lazy(() => import('./pages/AdminLogin'));
 const AdminDashboard  = lazy(() => import('./pages/AdminDashboard'));
 
-// Visitor experience — lazy loaded
 const VisitorEntry     = lazy(() => import('./pages/VisitorEntry'));
 const Butterflies360   = lazy(() => import('./pages/Butterflies360'));
 const ButterflyLetters = lazy(() => import('./pages/ButterflyLetters'));
@@ -38,7 +20,6 @@ const ButterflyWish    = lazy(() => import('./pages/ButterflyWish'));
 
 import './App.css';
 
-/* Minimal full-screen loader shown while a chunk is downloading */
 function PageLoader() {
   return (
     <div style={{
@@ -52,10 +33,44 @@ function PageLoader() {
   );
 }
 
+function ProtectedVisitorRoute({ children }) {
+  const { coupleAuth, coupleLogout } = useApp();
+
+  if (!coupleAuth?.slug || !coupleAuth?.visitorToken) {
+    
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  
+  const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
+  if (coupleAuth.issuedAt && Date.now() - coupleAuth.issuedAt > SESSION_TTL_MS) {
+    coupleLogout();
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  return children;
+}
+
+function ProtectedAdminRoute({ children }) {
+  const { clientSession } = useApp();
+  if (!clientSession?.sessionToken) return <Navigate to="/admin/login" replace />;
+  return children;
+}
+
+function ProtectedMasterRoute({ children }) {
+  const { masterLoggedIn } = useApp();
+  if (!masterLoggedIn) return <Navigate to="/master" replace />;
+  return children;
+}
+
 function App() {
   return (
     <AppProvider>
-      <AppRoutes />
+      <MusicProvider>
+        <AppRoutes />
+        {}
+        <BgMusicPlayer />
+      </MusicProvider>
     </AppProvider>
   );
 }
@@ -68,29 +83,45 @@ function AppRoutes() {
     <BrowserRouter>
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* ── Master Admin ── */}
+          {}
           <Route path="/master"           element={<MasterLogin />} />
-          <Route path="/master/dashboard" element={<MasterDashboard />} />
+          <Route path="/master/dashboard" element={
+            <ProtectedMasterRoute><MasterDashboard /></ProtectedMasterRoute>
+          } />
 
-          {/* ── Client (Admin) ── */}
-          <Route path="/register"         element={<ClientRegister />} />
-          <Route path="/admin/login"      element={<AdminLogin />} />
-          <Route path="/admin"            element={<AdminDashboard />} />
+          {}
+          <Route path="/register"    element={<ClientRegister />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin"       element={
+            <ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>
+          } />
 
-          {/* ── Visitor experience ── */}
-          <Route path="/love/:slug"       element={<VisitorEntry />} />
-          <Route path="/butterflies360"   element={<Butterflies360 />} />
-          <Route path="/butterfly/0"      element={<ButterflyLetters />} />
-          <Route path="/butterfly/1"      element={<ButterflyPhotos />} />
-          <Route path="/butterfly/2"      element={<ButterflyStory />} />
-          <Route path="/butterfly/3"      element={<ButterflyWish />} />
+          {}
+          <Route path="/love/:slug" element={<VisitorEntry />} />
 
-          {/* ── Fallback ── */}
-          <Route path="/"                 element={<Navigate to="/admin/login" replace />} />
-          <Route path="*"                 element={<Navigate to="/admin/login" replace />} />
+          {}
+          <Route path="/butterflies360" element={
+            <ProtectedVisitorRoute><MusicLoader /><Butterflies360 /></ProtectedVisitorRoute>
+          } />
+          <Route path="/butterfly/0" element={
+            <ProtectedVisitorRoute><MusicLoader /><ButterflyLetters /></ProtectedVisitorRoute>
+          } />
+          <Route path="/butterfly/1" element={
+            <ProtectedVisitorRoute><MusicLoader /><ButterflyPhotos /></ProtectedVisitorRoute>
+          } />
+          <Route path="/butterfly/2" element={
+            <ProtectedVisitorRoute><MusicLoader /><ButterflyStory /></ProtectedVisitorRoute>
+          } />
+          <Route path="/butterfly/3" element={
+            <ProtectedVisitorRoute><MusicLoader /><ButterflyWish /></ProtectedVisitorRoute>
+          } />
+
+          {}
+          <Route path="/"  element={<Navigate to="/admin/login" replace />} />
+          <Route path="*"  element={<Navigate to="/admin/login" replace />} />
         </Routes>
-        </Suspense>
-      </BrowserRouter>
+      </Suspense>
+    </BrowserRouter>
   );
 }
 

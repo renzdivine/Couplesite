@@ -1,16 +1,7 @@
-// ─────────────────────────────────────────────────────────────
-// EditableField.jsx
-// EditableText  — inline contentEditable text node
-// EditablePhoto — image with click-to-replace + crop modal
-// ─────────────────────────────────────────────────────────────
-
 import { useState, useRef, useEffect } from 'react';
 import { useImageUrl } from '../utils/useImageUrl';
 import ImageCropper    from './ImageCropper';
 
-/* ══════════════════════════════════════════
-   EditableText
-══════════════════════════════════════════ */
 export function EditableText({
   value,
   onChange,
@@ -66,29 +57,23 @@ export function EditableText({
   );
 }
 
-/* ══════════════════════════════════════════
-   EditablePhoto
-   Opens ImageCropper after picking a file.
-   onReplace receives an idb:// key.
-══════════════════════════════════════════ */
 export function EditablePhoto({
   src,
   alt       = '',
   onReplace,
   isEditing = false,
-  aspect    = 1,       // crop aspect ratio
+  aspect    = 1,
   className = '',
   style     = {},
   imgStyle  = {},
 }) {
   const fileRef    = useRef(null);
   const resolvedSrc = useImageUrl(src);
-  const [cropSrc, setCropSrc] = useState(null);  // raw object-URL while cropping
+  const [cropSrc, setCropSrc] = useState(null);
 
   const handleFile = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Create a temporary object URL for the cropper (no base64, no IDB yet)
     const url = URL.createObjectURL(file);
     setCropSrc(url);
     e.target.value = '';
@@ -135,7 +120,6 @@ export function EditablePhoto({
         <input ref={fileRef} type="file" accept="image/*" style={{ display:'none' }} onChange={handleFile}/>
       </div>
 
-      {/* Cropper modal — mounts over everything */}
       {cropSrc && (
         <ImageCropper
           src={cropSrc}

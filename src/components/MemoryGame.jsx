@@ -1,15 +1,10 @@
-// ─────────────────────────────────────────────────────────────
-// MemoryGame.jsx
-// ─────────────────────────────────────────────────────────────
-
 import { useState, useEffect, useRef } from 'react';
 import { EditableText } from './EditableField';
-import ImageCropper    from './ImageCropper';
 import { saveImage }   from '../utils/imageStore';
 import { useImageUrl } from '../utils/useImageUrl';
 import '../styles/components/MemoryGame.css';
 
-// ── Fallback photos ──────────────────────────────────────────
+
 const FALLBACK_PHOTOS = [
   { id: 'f1', url: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=400&q=80' },
   { id: 'f2', url: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&q=80' },
@@ -37,13 +32,13 @@ function buildCards(photos) {
   return shuffle(pairs);
 }
 
-// ── CardImage — resolves idb:// keys to usable object URLs ──
+
 function CardImage({ url, className }) {
   const resolved = useImageUrl(url);
   return <img src={resolved || ''} alt="couple memory" className={className} draggable={false} decoding="async"/>;
 }
 
-// ── Card ────────────────────────────────────────────────────
+
 function Card({ card, isFlipped, isMatched, onClick }) {
   return (
     <div
@@ -74,7 +69,7 @@ function Card({ card, isFlipped, isMatched, onClick }) {
   );
 }
 
-// ── Firework Canvas ──────────────────────────────────────────
+
 const FW_COLORS = [
   '#e91e8c', '#ff9ab5', '#d4a0ff', '#fff0f5',
   '#ff4d8d', '#c084fc', '#ffb3cc', '#f9a8d4',
@@ -108,7 +103,7 @@ function FireworkCanvas({ active }) {
         const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
         const speed = 4.5 + Math.random() * 8;
         const size  = 3.5 + Math.random() * 5.5;
-        const shape = Math.random();          // 0–0.5 heart | 0.5–0.75 circle | 0.75–1 rect
+        const shape = Math.random();          
         particles.push({
           x, y,
           vx: Math.cos(angle) * speed,
@@ -126,7 +121,7 @@ function FireworkCanvas({ active }) {
       }
     }
 
-    // ── Rain particles (constant drizzle across top) ──
+    
     function spawnRain() {
       const x = Math.random() * canvas.width;
       const size = 2.5 + Math.random() * 3.5;
@@ -137,7 +132,7 @@ function FireworkCanvas({ active }) {
         alpha: 0.9,
         color: FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)],
         size,
-        shape: Math.random() > 0.5 ? 0 : 0.6,   // hearts + circles only for rain
+        shape: Math.random() > 0.5 ? 0 : 0.6,   
         rot:  Math.random() * Math.PI * 2,
         rotV: (Math.random() - 0.5) * 0.12,
         gravity: 0.04,
@@ -147,7 +142,7 @@ function FireworkCanvas({ active }) {
       });
     }
 
-    // ── Initial 7 bursts staggered ──
+    
     const origins = [
       [0.22, 0.25], [0.78, 0.22], [0.50, 0.16],
       [0.14, 0.52], [0.86, 0.48], [0.38, 0.36], [0.65, 0.30],
@@ -160,7 +155,7 @@ function FireworkCanvas({ active }) {
       timers.current.push(t);
     });
 
-    // ── Periodic bursts every 320 ms for 3.5 s ──
+    
     const burstTimer = setInterval(() => {
       spawnBurst(
         canvas.width  * (0.10 + Math.random() * 0.80),
@@ -170,12 +165,12 @@ function FireworkCanvas({ active }) {
     const stopBurst = setTimeout(() => clearInterval(burstTimer), 3500);
     timers.current.push(stopBurst);
 
-    // ── Rain drizzle every 60 ms for 5 s ──
+    
     const rainTimer = setInterval(spawnRain, 60);
     const stopRain  = setTimeout(() => clearInterval(rainTimer), 5000);
     timers.current.push(stopRain);
 
-    // ── Draw helpers ──
+    
     function drawHeart(ctx, size) {
       ctx.beginPath();
       ctx.moveTo(0, -size * 0.3);
@@ -187,7 +182,7 @@ function FireworkCanvas({ active }) {
     function loop() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Filter out dead particles in one pass (avoids O(n²) splice)
+      
       let writeIdx = 0;
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
@@ -198,23 +193,23 @@ function FireworkCanvas({ active }) {
         p.y   += p.vy;
         p.rot += p.rotV;
 
-        // Rain fades out near bottom
+        
         if (p.rain) {
           if (p.y > canvas.height * 0.85) p.alpha -= 0.04;
         } else {
           p.alpha -= 0.011;
         }
 
-        // Twinkle — oscillate alpha slightly
+        
         const displayAlpha = p.twinkle
           ? p.alpha * (0.75 + 0.25 * Math.sin(Date.now() * 0.012 + i))
           : p.alpha;
 
         if (displayAlpha <= 0 || p.y > canvas.height + 20) {
-          continue; // skip dead particles
+          continue; 
         }
 
-        // Keep alive particle
+        
         particles[writeIdx++] = p;
 
         ctx.save();
@@ -254,7 +249,7 @@ function FireworkCanvas({ active }) {
   return <canvas ref={canvasRef} className="mg-firework-canvas" aria-hidden="true" />;
 }
 
-// ── Gift Box SVG ─────────────────────────────────────────────
+
 function GiftBox({ onClick, opening, btnRef }) {
   return (
     <button
@@ -265,10 +260,10 @@ function GiftBox({ onClick, opening, btnRef }) {
       title="Click to reveal your surprise"
       disabled={opening}
     >
-      {/* Outer pulse ring — hidden once opening */}
+      {}
       {!opening && <span className="mg-gift-pulse" aria-hidden="true" />}
 
-      {/* Light burst that erupts from the box when opened */}
+      {}
       {opening && <span className="mg-gift-burst" aria-hidden="true" />}
 
       <svg
@@ -301,34 +296,31 @@ function GiftBox({ onClick, opening, btnRef }) {
           </linearGradient>
         </defs>
 
-        {/* Box body — stays put */}
+        {}
         <rect x="14" y="52" width="92" height="58" rx="6" fill="url(#gBoxBody)" />
-        {/* Ribbon vertical on body */}
+        {}
         <rect x="54" y="52" width="12" height="58" rx="3" fill="url(#gRibbon)" />
-        {/* Sparkles on body */}
+        {}
         <circle cx="28" cy="72" r="3" fill="rgba(255,255,255,0.35)" />
         <circle cx="90" cy="88" r="2.5" fill="rgba(255,255,255,0.25)" />
 
-        {/*
-          Lid group — pivot at bottom-center of lid (60, 58).
-          When opening, this rotates backward (-105 deg) around that point.
-        */}
+        {}
         <g
           className={`mg-gift-lid${opening ? ' mg-gift-lid--open' : ''}`}
           style={{ transformOrigin: '60px 58px' }}
         >
-          {/* Lid rect */}
+          {}
           <rect x="10" y="40" width="100" height="18" rx="5" fill="url(#gBoxLid)" />
-          {/* Ribbon horizontal on lid */}
+          {}
           <rect x="10" y="46" width="100" height="12" rx="3" fill="url(#gRibbon)" />
-          {/* Bow left loop */}
+          {}
           <ellipse cx="42" cy="30" rx="18" ry="12" fill="url(#gBow)" transform="rotate(-22 42 30)" />
-          {/* Bow right loop */}
+          {}
           <ellipse cx="78" cy="30" rx="18" ry="12" fill="url(#gBow)" transform="rotate(22 78 30)" />
-          {/* Bow center knot */}
+          {}
           <circle cx="60" cy="36" r="9" fill="url(#gBow)" />
           <circle cx="60" cy="36" r="5" fill="url(#gBowInner)" />
-          {/* Star accent */}
+          {}
           <path d="M18 28 L20 22 L22 28 L28 26 L23 31 L25 37 L20 33 L15 37 L17 31 L12 26 Z"
             fill="rgba(255,220,240,0.55)" />
         </g>
@@ -339,7 +331,7 @@ function GiftBox({ onClick, opening, btnRef }) {
   );
 }
 
-// ── Main MemoryGame ──────────────────────────────────────────
+
 export default function MemoryGame({ couple, onComplete, isEditing = false, onContentChange }) {
   const gamePhotos = couple?.memoryGamePhotos?.filter(p => p?.url?.trim()).length
     ? couple.memoryGamePhotos.filter(p => p?.url?.trim())
@@ -350,11 +342,11 @@ export default function MemoryGame({ couple, onComplete, isEditing = false, onCo
   const pc       = couple?.pageContent?.memoryGame || {};
   const eyebrow  = pc.eyebrow  ?? 'Mini game';
   const mgTitle  = pc.title    ?? "Let's play a little game";
-  const subtitle = pc.subtitle ?? 'Find all matching pairs to unlock your love page';
+  const subtitle = pc.subtitle ?? 'Find all matching pairs to unlock my Surprise';
   const hintTxt  = pc.hint     ?? 'Tap two cards to find matching pairs';
   const savePC   = (field, val) => onContentChange?.({ ...pc, [field]: val });
 
-  // ── Edit: 6 photo slots saved to couple.memoryGamePhotos ──
+  
   const SLOTS = 6;
   const savedSlots = couple?.memoryGamePhotos || [];
   const fileRefs   = useRef(Array.from({ length: SLOTS }, () => null));
@@ -382,7 +374,7 @@ export default function MemoryGame({ couple, onComplete, isEditing = false, onCo
     onContentChange?.({ ...pc, __memoryGamePhotos: updated });
   };
 
-  // ── Visitor: card game state ──
+  
   const [cards]   = useState(() => buildCards(photos));
   const [flipped, setFlipped] = useState([]);
   const [matched, setMatched] = useState([]);
@@ -434,7 +426,7 @@ export default function MemoryGame({ couple, onComplete, isEditing = false, onCo
           {!isEditing && `, ${name1}!`}
         </p>
 
-        {/* ── EDIT MODE: photo slot picker ── */}
+        {}
         {isEditing ? (
           <div className="mg-edit-slots">
             <p className="mg-edit-slots-label">
@@ -449,7 +441,6 @@ export default function MemoryGame({ couple, onComplete, isEditing = false, onCo
                   fileRef={el => { fileRefs.current[i] = el; }}
                   onPick={() => fileRefs.current[i]?.click()}
                   onRemove={() => removeSlot(i)}
-                  onChange={() => {}}
                   onConfirm={(key) => {
                     const updated = Array.from({ length: SLOTS }, (_, idx) => ({
                       url:   savedSlots[idx]?.url   || '',
@@ -463,7 +454,7 @@ export default function MemoryGame({ couple, onComplete, isEditing = false, onCo
             </div>
           </div>
         ) : (
-          /* ── VISITOR MODE: actual card game ── */
+          
           <>
             <div className="mg-moves">Moves: {moves}</div>
             <div className="mg-grid">
@@ -507,66 +498,135 @@ export default function MemoryGame({ couple, onComplete, isEditing = false, onCo
       </div>
 
       {!isEditing && (
-        <button className="mg-skip" onClick={onComplete}>skip game</button>
+        <button className="mg-skip" onClick={onComplete}></button>
       )}
     </div>
   );
 }
 
-/* ── SlotPicker — one editable photo card for the memory game ── */
-function SlotPicker({ index, url, fileRef, onPick, onRemove, onChange, onConfirm }) {
-  const resolved = useImageUrl(url);
-  const [cropSrc, setCropSrc] = useState(null);
 
-  const handleFile = (e) => {
+function SlotPicker({ index, url, fileRef, onPick, onRemove, onConfirm }) {
+  const resolved   = useImageUrl(url);
+  const imgRef     = useRef(null);
+  const zoomValRef = useRef(null);
+  const translateRef = useRef({ x: 0, y: 0 });  
+  const scaleRef   = useRef(1);
+  const dragging   = useRef(false);
+  const dragStart  = useRef({ mx: 0, my: 0, tx: 0, ty: 0 });
+
+  const applyTransform = () => {
+    if (!imgRef.current) return;
+    const { x, y } = translateRef.current;
+    imgRef.current.style.transform = `translate(${x}px, ${y}px) scale(${scaleRef.current})`;
+    if (zoomValRef.current) {
+      zoomValRef.current.textContent = `${Math.round(scaleRef.current * 100)}%`;
+    }
+  };
+
+  const onMouseDown = (e) => {
+    if (!resolved) return;
+    e.preventDefault(); e.stopPropagation();
+    dragging.current = true;
+    if (imgRef.current) imgRef.current.style.cursor = 'grabbing';
+    dragStart.current = {
+      mx: e.clientX, my: e.clientY,
+      tx: translateRef.current.x, ty: translateRef.current.y,
+    };
+
+    const onMove = (mv) => {
+      if (!dragging.current) return;
+      translateRef.current = {
+        x: dragStart.current.tx + (mv.clientX - dragStart.current.mx),
+        y: dragStart.current.ty + (mv.clientY - dragStart.current.my),
+      };
+      applyTransform();
+    };
+    const onUp = () => {
+      dragging.current = false;
+      if (imgRef.current) imgRef.current.style.cursor = 'grab';
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
+  const onWheel = (e) => {
+    if (!resolved) return;
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault(); e.stopPropagation();
+    scaleRef.current = Math.max(0.5, Math.min(4, parseFloat((scaleRef.current - e.deltaY * 0.002).toFixed(3))));
+    applyTransform();
+  };
+
+  const zoom = (delta) => {
+    scaleRef.current = Math.max(0.5, Math.min(4, parseFloat((scaleRef.current + delta).toFixed(3))));
+    applyTransform();
+  };
+
+  const handleFile = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
-    setCropSrc(URL.createObjectURL(file));
+    try {
+      const key = await saveImage(file);
+      translateRef.current = { x: 0, y: 0 };
+      scaleRef.current = 1;
+      onConfirm(key);
+    } catch (err) { console.error(err); }
     e.target.value = '';
   };
 
   return (
-    <>
-      <div className="mg-slot">
-        <div
-          className={`mg-slot-img ${resolved ? 'mg-slot-img--filled' : ''}`}
-          onClick={onPick}
-          title="Click to add photo"
-        >
-          {resolved ? (
-            <>
-              <img src={resolved} alt={`pair ${index + 1}`}/>
-              <div className="mg-slot-overlay"><span>Replace</span></div>
-              <button
-                className="mg-slot-remove"
-                onClick={e => { e.stopPropagation(); onRemove(); }}
-                title="Remove photo"
-              >✕</button>
-            </>
-          ) : (
-            <div className="mg-slot-empty">
-              <span className="mg-slot-plus">+</span>
-              <span className="mg-slot-pair-label">Pair {index + 1}</span>
+    <div className="mg-slot">
+      <div
+        className={`mg-slot-img ${resolved ? 'mg-slot-img--filled' : ''}`}
+        onClick={!resolved ? onPick : undefined}
+        onWheel={resolved ? onWheel : undefined}
+        title={resolved ? 'Drag to reposition · Scroll to zoom' : 'Click to add photo'}
+      >
+        {resolved ? (
+          <>
+            <img
+              ref={imgRef}
+              src={resolved}
+              alt={`pair ${index + 1}`}
+              style={{
+                width:'100%', height:'100%', objectFit:'contain', display:'block',
+                background:'#1a0a0e',
+                transform: `translate(0px, 0px) scale(${scaleRef.current})`,
+                transformOrigin: 'center center',
+                cursor: 'grab',
+              }}
+              onMouseDown={onMouseDown}
+              onDoubleClick={onPick}
+              draggable={false}
+            />
+            {}
+            <div className="mg-slot-zoom-btns" onClick={e => e.stopPropagation()}>
+              <button className="mg-slot-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(0.1); }}>＋</button>
+              <span ref={zoomValRef} className="mg-slot-zoom-val">100%</span>
+              <button className="mg-slot-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(-0.1); }}>－</button>
             </div>
-          )}
-        </div>
-        <input ref={fileRef} type="file" accept="image/*" style={{ display:'none' }} onChange={handleFile}/>
+            <div className="mg-slot-drag-hint">✥ drag · ctrl+scroll · dbl-click to replace</div>
+            <button
+              className="mg-slot-remove"
+              onClick={e => { e.stopPropagation(); onRemove(); }}
+              title="Remove photo"
+            >✕</button>
+          </>
+        ) : (
+          <div className="mg-slot-empty">
+            <span className="mg-slot-plus">+</span>
+            <span className="mg-slot-pair-label">Pair {index + 1}</span>
+          </div>
+        )}
       </div>
-
-      {cropSrc && (
-        <ImageCropper
-          src={cropSrc}
-          aspect={1}
-          onConfirm={(key) => {
-            URL.revokeObjectURL(cropSrc);
-            setCropSrc(null);
-            onConfirm(key);
-          }}
-          onCancel={() => {
-            URL.revokeObjectURL(cropSrc);
-            setCropSrc(null);
-          }}
-        />
-      )}
-    </>
+      <input
+        ref={fileRef}
+        type="file" accept="image/*"
+        style={{ display:'none' }}
+        onChange={handleFile}
+        onDoubleClick={resolved ? onPick : undefined}
+      />
+    </div>
   );
 }

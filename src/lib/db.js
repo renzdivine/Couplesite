@@ -1,26 +1,14 @@
-// ─────────────────────────────────────────────────────────────
-// db.js — All Supabase database operations for HeartLink
-//
-// Tables:
-//   master_admin  — one row, website owner credentials
-//   clients       — client accounts (one per couple page)
-//   couples       — couple pages / love websites
-//
-// Security: clients have a session_token that locks their
-// account to one active session. New login revokes the old one.
-// ─────────────────────────────────────────────────────────────
-
 import { supabase } from './supabase';
 
-/* ─── small helpers ─── */
+
 const rand = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-/** Generate a secure session token */
+
 function generateSessionToken() {
   return `hl_${rand()}_${rand()}`;
 }
 
-/** Strip base64 data: URLs from an object before saving to DB */
+
 function stripBase64(obj) {
   if (typeof obj === 'string') {
     return obj.startsWith('data:') ? '[image:idb]' : obj;
@@ -34,11 +22,9 @@ function stripBase64(obj) {
   return obj;
 }
 
-/* ════════════════════════════════════════
-   MASTER ADMIN
-════════════════════════════════════════ */
 
-/** Verify master admin credentials */
+
+
 export async function masterAdminLogin(username, password) {
   const { data, error } = await supabase
     .from('master_admin')
@@ -51,22 +37,33 @@ export async function masterAdminLogin(username, password) {
   return { success: true };
 }
 
-/* ════════════════════════════════════════
-   CLIENTS
-════════════════════════════════════════ */
 
-/** Load all clients (master admin only) */
+
+
 export async function fetchClients() {
   const { data, error } = await supabase
     .from('clients')
-    .select('id, gmail, display_name, activation_code, activated, active, approved, created_at, subscription, expires_at, couple_slug')
+    .select('id, gmail, display_name, activation_code, activated, active, approved, created_at, subscription, expires_at, couple_slug, deleted_at')
+    .is('deleted_at', null)
     .order('created_at', { ascending: false });
 
   if (error) { console.error('fetchClients error:', error); return []; }
   return data.map(normalizeClient);
 }
 
-/** Check if an activation code is valid and unused */
+
+export async function fetchTrashedClients() {
+  const { data, error } = await supabase
+    .from('clients')
+    .select('id, gmail, display_name, activation_code, activated, active, approved, created_at, subscription, expires_at, couple_slug, deleted_at')
+    .not('deleted_at', 'is', null)
+    .order('deleted_at', { ascending: false });
+
+  if (error) { console.error('fetchTrashedClients error:', error); return []; }
+  return data.map(normalizeClient);
+}
+
+
 export async function validateActivationCode(code) {
   const { data, error } = await supabase
     .from('clients')
@@ -79,12 +76,12 @@ export async function validateActivationCode(code) {
   return { valid: true, client: normalizeClient(data) };
 }
 
-/** Client self-registers with Gmail + password + activation code */
+
 export async function clientRegister(gmail, password, activationCode) {
   const check = await validateActivationCode(activationCode);
   if (!check.valid) return { success: false, error: check.error };
 
-  // Check if Gmail is already taken
+  
   const { data: existing } = await supabase
     .from('clients')
     .select('id')
@@ -108,11 +105,7 @@ export async function clientRegister(gmail, password, activationCode) {
   return { success: true };
 }
 
-/**
- * Client logs in with Gmail + password.
- * Security: issues a new session_token, invalidating any previous session.
- * One active session per account at all times.
- */
+
 export async function clientLogin(gmail, password) {
   const { data: client, error } = await supabase
     .from('clients')
@@ -125,7 +118,7 @@ export async function clientLogin(gmail, password) {
   if (!client.active)    return { success: false, error: 'Your account has been disabled. Contact support.' };
   if (!client.approved)  return { success: false, error: 'Your account is pending approval.' };
 
-  // Issue a fresh session token — this invalidates any other open session
+  
   const token = generateSessionToken();
   const now   = new Date().toISOString();
 
@@ -148,10 +141,7 @@ export async function clientLogin(gmail, password) {
   return { success: true, session };
 }
 
-/**
- * Validate that a stored session token is still the active one for this client.
- * Returns true if valid, false if another device has logged in.
- */
+
 export async function validateClientSession(clientId, sessionToken) {
   if (!clientId || !sessionToken) return false;
 
@@ -166,10 +156,10 @@ export async function validateClientSession(clientId, sessionToken) {
   return data.session_token === sessionToken;
 }
 
-/** Revoke a client's session (logout) */
+
 export async function clientLogout(clientId, sessionToken) {
   if (!clientId) return;
-  // Only clear if this token is still the current one
+  
   await supabase
     .from('clients')
     .update({ session_token: null, session_created: null })
@@ -177,7 +167,7 @@ export async function clientLogout(clientId, sessionToken) {
     .eq('session_token', sessionToken ?? '');
 }
 
-/** Create a new client (master admin) */
+
 export async function createClient(data) {
   const tag  = (data.displayName || data.gmail || '').replace(/\s+/g, '').toUpperCase().slice(0, 4) || 'USER';
   const rand4 = Math.random().toString(36).slice(2, 6).toUpperCase();
@@ -200,11 +190,11 @@ export async function createClient(data) {
   };
 
   const { error } = await supabase.from('clients').insert(newClient);
-  if (error) { console.error('createClient error:', error); return null; }
+  if (error) { console.error('createClient error:', error.message, error.details, error.hint); return null; }
   return normalizeClient({ ...newClient });
 }
 
-/** Update a client (master admin) */
+
 export async function updateClient(clientId, updates) {
   const mapped = {};
   if ('displayName'  in updates) mapped.display_name    = updates.displayName;
@@ -216,16 +206,37 @@ export async function updateClient(clientId, updates) {
   if ('password'     in updates) mapped.password         = updates.password;
 
   const { error } = await supabase.from('clients').update(mapped).eq('id', clientId);
-  if (error) console.error('updateClient error:', error);
+  if (error) {
+    console.error('updateClient error:', error);
+    throw error; 
+  }
 }
 
-/** Delete a client */
+
 export async function deleteClient(clientId) {
-  const { error } = await supabase.from('clients').delete().eq('id', clientId);
+  const { error } = await supabase
+    .from('clients')
+    .update({ deleted_at: new Date().toISOString(), active: false, session_token: null })
+    .eq('id', clientId);
   if (error) console.error('deleteClient error:', error);
 }
 
-/** Regenerate activation code (resets registration) */
+
+export async function restoreClient(clientId) {
+  const { error } = await supabase
+    .from('clients')
+    .update({ deleted_at: null, active: true })
+    .eq('id', clientId);
+  if (error) console.error('restoreClient error:', error);
+}
+
+
+export async function permanentDeleteClient(clientId) {
+  const { error } = await supabase.from('clients').delete().eq('id', clientId);
+  if (error) console.error('permanentDeleteClient error:', error);
+}
+
+
 export async function regenerateActivationCode(clientId, displayName) {
   const tag  = (displayName || '').replace(/\s+/g, '').toUpperCase().slice(0, 4) || 'USER';
   const rand4 = Math.random().toString(36).slice(2, 6).toUpperCase();
@@ -240,26 +251,90 @@ export async function regenerateActivationCode(clientId, displayName) {
   return newCode;
 }
 
-/* ════════════════════════════════════════
-   COUPLES
-════════════════════════════════════════ */
 
-/** Load all couples */
+
+
+
+const RL_KEY = 'hl_rl'; 
+const RL_MAX_ATTEMPTS = 5;
+const RL_WINDOW_MS    = 15 * 60 * 1000; 
+
+function getRLState() {
+  try { return JSON.parse(localStorage.getItem(RL_KEY) || '{}'); } catch { return {}; }
+}
+
+function setRLState(state) {
+  try { localStorage.setItem(RL_KEY, JSON.stringify(state)); } catch {}
+}
+
+
+function checkRateLimit(slug) {
+  const now   = Date.now();
+  const state = getRLState();
+  const entry = state[slug] || { count: 0, firstAt: now, lockedUntil: 0 };
+
+  
+  if (entry.lockedUntil && now < entry.lockedUntil) {
+    return { allowed: false, retryAfterMs: entry.lockedUntil - now };
+  }
+
+  
+  if (now - entry.firstAt > RL_WINDOW_MS) {
+    entry.count   = 0;
+    entry.firstAt = now;
+    entry.lockedUntil = 0;
+  }
+
+  entry.count += 1;
+
+  if (entry.count > RL_MAX_ATTEMPTS) {
+    entry.lockedUntil = now + RL_WINDOW_MS;
+    state[slug] = entry;
+    setRLState(state);
+    return { allowed: false, retryAfterMs: RL_WINDOW_MS };
+  }
+
+  state[slug] = entry;
+  setRLState(state);
+  return { allowed: true, attemptsLeft: RL_MAX_ATTEMPTS - entry.count };
+}
+
+
+function clearRateLimit(slug) {
+  const state = getRLState();
+  delete state[slug];
+  setRLState(state);
+}
+
+
 export async function fetchCouples() {
   const { data, error } = await supabase
     .from('couples')
-    .select('*')
+    .select('id, slug, name1, name2, relationship_date, theme, package, tagline, active, created_at, qr_generated, photos, letters_photos, letters, songs, timeline, monthsary_messages, time_capsule, page_content, video_slideshow, bouquet, memory_game_photos, bg_music, deleted_at')
+    .is('deleted_at', null)
     .order('created_at', { ascending: false });
 
   if (error) { console.error('fetchCouples error:', error); return []; }
   return data.map(normalizeCouple);
 }
 
-/** Load a single couple by slug */
+
+export async function fetchTrashedCouples() {
+  const { data, error } = await supabase
+    .from('couples')
+    .select('id, slug, name1, name2, relationship_date, theme, package, tagline, active, created_at, qr_generated, photos, deleted_at')
+    .not('deleted_at', 'is', null)
+    .order('deleted_at', { ascending: false });
+
+  if (error) { console.error('fetchTrashedCouples error:', error); return []; }
+  return data.map(normalizeCouple);
+}
+
+
 export async function fetchCoupleBySlug(slug) {
   const { data, error } = await supabase
     .from('couples')
-    .select('*')
+    .select('id, slug, name1, name2, relationship_date, theme, package, tagline, active, created_at, qr_generated, photos, letters_photos, letters, songs, timeline, monthsary_messages, time_capsule, page_content, video_slideshow, bouquet, memory_game_photos, bg_music')
     .eq('slug', slug)
     .single();
 
@@ -267,20 +342,42 @@ export async function fetchCoupleBySlug(slug) {
   return normalizeCouple(data);
 }
 
-/** Verify a visitor's access code */
+
 export async function coupleLogin(slug, code) {
+  
+  const rl = checkRateLimit(slug);
+  if (!rl.allowed) {
+    const mins = Math.ceil(rl.retryAfterMs / 60000);
+    return { error: `Too many attempts. Try again in ${mins} minute${mins !== 1 ? 's' : ''}.` };
+  }
+
   const { data, error } = await supabase
     .from('couples')
-    .select('slug, name1, name2, access_code')
+    .select('slug, name1, name2, access_code, active')
     .eq('slug', slug)
-    .eq('access_code', code)
     .single();
 
-  if (error || !data) return null;
-  return { slug: data.slug, name: `${data.name1} & ${data.name2}` };
+  
+  if (error || !data) return { error: 'Wrong code. Try again.' };
+
+  
+  if (!data.active) return { error: 'This page is not available.' };
+
+  
+  if (data.access_code !== code) return { error: 'Wrong code. Try again.' };
+
+  
+  clearRateLimit(slug);
+  const visitorToken = `vt_${rand()}_${rand()}`;
+  return {
+    slug:         data.slug,
+    name:         `${data.name1} & ${data.name2}`,
+    visitorToken,
+    issuedAt:     Date.now(),
+  };
 }
 
-/** Add a new couple page */
+
 export async function addCouple(coupleData) {
   const row = {
     id:                coupleData.slug,
@@ -308,13 +405,13 @@ export async function addCouple(coupleData) {
   };
 
   const { error } = await supabase.from('couples').insert(row);
-  if (error) { console.error('addCouple error:', error); return null; }
+  if (error) { console.error('addCouple error:', error.message, error.details, error.hint); return null; }
   return normalizeCouple(row);
 }
 
-/** Update couple data — merges with existing */
+
 export async function updateCouple(slug, updates) {
-  // Map camelCase keys → snake_case columns
+  
   const mapped = {};
   if ('photos'           in updates) mapped.photos            = stripBase64(updates.photos);
   if ('lettersPhotos'    in updates) mapped.letters_photos    = stripBase64(updates.lettersPhotos);
@@ -329,8 +426,9 @@ export async function updateCouple(slug, updates) {
   if ('active'           in updates) mapped.active            = updates.active;
   if ('bouquet'          in updates) mapped.bouquet           = updates.bouquet;
   if ('memoryGamePhotos' in updates) mapped.memory_game_photos= stripBase64(updates.memoryGamePhotos);
+  if ('bgMusic'         in updates) mapped.bg_music           = updates.bgMusic;
 
-  // pageContent is merged (not replaced)
+  
   if ('pageContent' in updates) {
     const { data: current } = await supabase
       .from('couples')
@@ -347,20 +445,36 @@ export async function updateCouple(slug, updates) {
   if (error) console.error('updateCouple error:', error);
 }
 
-/** Delete a couple page */
+
 export async function deleteCouple(slug) {
-  const { error } = await supabase.from('couples').delete().eq('slug', slug);
+  const { error } = await supabase
+    .from('couples')
+    .update({ deleted_at: new Date().toISOString(), active: false })
+    .eq('slug', slug);
   if (error) console.error('deleteCouple error:', error);
 }
 
-/** Save bouquet data */
+
+export async function restoreCouple(slug) {
+  const { error } = await supabase
+    .from('couples')
+    .update({ deleted_at: null, active: true })
+    .eq('slug', slug);
+  if (error) console.error('restoreCouple error:', error);
+}
+
+
+export async function permanentDeleteCouple(slug) {
+  const { error } = await supabase.from('couples').delete().eq('slug', slug);
+  if (error) console.error('permanentDeleteCouple error:', error);
+}
+
+
 export async function saveBouquet(slug, quantities, seed) {
   await updateCouple(slug, { bouquet: { quantities, seed } });
 }
 
-/* ════════════════════════════════════════
-   NORMALIZERS  (DB snake_case → app camelCase)
-════════════════════════════════════════ */
+
 
 function normalizeClient(c) {
   return {
@@ -377,6 +491,7 @@ function normalizeClient(c) {
     expiresAt:      c.expires_at ?? '',
     coupleSlug:     c.couple_slug ?? '',
     sessionToken:   c.session_token ?? null,
+    deletedAt:      c.deleted_at ?? null,
   };
 }
 
@@ -387,7 +502,7 @@ function normalizeCouple(c) {
     name1:                c.name1,
     name2:                c.name2,
     relationshipDate:     c.relationship_date ?? c.relationshipDate ?? '',
-    accessCode:           c.access_code ?? c.accessCode ?? '',
+    
     theme:                c.theme ?? 'rose',
     package:              c.package ?? 'Basic',
     tagline:              c.tagline ?? '',
@@ -405,7 +520,9 @@ function normalizeCouple(c) {
     videoSlideshow:       c.video_slideshow ?? c.videoSlideshow ?? null,
     bouquet:              c.bouquet ?? {},
     memoryGamePhotos:     c.memory_game_photos ?? c.memoryGamePhotos ?? [],
-    // Legacy: song field mapped from first songs entry
+    bgMusic:              c.bg_music ?? c.bgMusic ?? null,
+    deletedAt:            c.deleted_at ?? c.deletedAt ?? null,
+    
     song: (c.songs ?? [])[0] ?? {},
   };
 }

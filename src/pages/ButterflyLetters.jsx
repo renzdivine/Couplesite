@@ -1,11 +1,141 @@
 import { useState, useEffect, useRef, useCallback, memo, Component } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { EditableText, EditablePhoto } from '../components/EditableField';
+import { EditableText } from '../components/EditableField';
 import { saveImage } from '../utils/imageStore';
 import { useImageUrl } from '../utils/useImageUrl';
 import CoverHero from '../components/CoverHero';
 import '../styles/pages/ButterflyLetters.css';
+
+/* ─── DraggablePhoto — drag to pan, ctrl+scroll to zoom, ✕ to remove ── */
+function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing = false, onReplace, onRemove, objectFit = 'contain' }) {
+  const resolved     = useImageUrl(src);
+  const imgRef       = useRef(null);
+  const fileRef      = useRef(null);
+  const zoomValRef   = useRef(null);
+  const translateRef = useRef({ x: 0, y: 0 });
+  const scaleRef     = useRef(1);
+  const dragging     = useRef(false);
+  const dragStart    = useRef({ mx: 0, my: 0, tx: 0, ty: 0 });
+
+  const prevSrc = useRef(src);
+  if (src !== prevSrc.current) {
+    prevSrc.current = src;
+    translateRef.current = { x: 0, y: 0 };
+    scaleRef.current = 1;
+  }
+
+  const applyTransform = useCallback(() => {
+    if (!imgRef.current) return;
+    const { x, y } = translateRef.current;
+    imgRef.current.style.transform = `translate(${x}px, ${y}px) scale(${scaleRef.current})`;
+    if (zoomValRef.current) {
+      zoomValRef.current.textContent = `${Math.round(scaleRef.current * 100)}%`;
+    }
+  }, []);
+
+  const onMouseDown = useCallback((e) => {
+    if (!isEditing || !resolved) return;
+    e.preventDefault(); e.stopPropagation();
+    dragging.current = true;
+    if (imgRef.current) imgRef.current.style.cursor = 'grabbing';
+    dragStart.current = { mx: e.clientX, my: e.clientY, tx: translateRef.current.x, ty: translateRef.current.y };
+    const onMove = (mv) => {
+      if (!dragging.current) return;
+      translateRef.current = {
+        x: dragStart.current.tx + (mv.clientX - dragStart.current.mx),
+        y: dragStart.current.ty + (mv.clientY - dragStart.current.my),
+      };
+      applyTransform();
+    };
+    const onUp = () => {
+      dragging.current = false;
+      if (imgRef.current) imgRef.current.style.cursor = 'grab';
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [isEditing, resolved, applyTransform]);
+
+  const onWheel = useCallback((e) => {
+    if (!isEditing || !resolved) return;
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault(); e.stopPropagation();
+    scaleRef.current = Math.max(0.5, Math.min(4, parseFloat((scaleRef.current - e.deltaY * 0.002).toFixed(3))));
+    applyTransform();
+  }, [isEditing, resolved, applyTransform]);
+
+  const zoom = (delta) => {
+    scaleRef.current = Math.max(0.5, Math.min(4, parseFloat((scaleRef.current + delta).toFixed(3))));
+    applyTransform();
+  };
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    e.target.value = '';
+    const key = await saveImage(file);
+    translateRef.current = { x: 0, y: 0 };
+    scaleRef.current = 1;
+    onReplace?.(key);
+  };
+
+  const isDraggable = isEditing && !!resolved;
+
+  if (!isEditing && !resolved) {
+    return (
+      <div style={{ background: '#c9adb5', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', ...style }}>
+        <svg width="28" height="24" viewBox="0 0 28 24" fill="none"><path d="M10 4L8 7H3a2 2 0 00-2 2v11a2 2 0 002 2h22a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-3H10z" stroke="rgba(120,85,95,0.55)" strokeWidth="1.4" fill="rgba(180,140,150,0.18)" strokeLinejoin="round"/><circle cx="14" cy="14" r="4" stroke="rgba(120,85,95,0.55)" strokeWidth="1.4" fill="none"/><circle cx="14" cy="14" r="1.5" fill="rgba(120,85,95,0.4)"/></svg>
+      </div>
+    );
+  }
+
+  if (!isEditing && resolved) {
+    return <img src={resolved} alt={alt} className={className} style={{ width: '100%', height: '100%', objectFit: objectFit, display: 'block', background: '#1a0a0e', ...style }} loading="lazy" decoding="async"/>;
+  }
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}
+      onWheel={isDraggable ? onWheel : undefined}
+    >
+      {resolved ? (
+        <>
+          <img
+            ref={imgRef}
+            src={resolved} alt={alt} className={className}
+            style={{ width: '100%', height: '100%', objectFit: objectFit, display: 'block', background: '#1a0a0e', transform: 'translate(0px,0px) scale(1)', transformOrigin: 'center center', cursor: 'grab' }}
+            onMouseDown={onMouseDown}
+            onDoubleClick={() => fileRef.current?.click()}
+            draggable={false}
+          />
+          {/* zoom controls */}
+          <div className="bl-dp-zoom-btns" onClick={e => e.stopPropagation()}>
+            <button className="bl-dp-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(0.1); }}>＋</button>
+            <span ref={zoomValRef} className="bl-dp-zoom-val">100%</span>
+            <button className="bl-dp-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(-0.1); }}>－</button>
+          </div>
+          <div className="bl-dp-drag-hint">✥ drag · ctrl+scroll · dbl-click to replace</div>
+          {/* remove button */}
+          <button className="bl-dp-remove-btn" onClick={e => { e.stopPropagation(); onRemove?.(); }} title="Remove photo">✕</button>
+        </>
+      ) : (
+        <div
+          className="bl-dp-placeholder"
+          onClick={() => fileRef.current?.click()}
+          title="Click to add photo"
+        >
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+            <circle cx="18" cy="18" r="17" fill="rgba(233,30,140,0.15)" stroke="rgba(233,30,140,0.7)" strokeWidth="1.8" strokeDasharray="4 3"/>
+            <line x1="18" y1="10" x2="18" y2="26" stroke="rgba(233,30,140,1)" strokeWidth="2.5" strokeLinecap="round"/>
+            <line x1="10" y1="18" x2="26" y2="18" stroke="rgba(233,30,140,1)" strokeWidth="2.5" strokeLinecap="round"/>
+          </svg>
+          <span style={{ fontSize: '0.6rem', fontFamily: 'system-ui,sans-serif', color: 'rgba(233,30,140,0.9)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 4 }}>Click to add</span>
+        </div>
+      )}
+      <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFile}/>
+    </div>
+  );
+}
 
 /* ─── Error boundary — catches any render crash ─────────────── */
 class BookErrorBoundary extends Component {
@@ -30,18 +160,34 @@ class BookErrorBoundary extends Component {
 }
 
 /* ─── Photo component ───────────────────────────────────────── */
-function Photo({ src, alt = '', className = '' }) {
-  const resolved = useImageUrl(src);
-  if (resolved) return <img src={resolved} alt={alt} className={`bl-photo ${className}`} loading="lazy" decoding="async" />;
+function PhotoPlaceholder({ className = '', style = {}, isEditing = false }) {
   return (
-    <div className={`bl-photo bl-photo-empty ${className}`}>
-      <svg viewBox="0 0 40 32" fill="none">
-        <rect width="40" height="32" rx="2" fill="rgba(0,0,0,0.08)" />
-        <circle cx="14" cy="12" r="4" fill="rgba(0,0,0,0.15)" />
-        <path d="M4 28 L14 16 L22 24 L28 18 L36 28Z" fill="rgba(0,0,0,0.1)" />
-      </svg>
+    <div className={`bl-photo bl-photo-empty ${className}`} style={{ background: '#c9adb5', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, ...style }}>
+      {isEditing ? (
+        <>
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="16" cy="16" r="15" fill="rgba(233,30,140,0.18)" stroke="rgba(233,30,140,0.6)" strokeWidth="1.5" strokeDasharray="4 3"/>
+            <line x1="16" y1="9" x2="16" y2="23" stroke="rgba(233,30,140,0.9)" strokeWidth="2" strokeLinecap="round"/>
+            <line x1="9" y1="16" x2="23" y2="16" stroke="rgba(233,30,140,0.9)" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+          <span style={{ fontSize: '0.6rem', fontFamily: 'system-ui,sans-serif', color: 'rgba(120,50,70,0.85)', fontWeight: 600, textAlign: 'center', lineHeight: 1.3, padding: '0 6px' }}>Add Photo</span>
+        </>
+      ) : (
+        <svg width="28" height="24" viewBox="0 0 28 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="28" height="24" rx="3" fill="rgba(255,255,255,0.0)"/>
+          <path d="M10 4L8 7H3a2 2 0 00-2 2v11a2 2 0 002 2h22a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-3H10z" stroke="rgba(120,85,95,0.55)" strokeWidth="1.4" fill="rgba(180,140,150,0.18)" strokeLinejoin="round"/>
+          <circle cx="14" cy="14" r="4" stroke="rgba(120,85,95,0.55)" strokeWidth="1.4" fill="none"/>
+          <circle cx="14" cy="14" r="1.5" fill="rgba(120,85,95,0.4)"/>
+        </svg>
+      )}
     </div>
   );
+}
+
+function Photo({ src, alt = '', className = '', isEditing = false }) {
+  const resolved = useImageUrl(src);
+  if (resolved) return <img src={resolved} alt={alt} className={`bl-photo ${className}`} loading="lazy" decoding="async" />;
+  return <PhotoPlaceholder className={className} isEditing={isEditing}/>;
 }
 
 /* ─── Spiral spine — memoized, never re-renders ─────────────── */
@@ -87,67 +233,79 @@ const SpineDefs = memo(function SpineDefs() {
 });
 
 /* ─── Torn-paper rectangular photo — memoized ───────────────── */
-const TornPhoto = memo(function TornPhoto({ src, alt='', className='', rotate=0, isEditing=false, onReplace }) {
-  const resolved = useImageUrl(src);
+const TornPhoto = memo(function TornPhoto({ src, alt='', className='', rotate=0, isEditing=false, onReplace, onRemove }) {
   return (
-    <div className={`bl-torn-rect ${className}`} style={{ transform: `rotate(${rotate}deg)` }}>
+    <div
+      className={`bl-torn-rect ${className}`}
+      style={{ transform: `rotate(${rotate}deg)` }}
+    >
       <div className="bl-torn-rect-inner">
-        {isEditing ? (
-          <EditablePhoto src={src} alt={alt} className="bl-torn-img" isEditing={isEditing} onReplace={onReplace}/>
-        ) : resolved ? (
-          <img src={resolved} alt={alt} className="bl-torn-img" loading="lazy" decoding="async"/>
-        ) : (
-          <div className="bl-torn-img bl-photo-empty">
-            <svg viewBox="0 0 40 32" fill="none"><rect width="40" height="32" rx="2" fill="rgba(0,0,0,0.1)"/><circle cx="14" cy="12" r="4" fill="rgba(0,0,0,0.15)"/><path d="M4 28 L14 16 L22 24 L28 18 L36 28Z" fill="rgba(0,0,0,0.1)"/></svg>
-          </div>
-        )}
+        <DraggablePhoto
+          src={src} alt={alt}
+          className="bl-torn-img"
+          isEditing={isEditing}
+          onReplace={onReplace}
+          onRemove={onRemove}
+          objectFit="contain"
+        />
       </div>
     </div>
   );
 });
 
 /* ─── Torn-paper circular photo — memoized ──────────────────── */
-const TornCircle = memo(function TornCircle({ src, alt='', className='', size=200, rotate=0, isEditing=false, onReplace }) {
-  const resolved = useImageUrl(src);
+const TornCircle = memo(function TornCircle({ src, alt='', className='', size=200, rotate=0, isEditing=false, onReplace, onRemove }) {
   const uid = useRef(`tc${Math.random().toString(36).slice(2)}`).current;
   const border = size + 20;
+  const half = border / 2;
+
   return (
     <div
       className={`bl-torn-circle ${className}`}
-      style={{ width: size, height: size, transform: `rotate(${rotate}deg)` }}
+      style={{ width: size, height: size, transform: `rotate(${rotate}deg)`, position: 'relative', flexShrink: 0 }}
     >
+      {/* Photo clipped to circle — sits on top */}
+      <div style={{
+        position: 'absolute',
+        top: 0, left: 0,
+        width: size, height: size,
+        borderRadius: '50%',
+        overflow: 'hidden',
+        zIndex: 1,
+      }}>
+        <DraggablePhoto
+          src={src} alt={alt}
+          isEditing={isEditing}
+          onReplace={onReplace}
+          onRemove={onRemove}
+          objectFit="contain"
+          style={{ width: '100%', height: '100%' }}
+        />
+      </div>
+
+      {/* Torn paper ring — only the border, not the fill, sits on top of photo */}
       <svg
-        className="bl-torn-circle-svg"
         viewBox={`0 0 ${border} ${border}`}
         xmlns="http://www.w3.org/2000/svg"
-        xmlnsXlink="http://www.w3.org/1999/xlink"
-        style={{ position:'absolute', inset: -10, width: border, height: border }}
+        style={{ position:'absolute', inset: -10, width: border, height: border, pointerEvents: 'none', zIndex: 2 }}
+        aria-hidden="true"
       >
         <defs>
-          {/* clipPath still needs to be per-instance since it uses a unique id */}
-          <clipPath id={`${uid}clip`}>
-            <circle cx={border/2} cy={border/2} r={size/2}/>
-          </clipPath>
+          <mask id={`${uid}ring`}>
+            {/* white = show, black = hide */}
+            <rect width={border} height={border} fill="white"/>
+            {/* punch out the inner circle to show photo through */}
+            <circle cx={half} cy={half} r={size / 2 - 2} fill="black"/>
+          </mask>
         </defs>
-        {/* Reuse the shared filter defined once in SpineDefs */}
-        <circle cx={border/2} cy={border/2} r={border/2 - 1}
+        {/* Full circle with torn filter, masked to ring only */}
+        <circle
+          cx={half} cy={half} r={half - 1}
           fill="white"
-          style={{ filter: `url(#bl-torn-shared) drop-shadow(4px 7px 8px rgba(30,12,0,0.45))` }}/>
-        {resolved && (
-          <image href={resolved} x="10" y="10" width={size} height={size}
-            clipPath={`url(#${uid}clip)`} preserveAspectRatio="xMidYMid slice"/>
-        )}
-        {!resolved && (
-          <circle cx={border/2} cy={border/2} r={size/2}
-            clipPath={`url(#${uid}clip)`} fill="rgba(150,110,60,0.3)"/>
-        )}
+          mask={`url(#${uid}ring)`}
+          style={{ filter: `url(#bl-torn-shared) drop-shadow(4px 7px 8px rgba(30,12,0,0.45))` }}
+        />
       </svg>
-      {isEditing && (
-        <EditablePhoto src={src} alt={alt}
-          className="bl-circle-edit-overlay"
-          isEditing={isEditing} onReplace={onReplace}
-          style={{ position:'absolute', inset:0, borderRadius:'50%', opacity: 0 }}/>
-      )}
     </div>
   );
 });
@@ -191,17 +349,14 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
   const s         = (field, fallback) => lp[field] ?? fallback;
   const save      = (field, val) => onContentChange?.('lettersPage', { ...lp, [field]: val });
 
-  /* photo replace helper */
+  /* photo replace / remove helpers */
   const replacePhoto = (idx, key) => {
     const updated = [...photos];
     if (updated[idx]) updated[idx] = { ...updated[idx], url: key };
     else updated[idx] = { id: Date.now(), url: key, caption: '' };
     onContentChange?.('lettersPhotos', updated);
   };
-  const EP = ({ idx, className }) => (
-    <EditablePhoto src={p(idx)} alt="couple" className={className}
-      isEditing={isEditing} onReplace={key => replacePhoto(idx, key)}/>
-  );
+  const removePhoto = (idx) => replacePhoto(idx, '');
 
   /* ── Book state ─────────────────────────────────────────── */
   const TOTAL = 6; // pages 0–5
@@ -286,6 +441,8 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
             onChangeTitleWord2={v => save('coverTitle2',v)}
             onChangeSubtitle={v => save('coverSub',v)}
             isEditing={isEditing}
+            onReplacePhoto={k => replacePhoto(0, k)}
+            onRemovePhoto={() => removePhoto(0)}
           />
         </div>
 
@@ -321,7 +478,7 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
             {/* Right: photo */}
             <div className="bl-facts-right">
               <div className="bl-facts-photo-wrap">
-                <TornPhoto rotate={2} isEditing={isEditing} onReplace={k=>replacePhoto(1,k)}
+                <TornPhoto rotate={2} isEditing={isEditing} onReplace={k=>replacePhoto(1,k)} onRemove={()=>removePhoto(1)}
                   src={p(1)} alt="couple" className="bl-facts-photo"/>
               </div>
             </div>
@@ -342,10 +499,10 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
                 isEditing={isEditing} onChange={v=>save('msg1sig',v)}/>
             </WashiNote>
             {/* Photo 1 — top right */}
-            <TornPhoto rotate={4} isEditing={isEditing} onReplace={k=>replacePhoto(2,k)}
+            <TornPhoto rotate={4} isEditing={isEditing} onReplace={k=>replacePhoto(2,k)} onRemove={()=>removePhoto(2)}
               src={p(2)} alt="couple" className="bl-msg-photo-tr"/>
             {/* Photo 2 — bottom left */}
-            <TornPhoto rotate={-5} isEditing={isEditing} onReplace={k=>replacePhoto(3,k)}
+            <TornPhoto rotate={-5} isEditing={isEditing} onReplace={k=>replacePhoto(3,k)} onRemove={()=>removePhoto(3)}
               src={p(3)} alt="couple" className="bl-msg-photo-bl"/>
             {/* Note 2 — bottom right */}
             <WashiNote rotate={3} className="bl-note-2">
@@ -378,7 +535,7 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
           <div className="bl-page-content bl-wonderful-layout">
             {/* Top row */}
             <div className="bl-wonderful-top">
-              <TornCircle size={270} rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(4,k)}
+              <TornCircle size={270} rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(4,k)} onRemove={()=>removePhoto(4)}
                 src={p(4)} alt="couple" className="bl-circ-tl"/>
               <div className="bl-wonderful-text">
                 <EditableText as="h2" className="bl-script-xl bl-wonderful-h"
@@ -405,9 +562,9 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
                   ))}
                 </svg>
               </div>
-              <TornCircle size={260} rotate={2} isEditing={isEditing} onReplace={k=>replacePhoto(5,k)}
+              <TornCircle size={260} rotate={2} isEditing={isEditing} onReplace={k=>replacePhoto(5,k)} onRemove={()=>removePhoto(5)}
                 src={p(5)} alt="couple" className="bl-circ-bc"/>
-              <TornCircle size={255} rotate={-2} isEditing={isEditing} onReplace={k=>replacePhoto(6,k)}
+              <TornCircle size={255} rotate={-2} isEditing={isEditing} onReplace={k=>replacePhoto(6,k)} onRemove={()=>removePhoto(6)}
                 src={p(6)} alt="couple" className="bl-circ-br"/>
             </div>
           </div>
@@ -439,7 +596,7 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
                   ))}
                 </svg>
               </div>
-              <TornPhoto rotate={-4} isEditing={isEditing} onReplace={k=>replacePhoto(7,k)}
+              <TornPhoto rotate={-4} isEditing={isEditing} onReplace={k=>replacePhoto(7,k)} onRemove={()=>removePhoto(7)}
                 src={p(7)} alt="couple" className="bl-eternal-photo"/>
             </div>
           </div>
@@ -450,7 +607,7 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
           <Spine/>
           <div className="bl-page-content bl-thankyou-layout">
             {/* Large torn landscape photo */}
-            <TornPhoto rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(8,k)}
+            <TornPhoto rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(8,k)} onRemove={()=>removePhoto(8)}
               src={p(8)} alt="couple on bench" className="bl-ty-photo"/>
             {/* Right column: flowers + banner */}
             <div className="bl-ty-right-col">

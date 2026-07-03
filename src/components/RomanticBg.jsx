@@ -1,9 +1,7 @@
 import { useEffect, useRef } from 'react';
 import '../styles/components/RomanticBg.css';
 
-// Draws animated floating hearts, petals, and sparkles on a canvas
-// Props:
-//   bg  - CSS background value (image url or gradient). Defaults to redbg.png.
+
 export default function RomanticBg({ bg }) {
   const canvasRef = useRef(null);
 
@@ -110,7 +108,7 @@ export default function RomanticBg({ bg }) {
     let lastTime = 0;
     function animate(now) {
       animId = requestAnimationFrame(animate);
-      // Throttle to ~30fps — halves CPU/GPU draw calls
+      
       if (now - lastTime < 32) return;
       lastTime = now;
       ctx.clearRect(0, 0, canvas.width, canvas.height);

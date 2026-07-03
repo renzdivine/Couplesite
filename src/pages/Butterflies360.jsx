@@ -2,19 +2,20 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as THREE from 'three';
 import { useApp } from '../context/AppContext';
+import { useImageUrl } from '../utils/useImageUrl';
 import '../styles/pages/Butterflies360.css';
 
-/* ── species ────────────────────────────────────────────────────────────────── */
+
 const SPECIES = [
   { id: 0, label: 'Letters', emoji: '💌', uOffset: 0.00 },
   { id: 1, label: 'Photos',  emoji: '📸', uOffset: 0.25 },
-  { id: 2, label: 'Story',   emoji: '🎵', uOffset: 0.50 },
+  { id: 2, label: 'Songs',   emoji: '🎵', uOffset: 0.50 },
   { id: 3, label: 'Wishes',  emoji: '⭐', uOffset: 0.75 },
 ];
 
-/* ── config ─────────────────────────────────────────────────────────────────── */
+
 const CFG = {
-  count:            40,       // more butterflies
+  count:            80,       
   wingsSpeed:       2.5,
   wingsDisp:        1.6,
   noiseCoordScale:  0.003,
@@ -27,13 +28,13 @@ const CFG = {
   textureCount:     4,
 };
 
-/* ── seeded RNG ─────────────────────────────────────────────────────────────── */
+
 function seededRand(seed) {
   let s = seed;
   return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
 }
 
-/* ── value noise ────────────────────────────────────────────────────────────── */
+
 function fade(t) { return t * t * t * (t * (t * 6 - 15) + 10); }
 function lrp(a, b, t) { return a + t * (b - a); }
 const P = new Uint8Array(512);
@@ -62,16 +63,8 @@ function noise3(x, y, z) {
     w);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   VERTEX SHADER
-   ─ Single PlaneGeometry per butterfly. Body centre = x=0.
-   ─ abs(pos.x) = distance from body (0 at spine, max at wing tip).
-   ─ BOTH wings displace in the SAME +Z direction together, then come back:
-       pos.z += abs(pos.x) * beat * uDisp
-   ─ This makes left AND right wing go UP at the same time and DOWN at the same
-     time — a real butterfly flap seen from the front.
-─────────────────────────────────────────────────────────────────────────────── */
-const VERT = /* glsl */`
+
+const VERT = `
   uniform float uTime;
   uniform float uSpeed;
   uniform float uDisp;
@@ -97,8 +90,8 @@ const VERT = /* glsl */`
   }
 `;
 
-/* ── fragment shader ────────────────────────────────────────────────────────── */
-const FRAG = /* glsl */`
+
+const FRAG = `
   uniform sampler2D uTex;
   uniform vec3 uAmbient;
   uniform vec3 uDirLight;
@@ -116,24 +109,22 @@ const FRAG = /* glsl */`
   }
 `;
 
-/* ── Overlay ────────────────────────────────────────────────────────────────── */
-function Overlay({ name1, name2 }) {
+
+function Overlay({ overlayTitle, overlayHint }) {
   const [visible, setVisible] = useState(true);
   useEffect(() => { const t = setTimeout(() => setVisible(false), 4000); return () => clearTimeout(t); }, []);
   return (
     <div className={`bf360-overlay ${visible ? '' : 'bf360-overlay--hidden'}`}>
       <div className="bf360-overlay-inner">
         <div className="bf360-overlay-heart">🦋</div>
-        <h1 className="bf360-overlay-names">
-          {name1} <span className="bf360-overlay-amp">&amp;</span> {name2}
-        </h1>
-        <p className="bf360-overlay-hint">Drag to look around · tap a butterfly</p>
+        <h1 className="bf360-overlay-names">{overlayTitle}</h1>
+        <p className="bf360-overlay-hint">{overlayHint}</p>
       </div>
     </div>
   );
 }
 
-/* ── No-WebGL fallback ───────────────────────────────────────────────────────── */
+
 function NoWebGL({ onNavigate }) {
   return (
     <div className="bf360-no-webgl">
@@ -151,13 +142,18 @@ function NoWebGL({ onNavigate }) {
   );
 }
 
-/* ── Main ───────────────────────────────────────────────────────────────────── */
+
 export default function Butterflies360() {
   const navigate = useNavigate();
   const { coupleAuth, getCoupleBySlug } = useApp();
   const couple  = getCoupleBySlug(coupleAuth?.slug);
   const name1   = couple?.name1 || 'You';
   const name2   = couple?.name2 || 'Me';
+  const bf360   = couple?.pageContent?.butterfly360;
+  const overlayTitle = bf360?.overlayTitle || `Hello Baby`;
+  const overlayHint  = bf360?.overlayHint  || 'Drag to look around · tap a butterfly';
+  const panoBgKey    = bf360?.bgImage      || '/Flower.png';
+  const panoBg       = useImageUrl(panoBgKey) || panoBgKey; 
 
   const mountRef = useRef(null);
   const [noWebGL, setNoWebGL] = useState(false);
@@ -166,7 +162,7 @@ export default function Butterflies360() {
   const lon     = useRef(0);
   const lat     = useRef(0);
   const fov     = useRef(75);
-  const [hoverLabel, setHoverLabel] = useState(null); // { x, y, sp }
+  const [hoverLabel, setHoverLabel] = useState(null); 
 
   const handleNavigate = useCallback(id => navigate(`/butterfly/${id}`), [navigate]);
 
@@ -174,15 +170,15 @@ export default function Butterflies360() {
     const el = mountRef.current;
     if (!el) return;
 
-    /* WebGL check */
+    
     const tc = document.createElement('canvas');
     if (!tc.getContext('webgl') && !tc.getContext('experimental-webgl')) {
       setNoWebGL(true); return;
     }
 
-    /* Renderer — max quality */
+    
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));  // cap at 2x to avoid 3x/4x perf hit
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));  
     renderer.setSize(el.clientWidth, el.clientHeight);
     renderer.domElement.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
     el.appendChild(renderer.domElement);
@@ -191,24 +187,24 @@ export default function Butterflies360() {
     const camera = new THREE.PerspectiveCamera(fov.current, el.clientWidth / el.clientHeight, 0.1, 2000);
     camera.position.set(0, 0, 0.01);
 
-    /* Panorama sphere — 64×48 segments is plenty for a smooth curve */
+    
     const panoGeo = new THREE.SphereGeometry(800, 64, 48);
     panoGeo.scale(-1, 1, 1);
     const loader  = new THREE.TextureLoader();
-    const panoTex = loader.load('/Flower.png');
+    const panoTex = loader.load(panoBg);
     panoTex.colorSpace       = THREE.SRGBColorSpace;
-    panoTex.minFilter        = THREE.LinearMipmapLinearFilter;  // trilinear — sharpest
+    panoTex.minFilter        = THREE.LinearMipmapLinearFilter;  
     panoTex.magFilter        = THREE.LinearFilter;
-    panoTex.anisotropy       = renderer.capabilities.getMaxAnisotropy(); // max sharpness
+    panoTex.anisotropy       = renderer.capabilities.getMaxAnisotropy(); 
     panoTex.generateMipmaps  = true;
     const panoMat = new THREE.MeshBasicMaterial({ map: panoTex });
     scene.add(new THREE.Mesh(panoGeo, panoMat));
 
-    /* Butterfly spritesheet */
+    
     const bfTex = new THREE.TextureLoader().load('/butterflies.png');
     bfTex.colorSpace = THREE.SRGBColorSpace;
 
-    /* ── helper: build one butterfly mesh ────────────────────────────────── */
+    
     const makeBfly = (i, rng2, wingSize, radiusMin, radiusMax, elevRange, speedMult) => {
       const sp    = SPECIES[i % CFG.textureCount];
       const speed = CFG.wingsSpeed + (rng2() - 0.5) * 0.8;
@@ -259,9 +255,9 @@ export default function Butterflies360() {
       };
     };
 
-    /* near butterflies — 40 large ones close to viewer */
+    
     const rng  = seededRand(42);
-    const rng2 = seededRand(137); // independent seed for far layer
+    const rng2 = seededRand(137); 
     const bflies = [
       ...Array.from({ length: 40 }, (_, i) => makeBfly(i,    rng,  22, 60,  280, 160, 1.0)),
       ...Array.from({ length: 15 }, (_, i) => makeBfly(i+40, rng2,  9, 300, 650, 220, 0.6)),
@@ -269,7 +265,7 @@ export default function Butterflies360() {
 
     const meshToSp = new Map(bflies.map(b => [b.mesh, b.sp]));
 
-    /* Resize */
+    
     const onResize = () => {
       camera.aspect = el.clientWidth / el.clientHeight;
       camera.updateProjectionMatrix();
@@ -277,14 +273,14 @@ export default function Butterflies360() {
     };
     window.addEventListener('resize', onResize);
 
-    /* Render loop */
+    
     const raycaster = new THREE.Raycaster();
     let rafId;
 
     const render = (ts) => {
       const time = ts * 0.001;
 
-      /* Camera */
+      
       const latR = THREE.MathUtils.degToRad(lat.current);
       const lonR = THREE.MathUtils.degToRad(lon.current);
       camera.lookAt(
@@ -295,14 +291,14 @@ export default function Butterflies360() {
       camera.fov = fov.current;
       camera.updateProjectionMatrix();
 
-      /* Butterfly AI — pure orbital flight, guaranteed spread */
+      
       bflies.forEach(b => {
         b.mat.uniforms.uTime.value = time + b.phaseOff;
 
-        /* Advance orbit angle */
+        
         b.orbitAngle += b.orbitSpeed * 0.01;
 
-        /* Vertical wobble */
+        
         const wobbleY   = Math.sin(time * b.wobbleSpeed + b.wobblePhase) * b.wobbleAmp;
         const wobbleDy  = Math.cos(time * b.wobbleSpeed + b.wobblePhase) * b.wobbleAmp * b.wobbleSpeed;
 
@@ -312,20 +308,15 @@ export default function Butterflies360() {
 
         b.mesh.position.set(x, y, z);
 
-        /* ── Rotation — body leans into direction of travel ──────────────
-           Geometry is flat (rotateX -90°), so axes are:
-           rotation.y = spin around vertical axis  → YAW  (face direction)
-           rotation.x = tilt nose up/down          → PITCH
-           rotation.z = lean left/right into turn  → ROLL/BANK
-        ──────────────────────────────────────────────────────────────────── */
+        
 
-        // Yaw — face tangent to the orbit circle (+ PI to flip body forward)
+        
         b.mesh.rotation.y = Math.atan2(x, z) + Math.PI * 0.5 * Math.sign(b.orbitSpeed) + Math.PI;
 
-        // Roll — bank into the turn, lean body toward inside of curve
+        
         b.mesh.rotation.z = b.orbitSpeed * 1.2;
 
-        // Pitch — nose up when climbing, down when diving
+        
         b.mesh.rotation.x = -wobbleDy * 0.018;
       });
 
@@ -334,7 +325,7 @@ export default function Butterflies360() {
     };
     rafId = requestAnimationFrame(render);
 
-    /* Pointer drag + hover */
+    
     const onDown = (e) => {
       if (e.button !== 0) return;
       drag.current = { startX: e.clientX, startY: e.clientY, startLon: lon.current, startLat: lat.current };
@@ -342,15 +333,15 @@ export default function Butterflies360() {
     const onMove = (() => {
       let lastRaycast = 0;
       return (e) => {
-      // Camera drag
+      
       if (drag.current) {
         lon.current = drag.current.startLon + (e.clientX - drag.current.startX) * 0.15;
-        // FIX: drag UP = look up → positive lat → flip sign
+        
         lat.current = Math.max(-85, Math.min(85,
           drag.current.startLat + (e.clientY - drag.current.startY) * 0.15
         ));
       }
-      // Hover detection — throttle raycasting to every 50ms
+      
       const now = performance.now();
       if (now - lastRaycast < 50) return;
       lastRaycast = now;
@@ -391,14 +382,14 @@ export default function Butterflies360() {
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
 
-    /* Wheel zoom */
+    
     const onWheel = (e) => {
       e.preventDefault();
       fov.current = Math.max(30, Math.min(110, fov.current + e.deltaY * 0.05));
     };
     el.addEventListener('wheel', onWheel, { passive: false });
 
-    /* Touch */
+    
     let td = null, lp = null;
     const onTS = (e) => {
       if (e.touches.length === 1) td = { startX: e.touches[0].clientX, startY: e.touches[0].clientY, startLon: lon.current, startLat: lat.current };
@@ -452,7 +443,7 @@ export default function Butterflies360() {
       panoGeo.dispose(); panoMat.dispose(); panoTex.dispose(); bfTex.dispose();
       if (renderer.domElement.parentNode === el) el.removeChild(renderer.domElement);
     };
-  }, [navigate]);
+  }, [navigate, panoBg]);
 
   if (noWebGL) return <NoWebGL onNavigate={handleNavigate} />;
 
@@ -460,9 +451,9 @@ export default function Butterflies360() {
     <div className="bf360-root">
       <div ref={mountRef} className="bf360-mount" />
       <div className="bf360-vignette" />
-      <Overlay name1={name1} name2={name2} />
+      <Overlay overlayTitle={overlayTitle} overlayHint={overlayHint} />
 
-      {/* Hover label */}
+      {}
       {hoverLabel && (
         <div className="bf360-hover-label" style={{ left: hoverLabel.x, top: hoverLabel.y }}>
           <span className="bf360-hover-emoji">{hoverLabel.sp.emoji}</span>

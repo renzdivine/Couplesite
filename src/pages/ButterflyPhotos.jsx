@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { EditableText } from '../components/EditableField';
@@ -6,37 +6,188 @@ import { saveImage }   from '../utils/imageStore';
 import { useImageUrl } from '../utils/useImageUrl';
 import '../styles/pages/ButterflyPhotos.css';
 
-/* ── FramedPhoto ── */
+
 function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '', animDelay = 0,
-                        isEditing = false, onReplace }) {
+                        isEditing = false, onReplace, onRemove,
+                        objectPosition = '50% 50%', onPositionChange,
+                        objectScale = 1, onScaleChange }) {
   const fileRef     = useRef(null);
+  const imgRef      = useRef(null);
   const resolvedSrc = useImageUrl(src);
   const shapeClass  = { rect:'agv-fp--rect', square:'agv-fp--square', oval:'agv-fp--oval', heart:'agv-fp--heart' };
+
+  
+  
+  const frozenAnimClass = useRef(isEditing ? '' : animClass);
+  const frozenAnimDelay = useRef(isEditing ? undefined : animDelay);
+
+  
+  const translateRef = useRef({ x: 0, y: 0 });  
+  const scaleRef   = useRef(Math.max(0.5, Math.min(4, objectScale || 1)));
+  const zoomValRef = useRef(null);
+
+  const dragging  = useRef(false);
+  const dragStart = useRef({ mx: 0, my: 0, tx: 0, ty: 0 });
+
+  
+  const prevSrc = useRef(src);
+  if (src !== prevSrc.current) {
+    prevSrc.current = src;
+    translateRef.current = { x: 0, y: 0 };
+    scaleRef.current = 1;
+  }
+
+  
+  const applyTransform = useCallback(() => {
+    if (!imgRef.current) return;
+    const { x, y } = translateRef.current;
+    imgRef.current.style.transform = `translate(${x}px, ${y}px) scale(${scaleRef.current})`;
+    if (zoomValRef.current) {
+      zoomValRef.current.textContent = `${Math.round(scaleRef.current * 100)}%`;
+    }
+  }, []);
+
+  
+  const onMouseDown = useCallback((e) => {
+    if (!isEditing || !resolvedSrc) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dragging.current = true;
+    if (imgRef.current) imgRef.current.style.cursor = 'grabbing';
+    dragStart.current = {
+      mx: e.clientX, my: e.clientY,
+      tx: translateRef.current.x, ty: translateRef.current.y,
+    };
+
+    const onMove = (mv) => {
+      if (!dragging.current) return;
+      translateRef.current = {
+        x: dragStart.current.tx + (mv.clientX - dragStart.current.mx),
+        y: dragStart.current.ty + (mv.clientY - dragStart.current.my),
+      };
+      applyTransform();
+    };
+
+    const onUp = () => {
+      if (!dragging.current) return;
+      dragging.current = false;
+      if (imgRef.current) imgRef.current.style.cursor = 'grab';
+      onPositionChange?.(`${translateRef.current.x}px ${translateRef.current.y}px`);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [isEditing, resolvedSrc, applyTransform, onPositionChange]);
+
+  
+  const onWheel = useCallback((e) => {
+    if (!isEditing || !resolvedSrc) return;
+    if (!e.ctrlKey && !e.metaKey) return; 
+    e.preventDefault();
+    e.stopPropagation();
+    const next = Math.max(0.5, Math.min(4, scaleRef.current - e.deltaY * 0.002));
+    scaleRef.current = parseFloat(next.toFixed(3));
+    applyTransform();
+    onScaleChange?.(scaleRef.current);
+  }, [isEditing, resolvedSrc, applyTransform, onScaleChange]);
+
+  
+  const zoom = useCallback((delta) => {
+    const next = Math.max(0.5, Math.min(4, parseFloat((scaleRef.current + delta).toFixed(3))));
+    scaleRef.current = next;
+    applyTransform();
+    onScaleChange?.(next);
+  }, [applyTransform, onScaleChange]);
 
   const handleFile = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
     e.target.value = '';
     const key = await saveImage(file);
     onReplace?.(key);
+    translateRef.current = { x: 0, y: 0 };
+    scaleRef.current = 1;
+    applyTransform();
   };
 
+  const handleClick    = isEditing && !resolvedSrc ? () => fileRef.current?.click() : undefined;
+  const handleDblClick = isEditing && resolvedSrc  ? () => fileRef.current?.click() : undefined;
+  const isDraggable    = isEditing && !!resolvedSrc;
+
   return (
-    <div className={`agv-fp ${shapeClass[frame]} ${className} ${animClass}`}
-      style={{ animationDelay:`${animDelay}ms`, position:'relative' }}
-      onDoubleClick={isEditing ? () => fileRef.current?.click() : undefined}
-      title={isEditing ? 'Double-click to change photo' : undefined}
+    <div
+      className={`agv-fp ${shapeClass[frame]} ${className}${frozenAnimClass.current ? ` ${frozenAnimClass.current}` : ''}`}
+      style={{ position:'relative', animationDelay: frozenAnimDelay.current != null ? `${frozenAnimDelay.current}ms` : undefined }}
+      onClick={handleClick}
+      onDoubleClick={handleDblClick}
+      title={isEditing ? (resolvedSrc ? 'Scroll to zoom · Drag to reposition · Double-click to change' : 'Click to add photo') : undefined}
     >
-      <div className="agv-fp-inner">
-        {resolvedSrc && <img className="agv-fp-photo" src={resolvedSrc} alt={alt} loading="lazy" decoding="async"/>}
-      </div>
-      {isEditing && (
+      {}
+      <div style={{ width: '100%', height: '100%' }}>
+        <div className="agv-fp-inner" onWheel={isDraggable ? onWheel : undefined}>
+        {resolvedSrc
+          ? <img
+              ref={imgRef}
+              className="agv-fp-photo"
+              src={resolvedSrc}
+              alt={alt}
+              loading="lazy"
+              decoding="async"
+              style={{
+                transform: `translate(0px, 0px) scale(${scaleRef.current})`,
+                transformOrigin: 'center center',
+                cursor: isDraggable ? 'grab' : undefined,
+              }}
+              onMouseDown={isDraggable ? onMouseDown : undefined}
+            />
+          : (
+            <div className={`agv-fp-photo agv-fp-placeholder${isEditing ? ' agv-fp-placeholder--editing' : ''}`}>
+              {isEditing ? (
+                <>
+                  <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+                    <circle cx="18" cy="18" r="17" fill="rgba(233,30,140,0.15)" stroke="rgba(233,30,140,0.7)" strokeWidth="1.8" strokeDasharray="4 3"/>
+                    <line x1="18" y1="10" x2="18" y2="26" stroke="rgba(233,30,140,1)" strokeWidth="2.5" strokeLinecap="round"/>
+                    <line x1="10" y1="18" x2="26" y2="18" stroke="rgba(233,30,140,1)" strokeWidth="2.5" strokeLinecap="round"/>
+                  </svg>
+                  <span style={{ fontSize:'0.6rem', fontFamily:'system-ui,sans-serif', color:'rgba(233,30,140,0.9)', fontWeight:700, textAlign:'center', lineHeight:1.3, textTransform:'uppercase', letterSpacing:'0.06em', marginTop:4 }}>Click to add photo</span>
+                </>
+              ) : (
+                <svg width="28" height="24" viewBox="0 0 28 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M10 4L8 7H3a2 2 0 00-2 2v11a2 2 0 002 2h22a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-3H10z" stroke="rgba(120,85,95,0.55)" strokeWidth="1.4" fill="rgba(180,140,150,0.18)" strokeLinejoin="round"/>
+                  <circle cx="14" cy="14" r="4" stroke="rgba(120,85,95,0.55)" strokeWidth="1.4" fill="none"/>
+                  <circle cx="14" cy="14" r="1.5" fill="rgba(120,85,95,0.4)"/>
+                </svg>
+              )}
+            </div>
+          )
+        }
+      </div>{}
+      </div>{}
+
+      {}
+      {isDraggable && (
         <>
-          <div style={{ position:'absolute', inset:0, background:'rgba(233,30,140,0.25)', display:'flex', alignItems:'center', justifyContent:'center', opacity:0, transition:'opacity .18s', cursor:'pointer', borderRadius:'inherit' }}
-            className="ep-hover-overlay">
-            <span style={{ background:'rgba(0,0,0,0.75)', color:'#fff', fontSize:'0.65rem', padding:'3px 8px', borderRadius:20, fontFamily:'system-ui,sans-serif', pointerEvents:'none' }}>📷 Double-click to change</span>
+          <div className="agv-fp-zoom-btns" onClick={e => e.stopPropagation()}>
+            <button className="agv-fp-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(0.1); }} aria-label="Zoom in">＋</button>
+            <span ref={zoomValRef} className="agv-fp-zoom-val">{Math.round(scaleRef.current * 100)}%</span>
+            <button className="agv-fp-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(-0.1); }} aria-label="Zoom out">－</button>
           </div>
-          <input ref={fileRef} type="file" accept="image/*" style={{ display:'none' }} onChange={handleFile}/>
+          <div className="agv-fp-drag-hint" aria-hidden="true">✥ drag · ctrl+scroll to zoom · dbl-click to replace</div>
         </>
+      )}
+
+      {isEditing && resolvedSrc && (
+        <button
+          className="agv-fp-remove-btn"
+          onClick={e => { e.stopPropagation(); onRemove?.(); }}
+          title="Remove photo"
+          aria-label="Remove photo"
+        >✕</button>
+      )}
+
+      {isEditing && (
+        <input ref={fileRef} type="file" accept="image/*" style={{ display:'none' }} onChange={handleFile}/>
       )}
     </div>
   );
@@ -64,11 +215,11 @@ const TEXT_ANIMS  = ['agv-anim-fade-up','agv-anim-fade-left','agv-anim-fade-righ
 const LAYOUTS     = ['hero','intro','timeline','dual','feature','bullets','tech','role','collection'];
 function pickRandom(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
 
-/* ── Slide component — all text wired to pageContent, photos clickable in edit mode ── */
-function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveText, onReplacePhoto }) {
-  // Each slide has its own dedicated photo index range — no sharing between slides.
-  // Slot map: hero=0-4  intro=5-7  timeline=8  dual=9-10
-  //           feature=11-13  bullets=14  tech=15  role=16-17  collection=18-20
+
+function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveText, onReplacePhoto, onSavePosition }) {
+  
+  
+  
   const pg   = (n) => photos[n] ?? photos[n % photos.length] ?? { url: '', caption: '' };
   const pc   = couple?.pageContent?.photos || {};
   const s    = (field, fallback) => pc[field] ?? fallback;
@@ -81,10 +232,17 @@ function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveT
   const FP   = ({ idx, frame, animDelay=0, className='' }) => (
     <FramedPhoto src={pg(idx).url} alt={pg(idx).caption}
       frame={frame} animClass={frameAnim} animDelay={animDelay} className={className}
-      isEditing={isEditing} onReplace={url => onReplacePhoto?.(idx, url)}/>
+      objectPosition={pg(idx).objectPosition || '50% 50%'}
+      objectScale={pg(idx).objectScale || 1}
+      isEditing={isEditing}
+      onReplace={url => onReplacePhoto?.(idx, url)}
+      onRemove={() => onReplacePhoto?.(idx, '')}
+      onPositionChange={pos => onSavePosition?.(idx, { pos })}
+      onScaleChange={scale => onSavePosition?.(idx, { scale })}
+    />
   );
 
-  // ── slide 1: HERO — slots 0,1,2,3,4 ──
+  
   if (layout === 'hero') return (
     <div className="agv-slide agv-slide--hero">
       <div className="agv-hw-spotlight" aria-hidden="true"/>
@@ -96,9 +254,8 @@ function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveT
         <div className="agv-hw-center-frame">
           <FP idx={4} frame="square" animDelay={60}/>
           <div className={`agv-hw-title-overlay ${textAnim}`} style={{ animationDelay:'200ms' }}>
-            <p className="agv-hw-eyebrow">{couple?.name1} &amp; {couple?.name2}</p>
-            <ET field="heroTitle1" fallback="Our" as="h1" className="agv-hw-title-script"/>
-            <ET field="heroTitle2" fallback="MEMORIES" as="h1" className="agv-hw-title-caps"/>
+            <ET field="heroTitle1" fallback="Our" as="h1" className="agv-hw-title-script" style={{ pointerEvents:'auto' }}/>
+            <ET field="heroTitle2" fallback="MEMORIES" as="h1" className="agv-hw-title-caps" style={{ pointerEvents:'auto' }}/>
           </div>
         </div>
         <div className="agv-hw-col agv-hw-col--right">
@@ -109,28 +266,27 @@ function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveT
     </div>
   );
 
-  // ── slide 2: INTRO — slots 5,6,7 ──
+  
   if (layout === 'intro') { const p1=pg(5),p2=pg(6),p3=pg(7); return (
     <div className="agv-slide agv-slide--intro">
       <div className="agv-intro-left">
         <div className={`agv-placard ${textAnim}`} style={{ animationDelay:'0ms' }}>
           <p className="agv-meta">OUR STORY</p>
-          <p className="agv-meta">{couple?.name1} &amp; {couple?.name2}</p>
         </div>
         <div className="agv-intro-photo1">
-          <FramedPhoto src={p1.url} alt={p1.caption} frame="rect" animClass={frameAnim} animDelay={80} aspect={3/4} isEditing={isEditing} onReplace={url=>onReplacePhoto?.(5,url)}/>
+          <FP idx={5} frame="rect" animDelay={80}/>
           <p className={`agv-photo-label ${textAnim}`} style={{ animationDelay:'180ms' }}>{p1.caption}</p>
         </div>
       </div>
       <div className="agv-intro-center">
         <ET field="slide2title" fallback="A Story of Love" as="h2" className={`agv-serif-lg ${textAnim}`}/>
         <div className="agv-intro-photo2">
-          <FramedPhoto src={p2.url} alt={p2.caption} frame="square" animClass={frameAnim} animDelay={120} aspect={1} isEditing={isEditing} onReplace={url=>onReplacePhoto?.(6,url)}/>
+          <FP idx={6} frame="square" animDelay={120}/>
         </div>
       </div>
       <div className="agv-intro-right">
         <div className="agv-intro-photo3">
-          <FramedPhoto src={p3.url} alt={p3.caption} frame="oval" animClass={frameAnim} animDelay={160} aspect={1} isEditing={isEditing} onReplace={url=>onReplacePhoto?.(7,url)}/>
+          <FP idx={7} frame="oval" animDelay={160}/>
         </div>
         <div className={`agv-placard ${textAnim}`} style={{ marginTop:'12px', animationDelay:'240ms' }}>
           <p className="agv-section-title">BEGINNING</p>
@@ -140,8 +296,8 @@ function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveT
     </div>
   );}
 
-  // ── slide 3: TIMELINE — slot 8 ──
-  if (layout === 'timeline') { const p1=pg(8);
+  
+  if (layout === 'timeline') {
     const items = couple?.timeline?.slice(0,3)||[{title:'First Meeting',date:couple?.relationshipDate},{title:'First Adventure',date:''},{title:'Together Forever',date:''}];
     return (
     <div className="agv-slide agv-slide--timeline">
@@ -152,7 +308,7 @@ function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveT
         </div>
       </div>
       <div className="agv-tl-center-photo">
-        <FramedPhoto src={p1.url} alt={p1.caption} frame="rect" animClass={frameAnim} animDelay={60} aspect={3/4} isEditing={isEditing} onReplace={url=>onReplacePhoto?.(8,url)}/>
+        <FP idx={8} frame="rect" animDelay={60}/>
       </div>
       <div className="agv-tl-right">
         {items.map((item,i)=>(
@@ -165,18 +321,18 @@ function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveT
     </div>
   );}
 
-  // ── slide 4: DUAL — slots 9,10 ──
+  
   if (layout === 'dual') { const p1=pg(9),p2=pg(10); return (
     <div className="agv-slide agv-slide--dual">
       <div className="agv-dual-left">
         <ET field="slide4title" fallback="Our Favourite Moments" as="h2" className={`agv-serif-lg ${textAnim}`}/>
         <div className="agv-dual-photo2">
-          <FramedPhoto src={p2.url} alt={p2.caption} frame="oval" animClass={frameAnim} animDelay={100} aspect={1} isEditing={isEditing} onReplace={url=>onReplacePhoto?.(10,url)}/>
+          <FP idx={10} frame="oval" animDelay={100}/>
         </div>
       </div>
       <div className="agv-dual-right">
         <div className="agv-dual-photo1">
-          <FramedPhoto src={p1.url} alt={p1.caption} frame="square" animClass={frameAnim} animDelay={40} aspect={1} isEditing={isEditing} onReplace={url=>onReplacePhoto?.(9,url)}/>
+          <FP idx={9} frame="square" animDelay={40}/>
         </div>
         <div className="agv-dual-desc-row">
           <div className={`agv-dual-desc ${textAnim}`} style={{ animationDelay:'160ms' }}>
@@ -192,8 +348,8 @@ function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveT
     </div>
   );}
 
-  // ── slide 5: FEATURE — slots 11,12,13 ──
-  if (layout === 'feature') { const p1=pg(11),p2=pg(12),p3=pg(13); return (
+  
+  if (layout === 'feature') { const p1=pg(11); return (
     <div className="agv-slide agv-slide--feature">
       <div className="agv-feat-left">
         <div className={`agv-placard ${textAnim}`}>
@@ -201,13 +357,12 @@ function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveT
           <ET field="feat1body" fallback="Every moment framed forever." as="p" className="agv-body-text"/>
         </div>
         <div className="agv-feat-photo1">
-          <FramedPhoto src={p1.url} alt={p1.caption} frame="square" animClass={frameAnim} animDelay={80} aspect={1} isEditing={isEditing} onReplace={url=>onReplacePhoto?.(11,url)}/>
+          <FP idx={11} frame="square" animDelay={80}/>
         </div>
         <p className={`agv-photo-label ${textAnim}`} style={{ animationDelay:'180ms' }}>{p1.caption}</p>
       </div>
       <div className="agv-feat-center-photo">
-        <FramedPhoto src={p2.url} alt={p2.caption} frame="rect" animClass={frameAnim} animDelay={40} aspect={3/4} isEditing={isEditing} onReplace={url=>onReplacePhoto?.(12,url)}/>
-        <p className={`agv-photo-label ${textAnim}`} style={{ animationDelay:'160ms' }}>{p2.caption}</p>
+        <FP idx={12} frame="rect" animDelay={40}/>
       </div>
       <div className="agv-feat-right">
         <ET field="slide5title" fallback="Beautiful Together" as="h2" className={`agv-serif-lg ${textAnim}`}/>
@@ -215,14 +370,14 @@ function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveT
           <ET field="feat2body" fallback="From every adventure to quiet evenings, these are the frames of our love story." as="p" className="agv-body-text"/>
         </div>
         <div className="agv-feat-photo2">
-          <FramedPhoto src={p3.url} alt={p3.caption} frame="heart" animClass={frameAnim} animDelay={200} aspect={1} isEditing={isEditing} onReplace={url=>onReplacePhoto?.(13,url)}/>
+          <FP idx={13} frame="heart" animDelay={200}/>
         </div>
       </div>
     </div>
   );}
 
-  // ── slide 6: BULLETS — slot 14 ──
-  if (layout === 'bullets') { const p1=pg(14); const moments=[pg(14),pg(15),pg(16)].map(p=>p?.caption).filter(Boolean); return (
+  
+  if (layout === 'bullets') { const moments=[pg(14),pg(15),pg(16)].map(p=>p?.caption).filter(Boolean); return (
     <div className="agv-slide agv-slide--bullets">
       <div className="agv-bul-left">
         <ET field="slide6title" fallback="The Story of Us" as="h2" className={`agv-serif-lg ${textAnim}`}/>
@@ -237,13 +392,13 @@ function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveT
         </ul>
       </div>
       <div className="agv-bul-photo">
-        <FramedPhoto src={p1.url} alt={p1.caption} frame="rect" animClass={frameAnim} animDelay={60} aspect={3/4} isEditing={isEditing} onReplace={url=>onReplacePhoto?.(14,url)}/>
+        <FP idx={14} frame="rect" animDelay={60}/>
       </div>
     </div>
   );}
 
-  // ── slide 7: TECH — slot 15 ──
-  if (layout === 'tech') { const p1=pg(15); return (
+  
+  if (layout === 'tech') { return (
     <div className="agv-slide agv-slide--tech">
       <div className="agv-tech-left">
         <ET field="tech1label" fallback="OUR ADVENTURES" as="p" className={`agv-section-title ${textAnim}`}/>
@@ -252,7 +407,7 @@ function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveT
       <div className="agv-tech-center">
         <ET field="slide7title" fallback="Adventures Together" as="h2" className={`agv-serif-lg ${textAnim}`}/>
         <div className="agv-tech-photo">
-          <FramedPhoto src={p1.url} alt={p1.caption} frame="square" animClass={frameAnim} animDelay={100} aspect={1} isEditing={isEditing} onReplace={url=>onReplacePhoto?.(15,url)}/>
+          <FP idx={15} frame="square" animDelay={100}/>
         </div>
       </div>
       <div className="agv-tech-right">
@@ -262,8 +417,8 @@ function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveT
     </div>
   );}
 
-  // ── slide 8: ROLE — slots 16,17 ──
-  if (layout === 'role') { const p1=pg(16),p2=pg(17); return (
+  
+  if (layout === 'role') { return (
     <div className="agv-slide agv-slide--role">
       <div className="agv-role-left">
         <ET field="role1label" fallback="LOVE" as="p" className={`agv-section-title ${textAnim}`}/>
@@ -277,71 +432,70 @@ function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveT
         <ET field="slide8title" fallback="The Role of Love" as="h2" className={`agv-serif-lg ${textAnim}`} style={{ animationDelay:'80ms', marginTop:'12px' }}/>
       </div>
       <div className="agv-role-center-photo">
-        <FramedPhoto src={p1.url} alt={p1.caption} frame="rect" animClass={frameAnim} animDelay={40} aspect={3/4} isEditing={isEditing} onReplace={url=>onReplacePhoto?.(16,url)}/>
+        <FP idx={16} frame="rect" animDelay={40}/>
       </div>
       <div className="agv-role-right">
         <div className="agv-role-photo2">
-          <FramedPhoto src={p2.url} alt={p2.caption} frame="oval" animClass={frameAnim} animDelay={160} aspect={1} isEditing={isEditing} onReplace={url=>onReplacePhoto?.(17,url)}/>
+          <FP idx={17} frame="oval" animDelay={160}/>
         </div>
       </div>
     </div>
   );}
 
-  // ── slide 9: COLLECTION — slots 18,19,20 ──
-  const p1=pg(18),p2=pg(19),p3=pg(20);
+  
   return (
     <div className="agv-slide agv-slide--collection">
       <div className="agv-col-header">
         <ET field="slide9title" fallback="Our Memories Collection" as="h2" className={`agv-serif-lg ${textAnim}`}/>
       </div>
       <div className="agv-col-strip">
-        <div className="agv-col-photo"><FramedPhoto src={p1.url} alt={p1.caption} frame="rect" animClass={frameAnim} animDelay={60} aspect={3/4} isEditing={isEditing} onReplace={url=>onReplacePhoto?.(18,url)}/></div>
-        <div className="agv-col-photo"><FramedPhoto src={p2.url} alt={p2.caption} frame="square" animClass={frameAnim} animDelay={140} aspect={1} isEditing={isEditing} onReplace={url=>onReplacePhoto?.(19,url)}/></div>
-        <div className="agv-col-photo"><FramedPhoto src={p3.url} alt={p3.caption} frame="rect" animClass={frameAnim} animDelay={220} aspect={3/4} isEditing={isEditing} onReplace={url=>onReplacePhoto?.(20,url)}/></div>
+        <div className="agv-col-photo"><FP idx={18} frame="rect" animDelay={60}/></div>
+        <div className="agv-col-photo"><FP idx={19} frame="square" animDelay={140}/></div>
+        <div className="agv-col-photo"><FP idx={20} frame="rect" animDelay={220}/></div>
       </div>
     </div>
   );
 }
 
-/* ── main component ── */
+
 export default function ButterflyPhotos({ isEditing = false, onContentChange }) {
   const navigate = useNavigate();
   const { getCoupleBySlug, coupleAuth, myCouple } = useApp();
   const couple = isEditing ? myCouple : getCoupleBySlug(coupleAuth?.slug);
 
   const FALLBACK = [
-    // hero: 0-4
-    { id:0,  url:'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=800&q=80', caption:'Our first date' },
-    { id:1,  url:'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&q=80', caption:'Summer adventure' },
-    { id:2,  url:'https://images.unsplash.com/photo-1516589091380-5d8e87df6999?w=800&q=80', caption:'Coffee mornings' },
-    { id:3,  url:'https://images.unsplash.com/photo-1474552226712-ac0f0961a954?w=800&q=80', caption:'Sunset walk' },
-    { id:4,  url:'https://images.unsplash.com/photo-1596460107916-430662021049?w=800&q=80', caption:'Beach day' },
-    // intro: 5-7
-    { id:5,  url:'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80', caption:'Cooking together' },
-    { id:6,  url:'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=800&q=80', caption:'City lights' },
-    { id:7,  url:'https://images.unsplash.com/photo-1494774157365-9e04c6720e47?w=800&q=80', caption:'Garden walk' },
-    // timeline: 8
-    { id:8,  url:'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80', caption:'Milestone moment' },
-    // dual: 9-10
-    { id:9,  url:'https://images.unsplash.com/photo-1529516548873-9ce57c8f155e?w=800&q=80', caption:'Together always' },
-    { id:10, url:'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=800&q=80', caption:'Pure happiness' },
-    // feature: 11-13
-    { id:11, url:'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80', caption:'Favourite memory' },
-    { id:12, url:'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=800&q=80', caption:'Beautiful together' },
-    { id:13, url:'https://images.unsplash.com/photo-1543804091-c4d20b4e3c80?w=800&q=80', caption:'Heart to heart' },
-    // bullets: 14
-    { id:14, url:'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&q=80', caption:'Our highlights' },
-    // tech: 15
-    { id:15, url:'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80', caption:'Adventures together' },
-    // role: 16-17
-    { id:16, url:'https://images.unsplash.com/photo-1500917293891-ef795e70e1f6?w=800&q=80', caption:'The role of love' },
-    { id:17, url:'https://images.unsplash.com/photo-1533038590840-1cde6e668a91?w=800&q=80', caption:'Every laugh' },
-    // collection: 18-20
-    { id:18, url:'https://images.unsplash.com/photo-1537535195739-e0d3d886f3f5?w=800&q=80', caption:'Collection I' },
-    { id:19, url:'https://images.unsplash.com/photo-1504275107627-0c2ba7a43dba?w=800&q=80', caption:'Collection II' },
-    { id:20, url:'https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?w=800&q=80', caption:'Collection III' },
+    
+    { id:0,  url:'', caption:'' },
+    { id:1,  url:'', caption:'' },
+    { id:2,  url:'', caption:'' },
+    { id:3,  url:'', caption:'' },
+    { id:4,  url:'', caption:'' },
+    
+    { id:5,  url:'', caption:'' },
+    { id:6,  url:'', caption:'' },
+    { id:7,  url:'', caption:'' },
+    
+    { id:8,  url:'', caption:'' },
+    
+    { id:9,  url:'', caption:'' },
+    { id:10, url:'', caption:'' },
+    
+    { id:11, url:'', caption:'' },
+    { id:12, url:'', caption:'' },
+    { id:13, url:'', caption:'' },
+    
+    { id:14, url:'', caption:'' },
+    
+    { id:15, url:'', caption:'' },
+    
+    { id:16, url:'', caption:'' },
+    { id:17, url:'', caption:'' },
+    
+    { id:18, url:'', caption:'' },
+    { id:19, url:'', caption:'' },
+    { id:20, url:'', caption:'' },
   ];
-  // Merge couple photos with FALLBACK so slots always go up to index 20
+  
   const photos = Array.from({ length: 21 }, (_, i) =>
     (couple?.photos?.[i]) ?? FALLBACK[i]
   );
@@ -354,16 +508,23 @@ export default function ButterflyPhotos({ isEditing = false, onContentChange }) 
   const prev = () => go(i => (i-1+total)%total);
   const next = () => go(i => (i+1)%total);
 
-  // save a pageContent.photos field
+  
   const handleSaveText = (field, val) => {
     const pc = couple?.pageContent?.photos || {};
     onContentChange?.('photos', { ...pc, [field]: val });
   };
 
-  // replace a photo by index — each slot is independent
+  
   const handleReplacePhoto = (idx, key) => {
     const updated = Array.from({ length: Math.max(photos.length, idx + 1) }, (_, i) => photos[i] ?? FALLBACK[i] ?? { id: Date.now() + i, url: '', caption: '' });
     updated[idx] = { ...(updated[idx] || {}), url: key };
+    onContentChange?.('photosList', updated);
+  };
+
+  
+  const handleSavePosition = (idx, patch) => {
+    const updated = Array.from({ length: Math.max(photos.length, idx + 1) }, (_, i) => photos[i] ?? FALLBACK[i] ?? { id: Date.now() + i, url: '', caption: '' });
+    updated[idx] = { ...(updated[idx] || {}), ...('pos' in patch ? { objectPosition: patch.pos } : {}), ...('scale' in patch ? { objectScale: patch.scale } : {}) };
     onContentChange?.('photosList', updated);
   };
 
@@ -387,6 +548,7 @@ export default function ButterflyPhotos({ isEditing = false, onContentChange }) 
             isEditing={isEditing}
             onSaveText={handleSaveText}
             onReplacePhoto={handleReplacePhoto}
+            onSavePosition={handleSavePosition}
           />
         </div>
 

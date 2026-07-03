@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useMusic } from '../context/MusicContext';
 import { EditableText } from '../components/EditableField';
 import '../styles/pages/ButterflyStory.css';
 
@@ -10,7 +11,7 @@ const DEFAULT_SONGS = [
   { id: 3, title: 'Right Side of My Heart', artist: 'Tenille Townes', reason: 'Tattooed on my soul', albumBg: 'linear-gradient(135deg,#5a4a3a,#9a7a6a)', spotifyId: '1N22A16DFUMbQOXfVeHhAZ', youtubeId: null, lyrics: '' },
 ];
 
-/* ── Album color palette for auto-assigned gradient ── */
+
 const ALBUM_GRADIENTS = [
   'linear-gradient(135deg,#c97b84,#f2b8c0)',
   'linear-gradient(135deg,#7a1a2a,#c0455a)',
@@ -21,7 +22,7 @@ const ALBUM_GRADIENTS = [
   'linear-gradient(135deg,#5a3a7a,#9a6ac0)',
 ];
 
-/* ── Parse Spotify or YouTube URL → { type, id } ── */
+
 function parseUrl(raw) {
   const url = raw.trim();
   const spMatch = url.match(/spotify\.com\/track\/([A-Za-z0-9]+)/) ||
@@ -34,7 +35,7 @@ function parseUrl(raw) {
   return null;
 }
 
-/* ── Fetch metadata from oEmbed (no API key needed) ── */
+
 async function fetchSongMeta(raw) {
   const parsed = parseUrl(raw);
   if (!parsed) throw new Error('Unrecognised URL — paste a Spotify track or YouTube link.');
@@ -62,7 +63,7 @@ async function fetchSongMeta(raw) {
   }
 }
 
-/* ── Spotify icon SVG ── */
+
 function SpotifyIcon({ size = 14 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
@@ -71,7 +72,7 @@ function SpotifyIcon({ size = 14 }) {
   );
 }
 
-/* ── Play button ── */
+
 function PlayBtn({ isActive }) {
   return (
     <div className={`bs-play-btn ${isActive ? 'bs-play-btn--active' : ''}`}>
@@ -86,7 +87,7 @@ function PlayBtn({ isActive }) {
   );
 }
 
-/* ── Song Card (Spotify dark style) ── */
+
 function SongCard({ song, isActive, onClick, isEditing, onDelete, onReplace }) {
   const [replacing, setReplacing] = useState(false);
   const [replaceUrl, setReplaceUrl] = useState('');
@@ -118,9 +119,9 @@ function SongCard({ song, isActive, onClick, isEditing, onDelete, onReplace }) {
 
   return (
     <div className={`bs-song-card ${isActive ? 'bs-song-card--active' : ''} ${isEditing ? 'bs-song-card--editing' : ''}`}>
-      {/* main card row */}
+      {}
       <div className="bs-song-card-inner" onClick={!isEditing ? onClick : undefined}>
-        {/* Album art */}
+        {}
         <div className="bs-album-art" style={{ background: song.albumBg }}>
           {isActive && !isEditing && (
             <div className="bs-album-overlay">
@@ -133,7 +134,7 @@ function SongCard({ song, isActive, onClick, isEditing, onDelete, onReplace }) {
           )}
         </div>
 
-        {/* Info */}
+        {}
         <div className="bs-card-info">
           <div className="bs-card-top">
             <span className="bs-card-title">{song.title}</span>
@@ -146,11 +147,11 @@ function SongCard({ song, isActive, onClick, isEditing, onDelete, onReplace }) {
           </div>
         </div>
 
-        {/* Right: always show play, plus edit buttons when editing */}
+        {}
         <div className="bs-card-right">
           {isEditing ? (
             <div className="bs-card-edit-btns">
-              {/* play / pause preview */}
+              {}
               <button
                 className={`bs-card-play-btn ${showPreview ? 'bs-card-play-btn--active' : ''}`}
                 onClick={e => { e.stopPropagation(); setShowPreview(v => !v); }}
@@ -181,7 +182,7 @@ function SongCard({ song, isActive, onClick, isEditing, onDelete, onReplace }) {
         </div>
       </div>
 
-      {/* Inline Spotify preview (edit mode play button) */}
+      {}
       {isEditing && showPreview && song.spotifyId && (
         <div className="bs-card-preview-wrap">
           <iframe
@@ -208,7 +209,7 @@ function SongCard({ song, isActive, onClick, isEditing, onDelete, onReplace }) {
           />
         </div>
       )}
-      {/* Replace URL input (inline, shown when editing + pencil clicked) */}
+      {}
       {isEditing && replacing && (
         <div className="bs-card-replace-row" onClick={e => e.stopPropagation()}>
           <input
@@ -235,7 +236,7 @@ function SongCard({ song, isActive, onClick, isEditing, onDelete, onReplace }) {
   );
 }
 
-/* ── Vinyl SVG ── */
+
 function VinylRecord() {
   return (
     <svg className="bs-vinyl-svg" viewBox="0 0 240 240" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
@@ -249,44 +250,44 @@ function VinylRecord() {
           <stop offset="100%" stopColor="#7a1010" />
         </radialGradient>
       </defs>
-      {/* Main disc */}
+      {}
       <circle cx="120" cy="120" r="118" fill="url(#vg)" />
-      {/* Groove rings */}
+      {}
       {[108,100,92,84,76,68,60,52,46].map(r=>(
         <circle key={r} cx="120" cy="120" r={r}
           fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="1.5"/>
       ))}
-      {/* Gloss sheen */}
+      {}
       <ellipse cx="90" cy="75" rx="40" ry="22"
         fill="rgba(255,255,255,0.055)" transform="rotate(-25 90 75)"/>
-      {/* Label */}
+      {}
       <circle cx="120" cy="120" r="38" fill="url(#labelG)"/>
       <circle cx="120" cy="120" r="36" fill="none"
         stroke="rgba(255,255,255,0.1)" strokeWidth="0.8"/>
-      {/* Spindle */}
+      {}
       <circle cx="120" cy="120" r="5" fill="#ddd"/>
       <circle cx="120" cy="120" r="3" fill="#fff" opacity="0.9"/>
-      {/* Outer rim */}
+      {}
       <circle cx="120" cy="120" r="118" fill="none"
         stroke="rgba(255,255,255,0.06)" strokeWidth="1"/>
     </svg>
   );
 }
 
-/* ── Lace SVG border ── */
+
 function LaceBorder() {
   return (
     <svg className="bs-lace-svg" viewBox="0 0 48 400" preserveAspectRatio="none"
       xmlns="http://www.w3.org/2000/svg">
       <defs>
         <pattern id="laceP" x="0" y="0" width="48" height="24" patternUnits="userSpaceOnUse">
-          {/* scallop arc */}
+          {}
           <path d="M0,0 Q12,18 24,8 Q36,18 48,0" fill="rgba(240,230,210,0.55)" stroke="rgba(220,200,170,0.3)" strokeWidth="0.5"/>
-          {/* mini circles */}
+          {}
           <circle cx="12" cy="14" r="2.5" fill="rgba(240,230,210,0.35)"/>
           <circle cx="36" cy="14" r="2.5" fill="rgba(240,230,210,0.35)"/>
           <circle cx="24" cy="4"  r="2"   fill="rgba(240,230,210,0.25)"/>
-          {/* diamond */}
+          {}
           <path d="M24,8 L27,11 L24,14 L21,11 Z" fill="rgba(240,230,210,0.2)"/>
         </pattern>
       </defs>
@@ -295,7 +296,7 @@ function LaceBorder() {
   );
 }
 
-/* ── Gingham torn edge ── */
+
 function GinghamEdge() {
   return (
     <svg className="bs-gingham-svg" viewBox="0 0 220 80" preserveAspectRatio="none"
@@ -309,19 +310,19 @@ function GinghamEdge() {
           <rect height="6" width="12" fill="rgba(255,255,255,0.1)"/>
         </pattern>
       </defs>
-      {/* Torn wavy top edge */}
+      {}
       <path d="M0,30 Q10,18 20,26 Q30,34 40,22 Q50,10 60,20 Q70,30 80,18 Q90,6 100,16 Q110,26 120,14 Q130,2 140,12 Q150,22 160,10 Q170,0 180,10 Q190,20 200,10 Q210,2 220,12 L220,80 L0,80 Z"
         fill="url(#gingham)" opacity="0.85"/>
     </svg>
   );
 }
 
-/* ── Song Manager (editing UI) ── */
+
 function SongManager({ songs, onChange }) {
   const [url, setUrl]     = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError]   = useState('');
-  const [editReason, setEditReason] = useState({}); // { idx: value }
+  const [editReason, setEditReason] = useState({}); 
   const gradientRef = useRef(0);
 
   const handleAdd = async () => {
@@ -363,7 +364,7 @@ function SongManager({ songs, onChange }) {
     <div className="bs-manager">
       <div className="bs-manager-title">🎵 Manage Songs</div>
 
-      {/* URL input row */}
+      {}
       <div className="bs-manager-row">
         <input
           className="bs-manager-input"
@@ -382,20 +383,20 @@ function SongManager({ songs, onChange }) {
       </div>
       {error && <div className="bs-manager-error">⚠ {error}</div>}
 
-      {/* Song list */}
+      {}
       <div className="bs-manager-list">
         {songs.length === 0 && (
           <div className="bs-manager-empty">No songs yet. Paste a link above to add one.</div>
         )}
         {songs.map((s, i) => (
           <div key={i} className="bs-manager-item">
-            {/* colour swatch */}
+            {}
             <div className="bs-manager-swatch" style={{ background: s.albumBg }} />
-            {/* info */}
+            {}
             <div className="bs-manager-info">
               <span className="bs-manager-song-title">{s.title || '—'}</span>
               <span className="bs-manager-artist">{s.artist || ''}</span>
-              {/* reason editable */}
+              {}
               <input
                 className="bs-manager-reason"
                 placeholder="Why this song? (optional)"
@@ -406,11 +407,11 @@ function SongManager({ songs, onChange }) {
                 }}
               />
             </div>
-            {/* platform badge */}
+            {}
             <span className="bs-manager-platform">
               {s.spotifyId ? '🟢 Spotify' : s.youtubeId ? '🔴 YouTube' : ''}
             </span>
-            {/* delete */}
+            {}
             <button
               className="bs-manager-del"
               onClick={() => handleDelete(i)}
@@ -423,15 +424,16 @@ function SongManager({ songs, onChange }) {
   );
 }
 
-/* ── Main ── */
+
 export default function ButterflyStory({ isEditing = false, onContentChange }) {
   const navigate = useNavigate();
   const { coupleAuth, getCoupleBySlug, myCouple } = useApp();
-  // In editing mode (AdminDashboard) use myCouple; in visitor mode use coupleAuth
+  const music = useMusic();
+  
   const couple = isEditing ? myCouple : getCoupleBySlug(coupleAuth?.slug);
 
   const pc    = couple?.pageContent?.storyPage || {};
-  // In editing mode never show defaults — show only what the admin has saved
+  
   const songs = isEditing
     ? (couple?.songs || [])
     : (couple?.songs?.length ? couple.songs : DEFAULT_SONGS);
@@ -444,9 +446,16 @@ export default function ButterflyStory({ isEditing = false, onContentChange }) {
 
   const [activeIdx, setActiveIdx] = useState(0);
   const [showLyrics, setShowLyrics] = useState(false);
-  // Guard: activeIdx may be out of range after a song is deleted
+  
   const safeIdx = songs.length > 0 ? Math.min(activeIdx, songs.length - 1) : 0;
   const active = songs[safeIdx] || null;
+
+  // Pause background music when a YouTube video is active
+  useEffect(() => {
+    if (!isEditing && active?.youtubeId && music) {
+      music.pause();
+    }
+  }, [active, isEditing, music]);
 
   return (
     <div className="bs-root">
@@ -454,25 +463,25 @@ export default function ButterflyStory({ isEditing = false, onContentChange }) {
         <button className="bs-back" onClick={() => navigate('/butterflies360')}>← Back</button>
       )}
 
-      {/* ══ OUTER CREAM FRAME ══ */}
+      {}
       <div className="bs-frame">
 
-        {/* ══ DARK RED BOARD ══ */}
+        {}
         <div className="bs-board">
 
-          {/* Lace right border */}
+          {}
           <div className="bs-lace-wrap">
             <LaceBorder />
           </div>
 
-          {/* Gingham torn bottom-left */}
+          {}
           <div className="bs-gingham-wrap">
             <GinghamEdge />
           </div>
 
-          {/* ── LEFT STICKERS column ── */}
+          {}
           <div className="bs-stickers">
-            {/* Silver heart */}
+            {}
             <div className="bs-sticker-heart">
               <svg viewBox="0 0 60 56" width="52" height="48">
                 <defs>
@@ -489,10 +498,10 @@ export default function ButterflyStory({ isEditing = false, onContentChange }) {
               </svg>
             </div>
 
-            {/* Cassette tapes stack */}
+            {}
             <div className="bs-sticker-cassettes">
               <svg viewBox="0 0 70 55" width="68" height="52">
-                {/* Back tape (tilted) */}
+                {}
                 <g transform="rotate(-15 35 28) translate(6,6)">
                   <rect width="52" height="32" rx="4" fill="#2a2a2a" stroke="#444" strokeWidth="0.8"/>
                   <rect x="4" y="4" width="44" height="24" rx="2" fill="#1a1a1a"/>
@@ -500,7 +509,7 @@ export default function ButterflyStory({ isEditing = false, onContentChange }) {
                   <circle cx="36" cy="16" r="6" fill="#333" stroke="#555" strokeWidth="0.8"/>
                   <rect x="20" y="13" width="12" height="6" rx="1" fill="#444"/>
                 </g>
-                {/* Front tape */}
+                {}
                 <g transform="translate(4,14)">
                   <rect width="52" height="32" rx="4" fill="#1e1e1e" stroke="#555" strokeWidth="0.8"/>
                   <rect x="4" y="4" width="44" height="24" rx="2" fill="#111"/>
@@ -514,7 +523,7 @@ export default function ButterflyStory({ isEditing = false, onContentChange }) {
               </svg>
             </div>
 
-            {/* Camera */}
+            {}
             <div className="bs-sticker-camera">
               <svg viewBox="0 0 64 50" width="60" height="46">
                 <rect x="4" y="12" width="56" height="34" rx="5" fill="#3a3a3a" stroke="#555" strokeWidth="0.8"/>
@@ -530,14 +539,14 @@ export default function ButterflyStory({ isEditing = false, onContentChange }) {
               </svg>
             </div>
 
-            {/* Teddy bear */}
+            {}
             <div className="bs-sticker-teddy">🧸</div>
 
-            {/* Strawberries */}
+            {}
             <div className="bs-sticker-strawberry">🍓🍓</div>
           </div>
 
-          {/* ── CENTER: Title + Song cards ── */}
+          {}
           <div className="bs-center">
             <div className="bs-title-block">
               <div className="bs-title-row1">
@@ -556,7 +565,7 @@ export default function ButterflyStory({ isEditing = false, onContentChange }) {
               )}
               {songs.map((s, i) => (
                 s.spotifyId ? (
-                  /* ── Spotify embed card ── */
+                  
                   <div key={i} className={`bs-embed-row ${activeIdx === i ? 'bs-embed-row--active' : ''}`}>
                     <iframe
                       src={`https://open.spotify.com/embed/track/${s.spotifyId}?utm_source=generator&theme=0`}
@@ -569,7 +578,7 @@ export default function ButterflyStory({ isEditing = false, onContentChange }) {
                     />
                   </div>
                 ) : (
-                  /* ── Fallback card for YouTube-only songs ── */
+                  
                   <SongCard
                     key={i}
                     song={s}
@@ -589,7 +598,7 @@ export default function ButterflyStory({ isEditing = false, onContentChange }) {
               ))}
             </div>
 
-            {/* Lyrics */}
+            {}
             {active?.lyrics && (
               <div className="bs-extras">
                 <button className="bs-lyrics-btn" onClick={() => setShowLyrics(v => !v)}>
@@ -605,7 +614,7 @@ export default function ButterflyStory({ isEditing = false, onContentChange }) {
               </div>
             )}
 
-            {/* YouTube video (visitor mode only) */}
+            {}
             {!isEditing && active?.youtubeId && (
               <div className="bs-video-wrap">
                 <iframe
@@ -619,24 +628,24 @@ export default function ButterflyStory({ isEditing = false, onContentChange }) {
             )}
           </div>
 
-          {/* ── RIGHT: Vinyl + flowers ── */}
+          {}
           <div className="bs-vinyl-col">
-            {/* Pink lily top-left of vinyl */}
+            {}
             <div className="bs-lily">🌸</div>
 
-            {/* Polaroid backing */}
+            {}
             <div className="bs-polaroid">
               <VinylRecord />
             </div>
 
-            {/* Daisy cluster bottom-right */}
+            {}
             <div className="bs-daisies">🌸🌷</div>
           </div>
 
-        </div>{/* end board */}
-      </div>{/* end frame */}
+        </div>{}
+      </div>{}
 
-      {/* ══ SONG MANAGER (editing only) ══ */}
+      {}
       {isEditing && (
         <SongManager
           songs={couple?.songs?.length ? couple.songs : []}

@@ -1,22 +1,10 @@
-// ─────────────────────────────────────────────────────────────
-// LoveScroll.jsx
-//
-// Draws the decorative scroll (parchment + rollers + ribbon bow)
-// using SVG. When clicked it "unrolls" to reveal a photo.
-//
-// Props:
-//   unrolling - boolean: has the user clicked? if yes, open it
-//   done      - boolean: unroll animation finished?
-//   photoUrl  - optional image URL to show inside the scroll
-// ─────────────────────────────────────────────────────────────
-
 export default function LoveScroll({ unrolling, done, photoUrl }) {
-  // ── Scroll size values that change when opening ──
-  const bodyH    = unrolling ? 160 : 60;   // scroll body height
-  const topRollY = unrolling ? -10 : 10;   // top roller slides up
-  const botRollY = unrolling ? bodyH + 10 : bodyH - 10; // bottom slides down
+  
+  const bodyH    = unrolling ? 160 : 60;   
+  const topRollY = unrolling ? -10 : 10;   
+  const botRollY = unrolling ? bodyH + 10 : bodyH - 10; 
 
-  // Photo area dimensions (must match the parchment rect below)
+  
   const photoX = 18;
   const photoY = 30;
   const photoW = 164;
@@ -33,12 +21,12 @@ export default function LoveScroll({ unrolling, done, photoUrl }) {
         }}
       >
         <defs>
-          {/* Clip path: limits the photo to inside the parchment area */}
+          {}
           <clipPath id="scrollPhotoClip">
             <rect x={photoX} y={photoY} width={photoW} height={bodyH} rx="4" />
           </clipPath>
 
-          {/* Color gradients used below */}
+          {}
           <linearGradient id="parchment" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#2d0a1e" />
             <stop offset="100%" stopColor="#1a0616" />
@@ -61,7 +49,7 @@ export default function LoveScroll({ unrolling, done, photoUrl }) {
           </linearGradient>
         </defs>
 
-        {/* ── Parchment body (dark rectangle) ── */}
+        {}
         <rect
           x="18" y="30"
           width="164"
@@ -71,7 +59,7 @@ export default function LoveScroll({ unrolling, done, photoUrl }) {
           style={{ transition: 'height 0.7s cubic-bezier(0.4,0,0.2,1)' }}
         />
 
-        {/* ── Photo inside the scroll (only shows after opening) ── */}
+        {}
         {unrolling && photoUrl && (
           <image
             href={photoUrl}
@@ -83,7 +71,7 @@ export default function LoveScroll({ unrolling, done, photoUrl }) {
           />
         )}
 
-        {/* ── Dark overlay on photo so rollers look clean on top ── */}
+        {}
         {unrolling && photoUrl && (
           <rect
             x={photoX} y={photoY} width={photoW} height={bodyH} rx="4"
@@ -93,7 +81,7 @@ export default function LoveScroll({ unrolling, done, photoUrl }) {
           />
         )}
 
-        {/* ── Decorative lines (shown when no photo) ── */}
+        {}
         {unrolling && !photoUrl &&
           [50, 65, 80, 95, 110, 125, 140, 155].map((ly, i) => (
             <line
@@ -108,7 +96,7 @@ export default function LoveScroll({ unrolling, done, photoUrl }) {
           ))
         }
 
-        {/* ── Heart shape on the scroll when it's still closed ── */}
+        {}
         {!unrolling && (
           <path
             d="M100 85 C100 85 84 74 84 64 C84 57 89 53 94 56
@@ -118,7 +106,7 @@ export default function LoveScroll({ unrolling, done, photoUrl }) {
           />
         )}
 
-        {/* ── "Love letter" text lines (no photo version) ── */}
+        {}
         {unrolling && !photoUrl && (
           <>
             <text
@@ -142,7 +130,7 @@ export default function LoveScroll({ unrolling, done, photoUrl }) {
           </>
         )}
 
-        {/* ── Heart emoji at the bottom of the photo ── */}
+        {}
         {unrolling && photoUrl && done && (
           <text
             x="100" y={photoY + bodyH - 12}
@@ -159,7 +147,7 @@ export default function LoveScroll({ unrolling, done, photoUrl }) {
           </text>
         )}
 
-        {/* ── Top roller bar ── */}
+        {}
         <rect
           x="10" y={topRollY + 28} width="180" height="20" rx="10"
           fill="url(#roller)"
@@ -170,11 +158,11 @@ export default function LoveScroll({ unrolling, done, photoUrl }) {
           fill="none" stroke="rgba(255,150,180,0.5)" strokeWidth="1"
           style={{ transition: 'y 0.7s cubic-bezier(0.4,0,0.2,1)' }}
         />
-        {/* Top roller knobs (the round ends) */}
+        {}
         <circle cx="16"  cy={topRollY + 38} r="7" fill="url(#knob)" style={{ transition: 'cy 0.7s cubic-bezier(0.4,0,0.2,1)' }} />
         <circle cx="184" cy={topRollY + 38} r="7" fill="url(#knob)" style={{ transition: 'cy 0.7s cubic-bezier(0.4,0,0.2,1)' }} />
 
-        {/* ── Bottom roller bar ── */}
+        {}
         <rect
           x="10" y={botRollY + 10} width="180" height="20" rx="10"
           fill="url(#roller)"
@@ -185,22 +173,22 @@ export default function LoveScroll({ unrolling, done, photoUrl }) {
           fill="none" stroke="rgba(255,150,180,0.5)" strokeWidth="1"
           style={{ transition: 'y 0.7s cubic-bezier(0.4,0,0.2,1)' }}
         />
-        {/* Bottom roller knobs */}
+        {}
         <circle cx="16"  cy={botRollY + 20} r="7" fill="url(#knob)" style={{ transition: 'cy 0.7s cubic-bezier(0.4,0,0.2,1)' }} />
         <circle cx="184" cy={botRollY + 20} r="7" fill="url(#knob)" style={{ transition: 'cy 0.7s cubic-bezier(0.4,0,0.2,1)' }} />
 
-        {/* ── Ribbon bow (visible only when scroll is closed) ── */}
+        {}
         {!unrolling && (
           <g>
-            {/* Vertical ribbon strip */}
+            {}
             <rect x="95" y="40" width="10" height={bodyH + 8} fill="url(#ribbon)" opacity="0.85" />
-            {/* Horizontal ribbon strip */}
+            {}
             <rect x="18" y="62" width="164" height="10" fill="url(#ribbon)" opacity="0.85" />
-            {/* Left bow loop */}
+            {}
             <ellipse cx="86" cy="67" rx="14" ry="8" fill="url(#ribbon)" transform="rotate(-30 86 67)" />
-            {/* Right bow loop */}
+            {}
             <ellipse cx="114" cy="67" rx="14" ry="8" fill="url(#ribbon)" transform="rotate(30 114 67)" />
-            {/* Center knot */}
+            {}
             <circle cx="100" cy="67" r="6" fill="#e91e8c" />
           </g>
         )}

@@ -1,287 +1,376 @@
-/* ── ButterflyWish — Love Anniversary Theme ──────────────────
-   Matches CodeScreen + MemoryGame:
-   deep crimson opacity-red · blush rose accents · champagne text
-   ──────────────────────────────────────────────────────────── */
-
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&display=swap');
 
 .bw-root {
   min-height: 100vh;
-  /* Same dark crimson canvas as MemoryGame butterfly screen */
-  background:
-    radial-gradient(ellipse at 50% 0%,  rgba(140, 10, 25, 0.32) 0%, transparent 65%),
-    radial-gradient(ellipse at 15% 80%, rgba(100, 5, 18, 0.24) 0%, transparent 55%),
-    radial-gradient(ellipse at 85% 70%, rgba(120, 8, 22, 0.20) 0%, transparent 55%),
-    linear-gradient(160deg, #160105 0%, #220310 45%, #160105 100%);
-  padding: 0 0 80px;
-  font-family: 'Playfair Display', 'Georgia', serif;
-  color: #fce8ea;
+  background: url('/Wishbg.png') center center / cover no-repeat fixed;
+  padding: 60px 0 100px;
+  font-family: 'Caveat', cursive;
   position: relative;
   overflow-x: hidden;
 }
 
-/* Decorative scatter — SVG petal shapes, no emoji (rule 3) */
-.bw-root::before {
-  content: '';
-  position: fixed;
-  top: 8%;
-  right: 6%;
-  width: 48px;
-  height: 48px;
-  /* Heart silhouette via clip-path */
-  background: rgba(200, 50, 80, 0.09);
-  clip-path: polygon(50% 15%, 60% 5%, 75% 5%, 85% 15%, 85% 30%, 50% 65%, 15% 30%, 15% 15%, 25% 5%, 40% 5%);
-  pointer-events: none;
-  z-index: 0;
-  animation: bw-float 8s ease-in-out infinite;
-}
-.bw-root::after {
-  content: '';
-  position: fixed;
-  bottom: 12%;
-  left: 5%;
-  width: 56px;
-  height: 56px;
-  background: rgba(180, 30, 60, 0.07);
-  clip-path: polygon(50% 15%, 60% 5%, 75% 5%, 85% 15%, 85% 30%, 50% 65%, 15% 30%, 15% 15%, 25% 5%, 40% 5%);
-  pointer-events: none;
-  z-index: 0;
-  animation: bw-float 10s ease-in-out infinite reverse;
-}
-@keyframes bw-float {
-  0%, 100% { transform: translateY(0) rotate(-8deg); }
-  50%       { transform: translateY(-14px) rotate(4deg); }
+
+.bw-root--editing {
+  background: transparent !important;
+  padding-top: 80px;
 }
 
-/* ── Back button ── */
+
 .bw-back {
+  position: fixed;
+  top: 22px;
+  left: 32px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin: 28px 0 0 28px;
-  /* Translucent crimson surface — matches card family */
-  background: rgba(110, 8, 18, 0.45);
-  border: 1px solid rgba(230, 100, 120, 0.32);
-  color: rgba(252, 232, 234, 0.78);
-  font-size: 13px;
-  font-family: inherit;
-  padding: 7px 16px;
+  gap: 7px;
+  background: rgba(255,255,255,0.9);
+  border: 2px solid rgba(220,180,150,0.5);
+  color: #8b6f47;
+  font-size: 12px;
+  font-family: 'Georgia', serif;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 8px 18px;
   border-radius: 9999px;
   cursor: pointer;
-  transition:
-    background var(--transition-base, 180ms ease),
-    color var(--transition-base, 180ms ease),
-    border-color var(--transition-base, 180ms ease);
-  position: relative;
-  z-index: 5;
+  z-index: 100;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: all 200ms ease;
 }
-.bw-back:hover {
-  background: rgba(140, 10, 25, 0.62);
-  border-color: rgba(255, 155, 170, 0.55);
-  color: #fce8ea;
-}
+.bw-back:hover { background: #fff; transform: translateX(-2px); }
 
-/* ── Header ── */
+
 .bw-header {
   text-align: center;
-  padding: 44px 24px 36px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
+  padding: 0 24px 60px;
   position: relative;
   z-index: 2;
 }
-.bw-stars { opacity: 0.88; }
-
-/* Heart flourish strip — text chars, not emoji */
-.bw-header::before {
-  content: '♥  ·  ♥  ·  ♥';
-  display: block;
-  font-size: 11px;
-  letter-spacing: 0.28em;
-  color: rgba(220, 100, 120, 0.48);
-  text-transform: uppercase;
-  font-family: 'Georgia', serif;
-}
-
 .bw-title {
-  font-size: clamp(30px, 6vw, 44px);
-  font-weight: 400;
-  font-style: italic;
-  letter-spacing: 0.02em;
-  /* Champagne-ivory — same as CodeScreen title */
-  color: #fce8ea;
-  margin: 0 0 4px;
-  text-shadow:
-    0 2px 18px rgba(160, 15, 40, 0.6),
-    0 0 40px rgba(140, 10, 30, 0.32);
+  font-family: 'Caveat', cursive;
+  font-size: clamp(42px, 7vw, 68px);
+  font-weight: 700;
+  color: #8b6f47;
+  margin: 0 0 12px;
 }
 .bw-subtitle {
-  font-size: 14px;
-  color: rgba(255, 215, 220, 0.58);
+  font-size: 18px;
+  color: #a08060;
   margin: 0;
-  font-style: italic;
-  letter-spacing: 0.04em;
-  text-shadow: 0 1px 4px rgba(80, 0, 15, 0.35);
 }
 
-/* Divider line under header */
-.bw-header::after {
-  content: '';
-  display: block;
-  width: 80px;
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(200, 60, 80, 0.45), transparent);
-  margin-top: 4px;
-}
 
-/* ── Wish list ── */
-.bw-list {
+.bw-single-envelope-container {
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-  max-width: 560px;
-  margin: 0 auto;
-  padding: 0 24px;
+  justify-content: center;
+  padding: 0 32px;
+}
+
+.bw-envelope-scene {
   position: relative;
+  width: 100%;
+  max-width: 650px;
+  height: 380px;
+}
+
+
+.bw-envelope {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  perspective: 1000px;
+}
+
+
+.bw-envelope-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  border-radius: 10px;
+  filter: drop-shadow(0 8px 24px rgba(255,120,170,0.25));
+  pointer-events: none;
+}
+
+
+.bw-heart-seal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70px;
+  height: 66px;
+  z-index: 7;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 10px rgba(180,20,80,0.35));
+  transition: transform 0.5s ease, opacity 0.5s ease;
+}
+.bw-heart-seal svg { width: 100%; height: 100%; }
+
+
+.bw-envelope.open .bw-heart-seal {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.3) rotate(15deg);
+}
+
+
+.bw-envelope-front {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 52%;
+  background: #ffb3c6;
+  border-radius: 0 0 10px 10px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.bw-flap-top {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 52%;
+  background: #ffc8d8;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  z-index: 6;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 8px rgba(150,40,40,0.2));
+}
+
+
+.bw-two-letters {
+  position: absolute;
+  top: 30%;
+  left: 6%;
+  right: 6%;
+  display: flex;
+  gap: 12px;
+  z-index: 2;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s 0s, opacity 0.3s;
+}
+
+.bw-envelope.open .bw-two-letters {
+  visibility: visible;
+  opacity: 1;
+  transition: visibility 0s 0.4s, opacity 0.4s 0.4s;
+  pointer-events: auto;
   z-index: 2;
 }
 
-/* ── Wish card — opacity-red glaze matches CodeScreen .cs-wrapper ── */
-.bw-card {
-  /* Same rgba(110,8,18) family, slightly more transparent for layering */
-  background: rgba(110, 8, 18, 0.62);
-  border: 1.5px solid rgba(255, 160, 170, 0.22);
-  border-radius: 16px;
-  min-height: 140px;
+
+.bw-letter-preview {
+  flex: 1;
+  background: #fff;
+  border-radius: 6px;
+  padding: 18px 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 160px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.bw-envelope.open .bw-letter-preview:hover {
+  border-color: #ff8080;
+}
+
+.bw-letter-preview-number {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ff8080;
+  letter-spacing: 0.05em;
+}
+
+.bw-letter-preview-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.bw-letter-preview-hint {
+  font-size: 13px;
+  color: #ff8080;
+  font-style: italic;
+  letter-spacing: 0.05em;
+}
+
+
+.bw-floating-hearts {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.bw-heart-float {
+  position: absolute;
+  font-size: 24px;
+  color: #ff3366;
+  bottom: 0;
+}
+
+
+.bw-letter-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow:
-    0 4px 20px rgba(80, 0, 15, 0.45),
-    inset 0 1px 0 rgba(255, 210, 215, 0.08);
-  transition:
-    transform var(--transition-base, 180ms ease),
-    box-shadow var(--transition-base, 180ms ease),
-    border-color var(--transition-base, 180ms ease);
-  overflow: hidden;
-  position: relative;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-.bw-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255, 200, 210, 0.05) 0%, transparent 60%);
-  pointer-events: none;
-  border-radius: inherit;
-}
-.bw-card:hover {
-  transform: translateY(-3px);
-  box-shadow:
-    0 10px 32px rgba(80, 0, 15, 0.55),
-    0 0 20px rgba(160, 15, 40, 0.20);
-  border-color: rgba(255, 175, 185, 0.38);
-}
-.bw-card--locked {
-  border-color: rgba(180, 40, 60, 0.14);
-  opacity: 0.58;
-}
-.bw-card--revealed {
-  animation: bw-reveal 380ms ease;
-}
-@keyframes bw-reveal {
-  from { opacity: 0; transform: translateY(10px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0)    scale(1); }
+  padding: 24px;
+  z-index: 1000;
 }
 
-/* ── Seal button (closed wish) ── */
-.bw-seal {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 32px;
-  background: none;
-  border: none;
-  color: rgba(255, 215, 220, 0.62);
-  cursor: pointer;
-  font-family: inherit;
-  transition:
-    color var(--transition-base, 180ms ease),
-    transform var(--transition-fast, 100ms ease);
-}
-.bw-seal:hover {
-  color: #fce8ea;
-  transform: scale(1.08);
-}
-.bw-seal-icon {
-  /* Blush rose icon, not saturated red */
-  color: rgba(210, 80, 105, 0.75);
-  opacity: 0.82;
-}
-.bw-seal-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-style: italic;
-  color: rgba(255, 190, 200, 0.58);
-}
-
-/* ── Wish inner content ── */
-.bw-wish-inner {
-  padding: 28px 32px;
+.bw-letter-full {
+  background: linear-gradient(to bottom, #fffef9, #faf8f3);
+  border-radius: 10px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.25);
+  padding: 48px 44px;
+  max-width: 580px;
   width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  border: 2px solid rgba(255,160,160,0.25);
+}
+
+.bw-letter-close {
+  position: absolute;
+  top: 16px; right: 16px;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: rgba(255,128,128,0.15);
+  border: 1.5px solid rgba(255,128,128,0.35);
+  color: #8b6f47;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.bw-letter-close:hover { background: rgba(255,128,128,0.3); transform: rotate(90deg); }
+
+.bw-letter-to {
+  font-size: 18px;
+  color: #aaa;
+  margin: 0 0 16px;
+}
+
+.bw-letter-title-full {
+  font-size: 34px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 20px;
+  line-height: 1.3;
+}
+
+.bw-letter-divider {
+  width: 100px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #ff8080, transparent);
+  margin: 0 auto 24px;
+}
+
+.bw-letter-message-full {
+  font-size: 22px;
+  line-height: 1.8;
+  color: #555;
+  text-align: center;
+  font-style: italic;
+  margin: 0;
+}
+
+.bw-letter-signature {
+  font-size: 32px;
+  color: #ff5555;
+  text-align: right;
+  margin-top: 24px;
+}
+
+@media (max-width: 768px) {
+  .bw-envelope-scene { height: 340px; }
+  .bw-two-letters { gap: 8px; }
+  .bw-letter-preview { padding: 14px 12px; min-height: 130px; }
+  .bw-letter-preview-title { font-size: 16px; }
+  .bw-letter-full { padding: 36px 28px; }
+  .bw-letter-title-full { font-size: 28px; }
+  .bw-letter-message-full { font-size: 19px; }
+}
+
+
+.bw-edit-cards {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  position: relative;
-  z-index: 1;
+  gap: 16px;
+  max-width: 650px;
+  margin: 40px auto 0;
+  padding: 0 32px;
 }
 
-/* Small heart accent top-right */
-.bw-wish-inner::after {
-  content: '♥';
-  position: absolute;
-  top: 14px;
-  right: 18px;
+.bw-edit-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 20px rgba(255, 120, 160, 0.15);
+  border: 1.5px solid rgba(255, 160, 180, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bw-edit-card-label {
   font-size: 11px;
-  color: rgba(200, 60, 85, 0.28);
-  pointer-events: none;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ff8080;
+  font-family: 'Georgia', serif;
 }
 
-/* Lock icon for sealed wishes */
-.bw-lock-icon {
-  color: rgba(200, 70, 95, 0.40);
-  margin-bottom: 4px;
+.bw-edit-card-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 }
 
-/* ── Typography — matches CodeScreen champagne palette ── */
-.bw-wish-title {
-  font-size: 20px;
-  font-weight: 400;
-  font-style: italic;
-  /* Blush champagne — same as CodeScreen .cs-title family */
-  color: #fce8ea;
-  margin: 0;
-  text-shadow: 0 1px 8px rgba(140, 10, 30, 0.35);
+.bw-edit-card-row--message {
+  align-items: flex-start;
 }
-.bw-wish-message {
-  font-size: 14.5px;
-  line-height: 1.85;
-  color: rgba(255, 215, 220, 0.78);
-  margin: 0;
-  font-style: italic;
-  /* Left border — deep rose, matches MemoryGame card border tone */
-  border-left: 2px solid rgba(180, 30, 55, 0.45);
-  padding-left: 14px;
+
+.bw-edit-card-field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #a08060;
+  min-width: 60px;
+  padding-top: 4px;
+  font-family: 'Georgia', serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
-.bw-wish-hint {
-  font-size: 12.5px;
-  color: rgba(220, 110, 130, 0.52);
-  margin: 0;
-  font-style: italic;
-  letter-spacing: 0.03em;
+
+.bw-edit-card-to,
+.bw-edit-card-title {
+  font-size: 17px;
+  color: #5a3a2a;
+  font-family: 'Caveat', cursive;
+  flex: 1;
+}
+
+.bw-edit-card-message {
+  font-size: 16px;
+  color: #6a4a3a;
+  font-family: 'Caveat', cursive;
+  flex: 1;
+  line-height: 1.55;
 }

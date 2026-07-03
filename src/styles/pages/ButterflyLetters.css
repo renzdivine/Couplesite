@@ -1,8 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Caveat:wght@400;600;700&display=swap');
 
-/* ════════════════════════════════════════════════════════════
-   BOOK CONTAINER — fills its parent, dark background
-════════════════════════════════════════════════════════════ */
+
 .bl-book-container {
   position: relative;
   width: 100%;
@@ -16,11 +14,11 @@
   perspective: 2200px;
   overflow: hidden;
   z-index: 0;
-  /* Prevent the book from bleeding into adjacent admin sections */
+  
   contain: layout paint;
 }
 
-/* ── Back button ──────────────────────────────────────────── */
+
 .bl-back-btn {
   position: absolute;
   top: 18px;
@@ -41,9 +39,7 @@
 }
 .bl-back-btn:hover { background: rgba(0,0,0,0.75); }
 
-/* ════════════════════════════════════════════════════════════
-   THE BOOK — 3-D stage
-════════════════════════════════════════════════════════════ */
+
 .bl-book {
   position: relative;
   width: min(1200px, 97vw);
@@ -55,9 +51,7 @@
     0 10px 20px rgba(0,0,0,0.45);
 }
 
-/* ════════════════════════════════════════════════════════════
-   PAGES
-════════════════════════════════════════════════════════════ */
+
 .bl-page {
   position: absolute;
   inset: 0;
@@ -77,10 +71,10 @@
   isolation: isolate;
 }
 
-/* Only animate pages involved in the current flip */
+
 .bl-page {
   will-change: auto;
-  /* No transition by default — prevents all 6 pages re-compositing on state change */
+  
   transition: none;
 }
 
@@ -89,33 +83,33 @@
   transition: transform 0.72s cubic-bezier(0.645, 0.045, 0.355, 1.000);
 }
 
-/* Already-flipped (past) pages */
+
 .bl-page.is-past {
   transform: rotateY(-180deg);
-  /* Hide from accessibility tree and skip rendering cost */
+  
   visibility: hidden;
 }
 
-/* Current visible page */
+
 .bl-page.is-current {
   transform: rotateY(0deg);
   visibility: visible;
 }
 
-/* Future pages — stacked behind, not animating */
+
 .bl-page.is-future {
   will-change: auto;
-  /* Skip paint for off-screen future pages */
+  
   content-visibility: auto;
 }
 
-/* While flipping, show the pages involved */
+
 .bl-page.is-past.is-flipping,
 .bl-page.is-current.is-flipping {
   visibility: visible;
 }
 
-/* Page edge shadow (right side) — makes stack visible */
+
 .bl-page::after {
   content: '';
   position: absolute;
@@ -130,7 +124,7 @@
   z-index: 50;
 }
 
-/* Page top/bottom edge */
+
 .bl-page::before {
   content: '';
   position: absolute;
@@ -141,9 +135,7 @@
   z-index: 50;
 }
 
-/* ════════════════════════════════════════════════════════════
-   SPINE
-════════════════════════════════════════════════════════════ */
+
 .bl-spine {
   position: absolute;
   left: 0; top: 0; bottom: 0;
@@ -162,7 +154,7 @@
   border-right: 1.5px solid rgba(100,70,30,0.22);
   box-shadow: inset -3px 0 10px rgba(60,35,10,0.14),
               4px 0 16px rgba(30,15,0,0.22);
-  /* 3-D spine depth */
+  
   transform: perspective(500px) rotateY(3deg);
   transform-origin: left center;
   z-index: 10;
@@ -175,9 +167,7 @@
 }
 .bl-ring svg { width: 100%; height: 100%; }
 
-/* ════════════════════════════════════════════════════════════
-   PAGE CONTENT WRAPPER
-════════════════════════════════════════════════════════════ */
+
 .bl-page-content {
   position: absolute;
   left: 68px;
@@ -187,9 +177,7 @@
   overflow: hidden;
 }
 
-/* ════════════════════════════════════════════════════════════
-   SHARED TYPOGRAPHY
-════════════════════════════════════════════════════════════ */
+
 .bl-script-xl {
   font-family: 'Playfair Display', 'Georgia', serif;
   font-style: italic;
@@ -201,9 +189,7 @@
   white-space: pre-line;
 }
 
-/* ════════════════════════════════════════════════════════════
-   TORN-PAPER RECTANGULAR PHOTO
-════════════════════════════════════════════════════════════ */
+
 .bl-torn-rect {
   position: relative;
   display: inline-block;
@@ -215,7 +201,7 @@
   background: #fff;
   padding: 8px 8px 22px;
   position: relative;
-  /* Torn edges via clip-path polygon */
+  
   clip-path: polygon(
     0% 2%,   1.5% 0%,  3% 1.8%,  4.5% 0.3%, 6% 2%,   7.5% 0%,  9% 1.5%,  10.5% 0.2%,
     12% 1.8%,14% 0.4%, 16% 2%,   18% 0%,    20% 1.6%, 22% 0.2%, 25% 1.9%, 28% 0.3%,
@@ -236,9 +222,7 @@
   object-fit: cover;
 }
 
-/* ════════════════════════════════════════════════════════════
-   TORN-PAPER CIRCULAR PHOTO
-════════════════════════════════════════════════════════════ */
+
 .bl-torn-circle {
   position: relative;
   display: inline-block;
@@ -254,9 +238,7 @@
   z-index: 5;
 }
 
-/* ════════════════════════════════════════════════════════════
-   WASHI TAPE NOTE
-════════════════════════════════════════════════════════════ */
+
 .bl-washi-note {
   position: relative;
   display: inline-block;
@@ -279,7 +261,7 @@
   z-index: 2;
   border-radius: 2px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  /* Slight textile texture */
+  
   background-image: repeating-linear-gradient(
     90deg,
     transparent,
@@ -316,16 +298,14 @@
   margin: 0;
 }
 
-/* ════════════════════════════════════════════════════════════
-   PINK FACT BANNER
-════════════════════════════════════════════════════════════ */
+
 .bl-fact-banner {
   background: #c05070;
   border-radius: 3px;
   padding: 10px 22px;
   display: inline-block;
   box-shadow: 3px 3px 10px rgba(0,0,0,0.3);
-  /* Slight edge tear */
+  
   clip-path: polygon(0 3%, 1% 0%, 99% 1%, 100% 0%, 100% 97%, 99% 100%, 1% 99%, 0% 100%);
 }
 
@@ -337,19 +317,28 @@
   white-space: pre-line;
 }
 
-/* ════════════════════════════════════════════════════════════
-   PHOTO placeholders
-════════════════════════════════════════════════════════════ */
+
 .bl-photo { display: block; width: 100%; height: 100%; object-fit: cover; }
 .bl-photo-empty {
-  background: rgba(150,110,60,0.25);
+  background: #c9adb5;
   display: flex; align-items: center; justify-content: center;
 }
-.bl-photo-empty svg { width: 40%; height: 40%; opacity: 0.5; }
+.bl-photo-empty svg { width: 28px; height: 24px; opacity: 1; }
 
-/* ════════════════════════════════════════════════════════════
-   PAGE 1 — 3 FACTS
-════════════════════════════════════════════════════════════ */
+
+.bl-photo-add {
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  border: 2px dashed rgba(233, 30, 140, 0.55);
+  transition: background 0.2s, border-color 0.2s;
+}
+.bl-photo-add:hover {
+  background: rgba(233, 30, 140, 0.12) !important;
+  border-color: rgba(233, 30, 140, 0.9);
+}
+
+
 .bl-page-content.bl-facts-layout {
   display: grid;
   grid-template-columns: 1fr 44%;
@@ -415,11 +404,9 @@
   aspect-ratio: 3/4;
 }
 
-/* snippet removed */
 
-/* ════════════════════════════════════════════════════════════
-   PAGE 2 — MESSAGES
-════════════════════════════════════════════════════════════ */
+
+
 .bl-messages-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -488,9 +475,7 @@
 }
 .bl-msg-leaf svg { width: 100%; height: 100%; }
 
-/* ════════════════════════════════════════════════════════════
-   PAGE 3 — WONDERFUL DAY
-════════════════════════════════════════════════════════════ */
+
 .bl-wonderful-layout {
   display: flex;
   flex-direction: column;
@@ -551,9 +536,7 @@
 }
 .bl-wonderful-flower svg { width: 100%; height: 100%; }
 
-/* ════════════════════════════════════════════════════════════
-   PAGE 4 — ETERNAL LOVE
-════════════════════════════════════════════════════════════ */
+
 .bl-eternal-layout {
   display: flex;
   align-items: center;
@@ -600,9 +583,7 @@
   aspect-ratio: unset;
 }
 
-/* ════════════════════════════════════════════════════════════
-   PAGE 5 — THANK YOU
-════════════════════════════════════════════════════════════ */
+
 .bl-thankyou-layout {
   display: grid;
   grid-template-columns: 58% 1fr;
@@ -689,9 +670,7 @@
   font-style: italic;
 }
 
-/* ════════════════════════════════════════════════════════════
-   NAVIGATION ARROWS
-════════════════════════════════════════════════════════════ */
+
 .bl-nav-btn {
   position: absolute;
   top: 50%;
@@ -719,9 +698,7 @@
 .bl-nav-prev { left: clamp(6px, 1.5vw, 24px); }
 .bl-nav-next { right: clamp(6px, 1.5vw, 24px); }
 
-/* ════════════════════════════════════════════════════════════
-   DOT INDICATORS
-════════════════════════════════════════════════════════════ */
+
 .bl-dots {
   position: absolute;
   bottom: 22px;
@@ -746,13 +723,9 @@
 .bl-dot:hover    { background: rgba(255,255,255,0.55); }
 .bl-dot-active   { background: rgba(255,255,255,0.9); transform: scale(1.3); }
 
-/* ════════════════════════════════════════════════════════════
-   BG OVERLAY — removed
-════════════════════════════════════════════════════════════ */
 
-/* ════════════════════════════════════════════════════════════
-   RESPONSIVE
-════════════════════════════════════════════════════════════ */
+
+
 @media (max-width: 860px) {
   .bl-book { width: 98vw; height: 92vh; }
   .bl-spine { width: 46px; }
@@ -794,3 +767,81 @@
   .bl-ty-photo { grid-column: 1; grid-row: 1; }
   .bl-ty-right-col { grid-column: 1; grid-row: 2; flex-direction: row; flex-wrap: wrap; justify-content: flex-end; height: auto; }
 }
+
+
+.bl-dp-placeholder {
+  width: 100%; height: 100%;
+  background: rgba(200, 170, 180, 0.85);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 6px; cursor: pointer;
+  border: 2px dashed rgba(233,30,140,0.55);
+  transition: background 0.2s, border-color 0.2s;
+}
+.bl-dp-placeholder:hover {
+  background: rgba(233,30,140,0.15);
+  border-color: rgba(233,30,140,0.9);
+}
+
+
+.bl-dp-remove-btn {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 22px; height: 22px;
+  border-radius: 50%; border: none;
+  background: rgba(140,10,30,0.9);
+  color: #fce8ea; font-size: 0.65rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 20;
+  transition: background 0.15s, transform 0.15s;
+}
+.bl-dp-remove-btn:hover {
+  background: rgba(200,10,30,1);
+  transform: scale(1.15);
+}
+
+
+.bl-dp-zoom-btns {
+  position: absolute;
+  bottom: 26px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(10,0,20,0.75);
+  border: 1px solid rgba(233,30,140,0.35);
+  border-radius: 20px; padding: 3px 8px;
+  opacity: 0; transition: opacity 0.18s;
+  z-index: 10; white-space: nowrap;
+}
+.bl-dp-zoom-btns:hover, *:hover > .bl-dp-zoom-btns { opacity: 1; }
+
+.bl-dp-zoom-btn {
+  background: none; border: none;
+  color: #ff9ab5; font-size: 0.85rem;
+  cursor: pointer; padding: 0 3px; line-height: 1;
+  font-family: system-ui, sans-serif;
+}
+.bl-dp-zoom-btn:hover { color: #fff; }
+
+.bl-dp-zoom-val {
+  font-size: 0.65rem;
+  color: rgba(255,180,200,0.7);
+  min-width: 32px; text-align: center;
+  font-family: system-ui, sans-serif;
+}
+
+
+.bl-dp-drag-hint {
+  position: absolute;
+  top: 6px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.55rem;
+  color: rgba(255,200,220,0.7);
+  background: rgba(10,0,20,0.65);
+  padding: 2px 8px; border-radius: 10px;
+  white-space: nowrap; pointer-events: none;
+  opacity: 0; transition: opacity 0.18s;
+  z-index: 10;
+  font-family: system-ui, sans-serif;
+}
+*:hover > .bl-dp-drag-hint { opacity: 1; }

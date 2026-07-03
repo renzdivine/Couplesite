@@ -1,0 +1,108 @@
+import { useState } from 'react';
+import { EditableText } from '../components/EditableField';
+import '../styles/pages/GiftPrompt.css';
+
+const GOMA_CAT_GIF     = 'https://media.tenor.com/Esi-teXJmyUAAAAm/laphie.webp';
+const MOCHI_COUPLE_GIF = 'https://media1.tenor.com/m/6c7WSVdVFNoAAAAC/catie.gif';
+
+export default function GiftPrompt({ couple, onAccept, isEditing = false, onContentChange }) {
+  const [state, setState] = useState('ask');
+
+  const pc         = couple?.pageContent?.giftPrompt || {};
+  const askTitle   = pc.askTitle    ?? 'HEY BABY!';
+  const askSub     = pc.askSub      ?? 'WOULD YOU LIKE TO SEE YOUR GIFT?';
+  const pleaseTitle = pc.pleaseTitle ?? 'AW PLEASE?';
+  const pleaseSub   = pc.pleaseSub  ?? 'I PREPARED THIS GIFT FOR YOU';
+
+  const save = (field, val) => onContentChange?.({ ...pc, [field]: val });
+
+  if (state === 'please') {
+    return (
+      <div className="gp-root">
+        <div className="gp-card">
+          <img
+            src={MOCHI_COUPLE_GIF}
+            alt="Mochi couple hugging"
+            className="gp-gif gp-gif--wide"
+            draggable={false}
+          />
+
+          <EditableText
+            as="h1" className="gp-title"
+            value={pleaseTitle}
+            isEditing={isEditing}
+            onChange={val => save('pleaseTitle', val)}
+          />
+          <EditableText
+            as="p" className="gp-subtitle"
+            value={pleaseSub}
+            isEditing={isEditing}
+            onChange={val => save('pleaseSub', val)}
+          />
+
+          {!isEditing && (
+            <button
+              className="gp-btn gp-btn--back"
+              onClick={() => setState('ask')}
+              aria-label="Go back"
+            >
+              ←
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="gp-root">
+      <div className="gp-card">
+        <img
+          src={GOMA_CAT_GIF}
+          alt="Goma cat"
+          className="gp-gif gp-gif--square"
+          draggable={false}
+        />
+
+        <EditableText
+          as="h1" className="gp-title"
+          value={askTitle}
+          isEditing={isEditing}
+          onChange={val => save('askTitle', val)}
+        />
+        <EditableText
+          as="p" className="gp-subtitle"
+          value={askSub}
+          isEditing={isEditing}
+          onChange={val => save('askSub', val)}
+        />
+
+        {!isEditing && (
+          <div className="gp-actions">
+            <button
+              className="gp-btn gp-btn--no"
+              onClick={() => setState('please')}
+              aria-label="No"
+            >
+              ✕
+            </button>
+            <button
+              className="gp-btn gp-btn--yes"
+              onClick={onAccept}
+              aria-label="Yes"
+            >
+              ✓
+            </button>
+          </div>
+        )}
+
+        {isEditing && (
+          <div className="gp-actions gp-actions--preview">
+            <button className="gp-btn gp-btn--no" disabled aria-label="No preview">✕</button>
+            <button className="gp-btn gp-btn--yes" disabled aria-label="Yes preview">✓</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

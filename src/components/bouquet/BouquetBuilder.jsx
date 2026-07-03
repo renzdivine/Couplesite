@@ -11,16 +11,6 @@ import FlowerSelector from './FlowerSelector';
 import BouquetPreview from './BouquetPreview';
 import '../../styles/components/BouquetBuilder.css';
 
-/**
- * BouquetBuilder
- *
- * Props:
- *  - readOnly (bool)   — visitor view: shows saved layout only, no controls
- *  - savedQuantities   — quantities object from couple data (used in readOnly mode)
- *  - savedSeed         — numeric seed from couple data (used in readOnly mode)
- *  - coupleSlug        — slug of the couple, used when saving
- *  - onSave(qty, seed) — callback after client saves their bouquet
- */
 export default function BouquetBuilder({
   readOnly = false,
   savedQuantities,
@@ -59,9 +49,9 @@ export default function BouquetBuilder({
     setSaved(true);
   }, [total, quantities, layoutSeed, onSave]);
 
-  /* ── Visitor read-only view ── */
+  
   if (readOnly) {
-    // No saved bouquet yet — show nothing
+    
     if (!savedQuantities || totalFlowerCount(savedQuantities) === 0) return null;
 
     return (
@@ -73,7 +63,7 @@ export default function BouquetBuilder({
     );
   }
 
-  /* ── Client editable view ── */
+  
   return (
     <section className="bb-root" aria-labelledby="bb-heading">
       <div className="bb-intro">

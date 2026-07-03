@@ -1,37 +1,28 @@
-/* ============================================================
-   DESIGN TOKENS — Edit here to restyle the entire product.
-   ============================================================ */
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* ── Brand (romantic rose/magenta) ── */
-  --color-brand:         hsl(330, 80%, 52%);   /* #e91e8c — primary CTA, active states */
-  --color-brand-light:   hsl(330, 80%, 92%);   /* Soft tint for backgrounds */
-  --color-brand-dark:    hsl(330, 80%, 38%);   /* Pressed / hover state */
-  --color-brand-glow:    rgba(233, 30, 140, 0.25);
+  --color-brand:         hsl(330, 80%, 52%);
+  --color-brand-light:   hsl(330, 80%, 92%);
+  --color-brand-dark:    hsl(330, 80%, 38%);
+  --color-brand-glow:    rgba(233, 30, 140, 0.18);
 
-  /* ── Surfaces ── */
-  --color-canvas:   hsl(330, 100%, 4%);        /* Page background #1a0010 */
-  --color-surface:  rgba(255, 255, 255, 0.05); /* Card / panel */
-  --color-overlay:  rgba(255, 255, 255, 0.08); /* Hover surface */
+  --color-canvas:   hsl(340, 40%, 98%);
+  --color-surface:  hsl(0, 0%, 100%);
+  --color-overlay:  hsl(330, 30%, 96%);
 
-  /* ── Text ── */
-  --color-text-primary:   hsl(340, 80%, 88%);  /* #ffb3cc — bright on dark */
-  --color-text-secondary: hsl(340, 60%, 72%);  /* #ff9ab5 — secondary */
-  --color-text-muted:     rgba(255, 180, 200, 0.5);
-  --color-text-faint:     rgba(255, 180, 200, 0.3);
+  --color-text-primary:   hsl(330, 40%, 16%);
+  --color-text-secondary: hsl(330, 25%, 42%);
+  --color-text-muted:     hsl(330, 18%, 62%);
+  --color-text-faint:     hsl(330, 15%, 76%);
 
-  /* ── Borders ── */
-  --color-border:        rgba(255, 150, 180, 0.2);
-  --color-border-strong: rgba(255, 150, 180, 0.45);
+  --color-border:        hsl(330, 30%, 84%);
+  --color-border-strong: hsl(330, 35%, 68%);
 
-  /* ── Shadows (subtle) ── */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.12);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.10);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.28), 0 2px 4px rgba(0, 0, 0, 0.14);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.40), 0 4px 8px rgba(0, 0, 0, 0.18);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.09), 0 4px 8px rgba(0, 0, 0, 0.05);
 
-  /* ── Border radius scale ── */
   --radius-xs:   4px;
   --radius-sm:   6px;
   --radius-md:   10px;
@@ -40,12 +31,10 @@
   --radius-2xl:  28px;
   --radius-full: 9999px;
 
-  /* ── Transitions ── */
   --transition-fast: 100ms ease;
   --transition-base: 180ms ease;
   --transition-slow: 320ms ease;
 
-  /* ── Type scale ── */
   --text-xs:   11px;
   --text-sm:   13px;
   --text-base: 15px;
@@ -56,7 +45,6 @@
   --text-3xl:  40px;
 }
 
-/* ── Reset ── */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body {
@@ -76,7 +64,6 @@ html, body {
   text-align: left;
 }
 
-/* ── Global interactive base ── */
 button, a, [role="button"] {
   transition:
     color          var(--transition-base),
@@ -87,7 +74,6 @@ button, a, [role="button"] {
     opacity        var(--transition-base);
 }
 
-/* ── Keyframes shared globally ── */
 @keyframes pulse {
   0%, 100% { transform: scale(1); }
   50%       { transform: scale(1.08); }
@@ -98,7 +84,6 @@ button, a, [role="button"] {
   to   { transform: rotate(360deg); }
 }
 
-/* ── EditablePhoto hover overlay ── */
 [data-editing] .ep-hover-overlay,
 .ep-editing-mode .ep-hover-overlay {
   opacity: 1 !important;
@@ -108,6 +93,6 @@ div:hover > .ep-hover-overlay {
 }
 [contenteditable]:empty:before {
   content: attr(data-placeholder);
-  color: rgba(255,150,180,0.35);
+  color: hsl(330, 30%, 72%);
   pointer-events: none;
 }

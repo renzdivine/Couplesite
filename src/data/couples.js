@@ -1,15 +1,9 @@
-// ─────────────────────────────────────────────────────────────
-// data/couples.js  — Role-based data store
-// Roles: masterAdmin → admin (client) → user (visitor)
-// ─────────────────────────────────────────────────────────────
-
-// Master Admin credentials (website owner)
 export const masterAdminCredentials = {
   username: 'masteradmin',
   password: 'masteradmin123',
 };
 
-// Client accounts — each client has their own credentials + couple data
+
 export const defaultClients = [
   {
     id: 'client-renz-jane',
@@ -27,7 +21,7 @@ export const defaultClients = [
   },
 ];
 
-// Couple/website data
+
 export const couplesData = [
   {
     id: 'renz-jane',
@@ -35,7 +29,7 @@ export const couplesData = [
     name1: 'Renz',
     name2: 'Jane',
     relationshipDate: '2023-02-14',
-    accessCode: '0214',
+    
     theme: 'rose',
     package: 'Premium',
     tagline: 'Two souls, one heartbeat',
@@ -90,7 +84,7 @@ export const couplesData = [
       video:     { title: 'Our Video',     subtitle: 'A romantic slideshow of our journey', pendingTitle: 'Your video is being created', pendingText: 'Our admin is crafting a beautiful romantic slideshow with your photos and song. Check back soon! 💕' },
       monthsary: { title: 'Monthsary',     subtitle: 'Celebrating every month of us', inLoveText: 'of being in love', defaultMessage: "Every month with you is a gift I'll never take for granted. ❤️" },
       capsule:   { title: 'Time Capsule',  subtitle: 'Messages from the past, for your future' },
-      // ── per-page editable content ──
+      
       codeScreen: {
         title: 'Enter Code',
         hint: 'The day you finally said "YES" to me.',
@@ -99,7 +93,7 @@ export const couplesData = [
       memoryGame: {
         eyebrow: 'Mini game',
         title: "Let's play a little game",
-        subtitle: 'Find all matching pairs to unlock your love page',
+        subtitle: 'Find all matching pairs to unlock my Surprise',
         hint: 'Tap two cards to find matching pairs',
       },
       photos: {
@@ -147,6 +141,10 @@ export const couplesData = [
         slide10Title1: 'A Love',
         slide10Title2: 'Still Growing',
         slide10Body: "In the end, our story isn't defined by a single moment, but by all the quiet ones that led us here. Every step, every laugh, every challenge, every soft \"it's okay\".",
+      },
+      butterfly360: {
+        overlayTitle: 'Jay & Me',
+        overlayHint: 'Drag to look around · tap a butterfly',
       },
       storyPage: {
         boardTitle1: 'Songs',

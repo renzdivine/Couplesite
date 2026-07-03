@@ -1,19 +1,9 @@
-// ─────────────────────────────────────────────────────────────
-// GiftReveal.jsx
-//
-// Overlays the MemoryGame as a fullscreen layer.
-// Background: the flower image (public/Flower.png) fills the screen.
-// Center: gift box — click it → lid opens → butterflies burst out
-// and spread across the whole flower-filled page.
-// After ~9 s the screen fades and navigates to /opening.
-// ─────────────────────────────────────────────────────────────
-
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ButterflyAnimation from './ButterflyAnimation';
 import '../styles/components/GiftReveal.css';
 
-// ── Gift Box SVG ──────────────────────────────────────────────
+
 function GiftBox({ opening, btnRef, onClick }) {
   return (
     <button
@@ -56,13 +46,13 @@ function GiftBox({ opening, btnRef, onClick }) {
           </linearGradient>
         </defs>
 
-        {/* Box body */}
+        {}
         <rect x="14" y="52" width="92" height="58" rx="6" fill="url(#grBoxBody)" />
         <rect x="54" y="52" width="12" height="58" rx="3" fill="url(#grRibbon)" />
         <circle cx="28" cy="72" r="3"   fill="rgba(255,255,255,0.35)" />
         <circle cx="90" cy="88" r="2.5" fill="rgba(255,255,255,0.25)" />
 
-        {/* Lid — pivots open */}
+        {}
         <g
           className={`gr-gift-lid${opening ? ' gr-gift-lid--open' : ''}`}
           style={{ transformOrigin: '60px 58px' }}
@@ -85,11 +75,11 @@ function GiftBox({ opening, btnRef, onClick }) {
   );
 }
 
-// ── Main ─────────────────────────────────────────────────────
+
 export default function GiftReveal() {
   const navigate = useNavigate();
 
-  // phase: idle → opening → butterflies → leaving
+  
   const [phase,           setPhase]           = useState('idle');
   const [boxVisible,      setBoxVisible]       = useState(true);
   const [butterflyOrigin, setButterflyOrigin]  = useState(null);
@@ -98,7 +88,7 @@ export default function GiftReveal() {
   function handleBoxClick() {
     if (phase !== 'idle') return;
 
-    // Capture exact box center before layout changes
+    
     let origin = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     if (btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
@@ -111,13 +101,13 @@ export default function GiftReveal() {
     setButterflyOrigin(origin);
     setPhase('opening');
 
-    // Lid animation done → launch butterflies
+    
     setTimeout(() => setPhase('butterflies'), 650);
 
-    // Box fades after butterflies have dispersed
+    
     setTimeout(() => setBoxVisible(false), 3500);
 
-    // After butterflies cover the page → fade out and go to /opening
+    
     setTimeout(() => setPhase('leaving'), 10000);
     setTimeout(() => navigate('/opening'), 20800);
   }
@@ -129,13 +119,13 @@ export default function GiftReveal() {
   return (
     <div className={`gr-root${isLeaving ? ' gr-root--leaving' : ''}`}>
 
-      {/* Flower background — fills the whole screen */}
+      {}
       <div className="gr-flower-bg" aria-hidden="true" />
 
-      {/* Dark overlay to make box + butterflies readable over flowers */}
+      {}
       <div className="gr-overlay" aria-hidden="true" />
 
-      {/* Gift box */}
+      {}
       <div className={`gr-box-wrap${boxVisible ? '' : ' gr-box-wrap--hidden'}`}>
         <GiftBox
           opening={isOpening}
@@ -144,7 +134,7 @@ export default function GiftReveal() {
         />
       </div>
 
-      {/* Butterflies burst from the box and cover the whole flower page */}
+      {}
       {butterflyOrigin && (
         <ButterflyAnimation active={butterfliesOn} origin={butterflyOrigin} />
       )}

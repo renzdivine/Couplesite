@@ -1,5 +1,3 @@
-/* ── Butterflies 360 ──────────────────────────────────────────────────────── */
-
 .bf360-root {
   position: fixed;
   inset: 0;
@@ -11,7 +9,7 @@
 }
 .bf360-root:active { cursor: grabbing; }
 
-/* Three.js canvas mount — fills root */
+
 .bf360-mount {
   position: absolute;
   inset: 0;
@@ -19,7 +17,7 @@
   height: 100%;
 }
 
-/* Vignette */
+
 .bf360-vignette {
   position: absolute;
   inset: 0;
@@ -28,9 +26,9 @@
   background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.52) 100%);
 }
 
-/* Butterflies are now Three.js meshes inside the WebGL canvas — no DOM buttons */
 
-/* ── Opening overlay ──────────────────────────────────────────────────────── */
+
+
 .bf360-overlay {
   position: absolute;
   inset: 0;
@@ -84,7 +82,7 @@
   letter-spacing: 0.06em;
 }
 
-/* ── Hint bar ─────────────────────────────────────────────────────────────── */
+
 .bf360-hint {
   position: absolute;
   bottom: 24px;
@@ -107,7 +105,7 @@
   100%   { opacity: 0; }
 }
 
-/* ── Back button ──────────────────────────────────────────────────────────── */
+
 .bf360-back {
   position: absolute;
   top: 18px; left: 18px;
@@ -133,7 +131,7 @@
   color: #fff;
 }
 
-/* ── No-WebGL fallback ────────────────────────────────────────────────────── */
+
 .bf360-no-webgl {
   position: fixed;
   inset: 0;
@@ -181,7 +179,7 @@
   background: rgba(255,100,160,0.35);
 }
 
-/* ── Hover label ──────────────────────────────────────────────────────────── */
+
 .bf360-hover-label {
   position: absolute;
   transform: translate(-50%, calc(-100% - 14px));

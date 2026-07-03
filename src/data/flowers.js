@@ -1,4 +1,3 @@
-/** Flower library — assets live in /public */
 export const FLOWER_LIBRARY = [
   {
     id: 'rose',

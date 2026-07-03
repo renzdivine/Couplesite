@@ -1,9 +1,3 @@
-/* ══════════════════════════════════════════════════════════════
-   MemoryGame — Love Anniversary Theme
-   Matches CodeScreen: deep crimson opacity-red · blush rose · champagne
-   60% crimson-glazed surface · 30% blush rose · 10% gold-rose accent
-   ══════════════════════════════════════════════════════════════ */
-
 .mg-root {
   position: relative;
   z-index: 10;
@@ -16,16 +10,16 @@
   font-family: 'Georgia', serif;
 }
 
-/* ── Panel — mirrors CodeScreen's opacity-red glaze ── */
+
 .mg-panel {
   background: rgba(110, 8, 18, 0.78);
   border: 1.5px solid rgba(255, 160, 170, 0.28);
   border-radius: var(--radius-2xl);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  padding: clamp(20px, 4vw, 36px);
+  padding: clamp(24px, 4vw, 44px);
   width: 100%;
-  max-width: 480px;
+  max-width: 600px;
   box-shadow:
     0 8px 40px rgba(90, 0, 20, 0.55),
     0 2px 8px rgba(0, 0, 0, 0.28),
@@ -34,7 +28,7 @@
   text-align: center;
 }
 
-/* ── Decorative top ribbon ── */
+
 .mg-panel::before {
   content: '· · · · · · ·';
   display: block;
@@ -44,7 +38,7 @@
   margin-bottom: 14px;
 }
 
-/* ── Header ── */
+
 .mg-eyebrow {
   margin-bottom: 6px;
   font-size: clamp(0.72rem, 2vw, 0.82rem);
@@ -55,10 +49,10 @@
 
 .mg-title {
   margin: 0 0 6px;
-  font-size: clamp(1.2rem, 4vw, 1.65rem);
+  font-size: clamp(1.4rem, 4vw, 2rem);
   font-weight: 700;
   font-style: italic;
-  /* champagne-to-blush gradient text — same family as CodeScreen title */
+  
   background: linear-gradient(135deg, #fce8ea 0%, #ffd0d8 45%, #fff5f6 80%, #ffc8d2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -75,10 +69,10 @@
   text-shadow: 0 1px 4px rgba(80, 0, 15, 0.35);
 }
 
-/* ── Moves counter ── */
+
 .mg-moves {
   display: inline-block;
-  /* distinctly lighter than the crimson panel — blush tint pill */
+  
   background: rgba(255, 220, 225, 0.12);
   border: 1px solid rgba(220, 100, 120, 0.45);
   border-radius: var(--radius-full);
@@ -89,14 +83,14 @@
   letter-spacing: 0.5px;
 }
 
-/* ── Card grid — blush panel, visually distinct from crimson card ── */
+
 .mg-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: clamp(8px, 2vw, 12px);
+  gap: clamp(10px, 2vw, 16px);
   margin-bottom: 16px;
-  padding: 14px;
-  /* translucent blush rose — rule 1: inner is different surface from outer */
+  padding: 18px;
+  
   background: rgba(255, 236, 238, 0.10);
   border-radius: var(--radius-xl);
   border: 1px solid rgba(230, 100, 120, 0.28);
@@ -104,7 +98,7 @@
   contain: layout style;
 }
 
-/* ── Progress hearts ── */
+
 .mg-hearts {
   display: flex;
   justify-content: center;
@@ -126,7 +120,7 @@
   opacity: 0.35;
 }
 
-/* ── Win inline state ── */
+
 .mg-win {
   animation: mgFadeIn 0.5s ease;
 }
@@ -151,7 +145,7 @@
 }
 .mg-win-btn {
   padding: 13px 40px;
-  /* rose-to-deep-rose, 2 hues, under 20° hue shift — matches admin button */
+  
   background: linear-gradient(135deg, #d63a5a, #a81535);
   border: none;
   border-radius: var(--radius-full);
@@ -170,7 +164,7 @@
   box-shadow: 0 10px 32px rgba(160, 20, 50, 0.65);
 }
 
-/* ── Hint text ── */
+
 .mg-hint {
   font-size: 0.78rem;
   color: rgba(255, 215, 220, 0.48);
@@ -179,7 +173,7 @@
   text-shadow: 0 1px 3px rgba(60, 0, 10, 0.3);
 }
 
-/* ── Firework canvas ── */
+
 .mg-firework-canvas {
   position: fixed;
   inset: 0;
@@ -187,7 +181,7 @@
   z-index: 998;
 }
 
-/* ── Skip button ── */
+
 .mg-skip {
   margin-top: 18px;
   background: none;
@@ -204,9 +198,7 @@
   color: rgba(255, 215, 220, 0.7);
 }
 
-/* ════════════════════════════════════════
-   Win Overlay
-   ════════════════════════════════════════ */
+
 .mg-win-overlay {
   position: fixed;
   inset: 0;
@@ -233,7 +225,7 @@
   pointer-events: auto;
 }
 
-/* ── Win card — same crimson-glaze surface as panel ── */
+
 .mg-win-card {
   position: relative;
   background: rgba(100, 5, 15, 0.96);
@@ -260,7 +252,7 @@
   transform: scale(1) translateY(0);
 }
 
-/* Glowing halo */
+
 .mg-win-glow {
   position: absolute;
   inset: -44px;
@@ -270,7 +262,7 @@
   z-index: -1;
 }
 
-/* ── Win card inner elements ── */
+
 .mg-win-heart-wrap {
   display: flex;
   justify-content: center;
@@ -317,9 +309,7 @@
   font-weight: 600;
 }
 
-/* ════════════════════════════════════════
-   Gift Box button
-   ════════════════════════════════════════ */
+
 .mg-gift-btn {
   position: relative;
   display: inline-flex;
@@ -399,9 +389,7 @@
   color: rgba(255, 190, 205, 0.88);
 }
 
-/* ════════════════════════════════════════
-   Butterfly fullscreen overlay
-   ════════════════════════════════════════ */
+
 .mg-butterfly-screen {
   position: fixed;
   inset: 0;
@@ -437,9 +425,7 @@
 }
 .mg-butterfly-flash--in { opacity: 1; }
 
-/* ════════════════════════════
-   Cards
-   ════════════════════════════ */
+
 .mg-card-outer {
   width: 100%;
   aspect-ratio: 1 / 1;
@@ -460,7 +446,7 @@
 .mg-card-inner--flipped  { transform: rotateY(180deg); }
 .mg-card-inner--unflipped { transform: rotateY(0deg); }
 
-/* Matched card glow — deep crimson, not pink */
+
 .mg-card-inner--matched {
   box-shadow:
     0 0 0 2px #b02030,
@@ -471,7 +457,7 @@
   box-shadow: var(--shadow-md);
 }
 
-/* ── Card back — crimson with blush heart ── */
+
 .mg-card-back {
   position: absolute;
   inset: 0;
@@ -492,13 +478,13 @@
 }
 
 .mg-card-back-icon {
-  font-size: clamp(1.6rem, 4.5vw, 2.2rem);
+  font-size: clamp(1.8rem, 4.5vw, 2.6rem);
   color: rgba(255, 220, 230, 0.82);
   text-shadow: 0 0 12px rgba(255, 170, 195, 0.55);
   line-height: 1;
 }
 
-/* ── Card front ── */
+
 .mg-card-front {
   position: absolute;
   inset: 0;
@@ -514,8 +500,10 @@
 .mg-card-img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center center;
   display: block;
+  background: #1a0a0e;
 }
 
 .mg-card-match-overlay {
@@ -528,9 +516,7 @@
   padding-bottom: 6px;
 }
 
-/* ════════════════════════════
-   Keyframes
-   ════════════════════════════ */
+
 @keyframes mgFadeIn {
   from { opacity: 0; transform: scale(0.92); }
   to   { opacity: 1; transform: scale(1); }
@@ -586,9 +572,7 @@
   100% { transform: scale(14); opacity: 0; }
 }
 
-/* ══════════════════════════════════════════════════════════════
-   Edit mode photo slots
-   ══════════════════════════════════════════════════════════════ */
+
 .mg-edit-slots { margin-top: 14px; }
 
 .mg-edit-slots-label {
@@ -626,7 +610,8 @@
 }
 .mg-slot-img img {
   width: 100%; height: 100%;
-  object-fit: cover; display: block;
+  object-fit: contain; display: block;
+  background: #1a0a0e;
 }
 
 .mg-slot-overlay {
@@ -636,6 +621,7 @@
   display: flex; align-items: center; justify-content: center;
   opacity: 0;
   transition: opacity 0.18s;
+  pointer-events: none;
 }
 .mg-slot-img:hover .mg-slot-overlay { opacity: 1; }
 
@@ -652,17 +638,20 @@
 .mg-slot-remove {
   position: absolute;
   top: 5px; right: 5px;
-  width: 20px; height: 20px;
+  width: 22px; height: 22px;
   background: rgba(140, 10, 30, 0.9);
   border: none; border-radius: 50%;
   color: #fce8ea;
   font-size: 0.65rem;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  z-index: 10; opacity: 0;
-  transition: opacity 0.15s;
+  z-index: 20;
+  transition: background 0.15s, transform 0.15s;
 }
-.mg-slot-img:hover .mg-slot-remove { opacity: 1; }
+.mg-slot-remove:hover {
+  background: rgba(200, 10, 30, 1);
+  transform: scale(1.15);
+}
 
 .mg-slot-empty {
   width: 100%; height: 100%;
@@ -685,3 +674,63 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
+
+.mg-slot-zoom-btns {
+  position: absolute;
+  bottom: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(10, 0, 20, 0.75);
+  border: 1px solid rgba(233, 30, 140, 0.35);
+  border-radius: 20px;
+  padding: 3px 8px;
+  opacity: 0;
+  transition: opacity 0.18s;
+  z-index: 10;
+  white-space: nowrap;
+}
+.mg-slot-img:hover .mg-slot-zoom-btns { opacity: 1; }
+
+.mg-slot-zoom-btn {
+  background: none;
+  border: none;
+  color: #ff9ab5;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0 3px;
+  line-height: 1;
+  font-family: system-ui, sans-serif;
+}
+.mg-slot-zoom-btn:hover { color: #fff; }
+
+.mg-slot-zoom-val {
+  font-size: 0.65rem;
+  color: rgba(255, 180, 200, 0.7);
+  min-width: 32px;
+  text-align: center;
+  font-family: system-ui, sans-serif;
+}
+
+
+.mg-slot-drag-hint {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.55rem;
+  color: rgba(255, 200, 220, 0.7);
+  background: rgba(10, 0, 20, 0.65);
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s;
+  z-index: 10;
+  font-family: system-ui, sans-serif;
+}
+.mg-slot-img:hover .mg-slot-drag-hint { opacity: 1; }

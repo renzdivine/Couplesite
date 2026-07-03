@@ -1,9 +1,5 @@
 import { useEffect, useRef } from 'react';
 
-/**
- * Renders a GIF on a canvas and removes the specified background color.
- * Works by drawing each frame to canvas and replacing near-white pixels with transparent.
- */
 export default function TransparentGif({ src, width = 90, height = 90, bgColor = [255, 255, 255], threshold = 40, style = {} }) {
   const canvasRef = useRef(null);
   const imgRef = useRef(null);
@@ -32,13 +28,13 @@ export default function TransparentGif({ src, width = 90, height = 90, bgColor =
           const db = Math.abs(data[i + 2] - b);
 
           if (dr < threshold && dg < threshold && db < threshold) {
-            data[i + 3] = 0; // make transparent
+            data[i + 3] = 0;
           }
         }
 
         ctx.putImageData(imageData, 0, 0);
       } catch {
-        // cross-origin fallback — just show as-is
+        
       }
 
       rafRef.current = requestAnimationFrame(drawFrame);

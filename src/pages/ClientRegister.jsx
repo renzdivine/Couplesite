@@ -1,10 +1,3 @@
-// ─────────────────────────────────────────────────────────────
-// ClientRegister.jsx  — Client (Admin) self-registration
-// Route: /register
-// Client enters Gmail, password, and activation code provided
-// by the Master Admin to unlock their account.
-// ─────────────────────────────────────────────────────────────
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
@@ -14,7 +7,7 @@ export default function ClientRegister() {
   const navigate = useNavigate();
   const { clientRegister, clientSession } = useApp();
 
-  const [step,    setStep]    = useState('form'); // 'form' | 'success'
+  const [step,    setStep]    = useState('form');
   const [gmail,   setGmail]   = useState('');
   const [pw,      setPw]      = useState('');
   const [pw2,     setPw2]     = useState('');
@@ -50,12 +43,12 @@ export default function ClientRegister() {
       <div style={styles.root}>
         <div style={styles.bg} /><div style={styles.overlay} />
         <div style={styles.card}>
-          <div style={{ ...styles.iconWrap, background: 'rgba(76,175,80,0.15)', border: '1px solid rgba(76,175,80,0.3)' }}>
-            <Heart size={32} color="#a5d6a7" fill="#a5d6a7" />
+          <div style={{ ...styles.iconWrap, background: 'rgba(76,175,80,0.1)', border: '1px solid rgba(76,175,80,0.25)' }}>
+            <Heart size={32} color="#4caf50" fill="#4caf50" />
           </div>
           <h1 style={styles.title}>You're In! 💕</h1>
           <p style={styles.subtitle}>Account registered successfully.</p>
-          <p style={{ color: 'rgba(255,180,200,0.6)', fontSize: '0.9rem', textAlign: 'center', marginBottom: 28, lineHeight: 1.7 }}>
+          <p style={{ color: 'rgba(100,50,80,0.6)', fontSize: '0.9rem', textAlign: 'center', marginBottom: 28, lineHeight: 1.7 }}>
             Your love page is ready. Log in with your Gmail and password to start customizing.
           </p>
           <button onClick={() => navigate('/admin/login')} style={styles.btn}>
@@ -78,7 +71,6 @@ export default function ClientRegister() {
         <p style={styles.subtitle}>HeartLink Client Registration</p>
 
         <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-          {/* Gmail */}
           <label style={styles.lbl}>Gmail Address</label>
           <div style={{ position: 'relative', marginBottom: 14 }}>
             <Mail size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,180,200,0.4)' }} />
@@ -93,7 +85,6 @@ export default function ClientRegister() {
             />
           </div>
 
-          {/* Password */}
           <label style={styles.lbl}>Password</label>
           <div style={{ position: 'relative', marginBottom: 14 }}>
             <input
@@ -110,7 +101,6 @@ export default function ClientRegister() {
             </button>
           </div>
 
-          {/* Confirm password */}
           <label style={styles.lbl}>Confirm Password</label>
           <input
             style={styles.inp}
@@ -122,7 +112,6 @@ export default function ClientRegister() {
             autoComplete="new-password"
           />
 
-          {/* Activation code */}
           <label style={styles.lbl}>Activation Code</label>
           <div style={{ position: 'relative', marginBottom: 4 }}>
             <Key size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,180,200,0.4)' }} />
@@ -158,18 +147,18 @@ export default function ClientRegister() {
 
 const styles = {
   root: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, position: 'relative', fontFamily: 'system-ui, sans-serif' },
-  bg:   { position: 'fixed', inset: 0, background: 'linear-gradient(135deg, #0d0010 0%, #1a0020 50%, #0d0010 100%)', zIndex: 0 },
-  overlay: { position: 'fixed', inset: 0, background: 'radial-gradient(ellipse at 50% 30%, rgba(233,30,140,0.12) 0%, transparent 65%)', zIndex: 0 },
-  card: { position: 'relative', zIndex: 1, background: 'rgba(10,0,20,0.88)', border: '1px solid rgba(255,150,180,0.2)', borderRadius: 24, padding: '44px 36px', width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', alignItems: 'center', backdropFilter: 'blur(24px)', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' },
-  iconWrap: { width: 64, height: 64, borderRadius: 20, background: 'rgba(233,30,140,0.15)', border: '1px solid rgba(233,30,140,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
-  title:   { margin: '0 0 6px', fontSize: '1.7rem', fontWeight: 700, background: 'linear-gradient(135deg, #ff9ab5, #d4a0ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
-  subtitle:{ margin: '0 0 28px', color: 'rgba(255,180,200,0.5)', fontSize: '0.9rem' },
-  lbl:  { display: 'block', marginBottom: 5, fontSize: '0.75rem', color: 'rgba(255,180,200,0.6)', textTransform: 'uppercase', letterSpacing: 0.8, alignSelf: 'flex-start' },
-  inp:  { width: '100%', padding: '12px 14px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,150,180,0.25)', borderRadius: 12, color: '#fff', fontSize: '0.95rem', outline: 'none', marginBottom: 14, boxSizing: 'border-box' },
-  eyeBtn: { position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,180,200,0.5)', cursor: 'pointer', padding: 4 },
-  error:  { color: '#ff6b6b', fontSize: '0.85rem', marginBottom: 12, textAlign: 'center' },
-  btn:    { width: '100%', padding: '13px', background: 'linear-gradient(135deg, #e91e8c, #9c27b0)', border: 'none', borderRadius: 50, color: '#fff', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 6px 20px rgba(233,30,140,0.35)', transition: 'opacity 0.2s' },
-  divider:{ width: '100%', height: 1, background: 'rgba(255,150,180,0.1)', margin: '24px 0 16px' },
-  hint:   { color: 'rgba(255,180,200,0.45)', fontSize: '0.85rem', margin: 0 },
-  link:   { background: 'none', border: 'none', color: '#ff9ab5', cursor: 'pointer', fontSize: '0.85rem', padding: 0, textDecoration: 'underline' },
+  bg:   { position: 'fixed', inset: 0, background: 'linear-gradient(135deg, #fef5f9 0%, #fff0f5 50%, #fef5f9 100%)', zIndex: 0 },
+  overlay: { position: 'fixed', inset: 0, background: 'radial-gradient(ellipse at 50% 30%, rgba(255,182,193,0.15) 0%, transparent 65%)', zIndex: 0 },
+  card: { position: 'relative', zIndex: 1, background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(233,30,140,0.15)', borderRadius: 24, padding: '44px 36px', width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', alignItems: 'center', backdropFilter: 'blur(24px)', boxShadow: '0 8px 32px rgba(233,30,140,0.12)' },
+  iconWrap: { width: 64, height: 64, borderRadius: 20, background: 'rgba(233,30,140,0.08)', border: '1px solid rgba(233,30,140,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
+  title:   { margin: '0 0 6px', fontSize: '1.7rem', fontWeight: 700, background: 'linear-gradient(135deg, #e91e8c, #9c27b0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
+  subtitle:{ margin: '0 0 28px', color: 'rgba(100,50,80,0.6)', fontSize: '0.9rem' },
+  lbl:  { display: 'block', marginBottom: 5, fontSize: '0.75rem', color: 'rgba(100,50,80,0.7)', textTransform: 'uppercase', letterSpacing: 0.8, alignSelf: 'flex-start' },
+  inp:  { width: '100%', padding: '12px 14px', background: 'rgba(233,30,140,0.03)', border: '1px solid rgba(233,30,140,0.2)', borderRadius: 12, color: '#2d1b2e', fontSize: '0.95rem', outline: 'none', marginBottom: 14, boxSizing: 'border-box' },
+  eyeBtn: { position: 'absolute', top: '50%', right: 12, transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(100,50,80,0.5)', cursor: 'pointer', padding: 4 },
+  error:  { color: '#e91e8c', fontSize: '0.85rem', marginBottom: 12, textAlign: 'center' },
+  btn:    { width: '100%', padding: '13px', background: 'linear-gradient(135deg, #e91e8c, #9c27b0)', border: 'none', borderRadius: 50, color: '#fff', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 6px 20px rgba(233,30,140,0.3)', transition: 'opacity 0.2s' },
+  divider:{ width: '100%', height: 1, background: 'rgba(233,30,140,0.15)', margin: '24px 0 16px' },
+  hint:   { color: 'rgba(100,50,80,0.6)', fontSize: '0.85rem', margin: 0 },
+  link:   { background: 'none', border: 'none', color: '#e91e8c', cursor: 'pointer', fontSize: '0.85rem', padding: 0, textDecoration: 'underline' },
 };
