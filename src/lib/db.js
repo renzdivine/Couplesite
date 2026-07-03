@@ -26,14 +26,28 @@ function stripBase64(obj) {
 
 
 export async function masterAdminLogin(username, password) {
+  // Debug: log what we're searching for
+  console.log('[DEBUG] Login attempt:', { username, password: '***' });
+  
   const { data, error } = await supabase
     .from('master_admin')
-    .select('id, username')
-    .eq('username', username)
-    .eq('password', password)
+    .select('id, username, password')
+    .eq('username', username.trim())
     .single();
 
-  if (error || !data) return { success: false, error: 'Invalid credentials.' };
+  console.log('[DEBUG] Query result:', { data, error });
+
+  if (error || !data) {
+    console.error('[DEBUG] Login failed - no user found or error:', error);
+    return { success: false, error: 'Invalid credentials.' };
+  }
+  
+  if (data.password !== password.trim()) {
+    console.error('[DEBUG] Login failed - password mismatch');
+    return { success: false, error: 'Invalid credentials.' };
+  }
+  
+  console.log('[DEBUG] Login successful!');
   return { success: true };
 }
 
