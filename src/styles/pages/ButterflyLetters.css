@@ -506,13 +506,16 @@
   padding-bottom: 4px;
 }
 
-.bl-circ-tl { 
-  flex-shrink: 0; 
+.bl-circ-tl-wrap {
   position: absolute;
   right: -12px;
   top: 50%;
-  transform: translateY(-50%) rotate(-3deg);
+  transform: translateY(-50%);
   z-index: 5;
+  flex-shrink: 0;
+}
+.bl-circ-tl { 
+  flex-shrink: 0; 
 }
 .bl-circ-bc { flex-shrink: 0; transform: rotate(2deg) !important; }
 .bl-circ-br { flex-shrink: 0; transform: rotate(-2deg); }
