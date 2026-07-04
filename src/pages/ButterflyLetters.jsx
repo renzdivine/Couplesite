@@ -278,7 +278,7 @@ const TornCircle = memo(function TornCircle({ src, alt='', className='', size=20
           isEditing={isEditing}
           onReplace={onReplace}
           onRemove={onRemove}
-          objectFit="contain"
+          objectFit="cover"
           style={{ width: '100%', height: '100%' }}
         />
       </div>
