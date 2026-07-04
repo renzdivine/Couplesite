@@ -8,21 +8,21 @@ import CoverHero from '../components/CoverHero';
 import '../styles/pages/ButterflyLetters.css';
 
 /* ─── DraggablePhoto — drag to pan, ctrl+scroll to zoom, ✕ to remove ── */
-function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing = false, onReplace, onRemove, objectFit = 'contain' }) {
+function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing = false, onReplace, onRemove, objectFit = 'contain', onTransformChange, photoData }) {
   const resolved     = useImageUrl(src);
   const imgRef       = useRef(null);
   const fileRef      = useRef(null);
   const zoomValRef   = useRef(null);
-  const translateRef = useRef({ x: 0, y: 0 });
-  const scaleRef     = useRef(1);
+  const translateRef = useRef({ x: photoData?.translateX || 0, y: photoData?.translateY || 0 });
+  const scaleRef     = useRef(photoData?.scale || 1);
   const dragging     = useRef(false);
   const dragStart    = useRef({ mx: 0, my: 0, tx: 0, ty: 0 });
 
   const prevSrc = useRef(src);
   if (src !== prevSrc.current) {
     prevSrc.current = src;
-    translateRef.current = { x: 0, y: 0 };
-    scaleRef.current = 1;
+    translateRef.current = { x: photoData?.translateX || 0, y: photoData?.translateY || 0 };
+    scaleRef.current = photoData?.scale || 1;
   }
 
   const applyTransform = useCallback(() => {
@@ -33,6 +33,25 @@ function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing =
       zoomValRef.current.textContent = `${Math.round(scaleRef.current * 100)}%`;
     }
   }, []);
+
+  // Apply saved transform on mount and when data changes
+  useEffect(() => {
+    if (photoData) {
+      translateRef.current = { x: photoData.translateX || 0, y: photoData.translateY || 0 };
+      scaleRef.current = photoData.scale || 1;
+      applyTransform();
+    }
+  }, [photoData, applyTransform]);
+
+  const saveTransform = useCallback(() => {
+    if (onTransformChange) {
+      onTransformChange({
+        translateX: translateRef.current.x,
+        translateY: translateRef.current.y,
+        scale: scaleRef.current
+      });
+    }
+  }, [onTransformChange]);
 
   const onMouseDown = useCallback((e) => {
     if (!isEditing || !resolved) return;
@@ -51,12 +70,13 @@ function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing =
     const onUp = () => {
       dragging.current = false;
       if (imgRef.current) imgRef.current.style.cursor = 'grab';
+      saveTransform();
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
-  }, [isEditing, resolved, applyTransform]);
+  }, [isEditing, resolved, applyTransform, saveTransform]);
 
   const onWheel = useCallback((e) => {
     if (!isEditing || !resolved) return;
@@ -64,11 +84,13 @@ function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing =
     e.preventDefault(); e.stopPropagation();
     scaleRef.current = Math.max(0.5, Math.min(4, parseFloat((scaleRef.current - e.deltaY * 0.002).toFixed(3))));
     applyTransform();
-  }, [isEditing, resolved, applyTransform]);
+    saveTransform();
+  }, [isEditing, resolved, applyTransform, saveTransform]);
 
   const zoom = (delta) => {
     scaleRef.current = Math.max(0.5, Math.min(4, parseFloat((scaleRef.current + delta).toFixed(3))));
     applyTransform();
+    saveTransform();
   };
 
   const handleFile = async (e) => {
@@ -233,7 +255,7 @@ const SpineDefs = memo(function SpineDefs() {
 });
 
 /* ─── Torn-paper rectangular photo — memoized ───────────────── */
-const TornPhoto = memo(function TornPhoto({ src, alt='', className='', rotate=0, isEditing=false, onReplace, onRemove }) {
+const TornPhoto = memo(function TornPhoto({ src, alt='', className='', rotate=0, isEditing=false, onReplace, onRemove, onTransformChange, photoData }) {
   return (
     <div
       className={`bl-torn-rect ${className}`}
@@ -246,6 +268,8 @@ const TornPhoto = memo(function TornPhoto({ src, alt='', className='', rotate=0,
           isEditing={isEditing}
           onReplace={onReplace}
           onRemove={onRemove}
+          onTransformChange={onTransformChange}
+          photoData={photoData}
           objectFit="cover"
         />
       </div>
@@ -254,7 +278,7 @@ const TornPhoto = memo(function TornPhoto({ src, alt='', className='', rotate=0,
 });
 
 /* ─── Torn-paper circular photo — memoized ──────────────────── */
-const TornCircle = memo(function TornCircle({ src, alt='', className='', size=200, rotate=0, isEditing=false, onReplace, onRemove }) {
+const TornCircle = memo(function TornCircle({ src, alt='', className='', size=200, rotate=0, isEditing=false, onReplace, onRemove, onTransformChange, photoData }) {
   const uid = useRef(`tc${Math.random().toString(36).slice(2)}`).current;
   const border = size + 20;
   const half = border / 2;
@@ -278,6 +302,8 @@ const TornCircle = memo(function TornCircle({ src, alt='', className='', size=20
           isEditing={isEditing}
           onReplace={onReplace}
           onRemove={onRemove}
+          onTransformChange={onTransformChange}
+          photoData={photoData}
           objectFit="cover"
           style={{ width: '100%', height: '100%' }}
         />
@@ -357,6 +383,17 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
     onContentChange?.('lettersPhotos', updated);
   };
   const removePhoto = (idx) => replacePhoto(idx, '');
+  
+  /* photo transform save helper */
+  const savePhotoTransform = (idx, transform) => {
+    const updated = [...photos];
+    if (updated[idx]) {
+      updated[idx] = { ...updated[idx], ...transform };
+    } else {
+      updated[idx] = { id: Date.now(), url: '', caption: '', ...transform };
+    }
+    onContentChange?.('lettersPhotos', updated);
+  };
 
   /* ── Book state ─────────────────────────────────────────── */
   const TOTAL = 6; // pages 0–5
@@ -479,6 +516,7 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
             <div className="bl-facts-right">
               <div className="bl-facts-photo-wrap">
                 <TornPhoto rotate={2} isEditing={isEditing} onReplace={k=>replacePhoto(1,k)} onRemove={()=>removePhoto(1)}
+                  onTransformChange={t=>savePhotoTransform(1,t)} photoData={photos[1]}
                   src={p(1)} alt="couple" className="bl-facts-photo"/>
               </div>
             </div>
@@ -500,9 +538,11 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
             </WashiNote>
             {/* Photo 1 — top right */}
             <TornPhoto rotate={4} isEditing={isEditing} onReplace={k=>replacePhoto(2,k)} onRemove={()=>removePhoto(2)}
+              onTransformChange={t=>savePhotoTransform(2,t)} photoData={photos[2]}
               src={p(2)} alt="couple" className="bl-msg-photo-tr"/>
             {/* Photo 2 — bottom left */}
             <TornPhoto rotate={-5} isEditing={isEditing} onReplace={k=>replacePhoto(3,k)} onRemove={()=>removePhoto(3)}
+              onTransformChange={t=>savePhotoTransform(3,t)} photoData={photos[3]}
               src={p(3)} alt="couple" className="bl-msg-photo-bl"/>
             {/* Note 2 — bottom right */}
             <WashiNote rotate={3} className="bl-note-2">
@@ -536,6 +576,7 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
             {/* Top row */}
             <div className="bl-wonderful-top">
               <TornCircle size={270} rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(4,k)} onRemove={()=>removePhoto(4)}
+                onTransformChange={t=>savePhotoTransform(4,t)} photoData={photos[4]}
                 src={p(4)} alt="couple" className="bl-circ-tl"/>
               <div className="bl-wonderful-text">
                 <EditableText as="h2" className="bl-script-xl bl-wonderful-h"
@@ -563,8 +604,10 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
                 </svg>
               </div>
               <TornCircle size={260} rotate={2} isEditing={isEditing} onReplace={k=>replacePhoto(5,k)} onRemove={()=>removePhoto(5)}
+                onTransformChange={t=>savePhotoTransform(5,t)} photoData={photos[5]}
                 src={p(5)} alt="couple" className="bl-circ-bc"/>
               <TornCircle size={255} rotate={-2} isEditing={isEditing} onReplace={k=>replacePhoto(6,k)} onRemove={()=>removePhoto(6)}
+                onTransformChange={t=>savePhotoTransform(6,t)} photoData={photos[6]}
                 src={p(6)} alt="couple" className="bl-circ-br"/>
             </div>
           </div>
@@ -597,6 +640,7 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
                 </svg>
               </div>
               <TornPhoto rotate={-4} isEditing={isEditing} onReplace={k=>replacePhoto(7,k)} onRemove={()=>removePhoto(7)}
+                onTransformChange={t=>savePhotoTransform(7,t)} photoData={photos[7]}
                 src={p(7)} alt="couple" className="bl-eternal-photo"/>
             </div>
           </div>
@@ -608,6 +652,7 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
           <div className="bl-page-content bl-thankyou-layout">
             {/* Large torn landscape photo */}
             <TornPhoto rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(8,k)} onRemove={()=>removePhoto(8)}
+              onTransformChange={t=>savePhotoTransform(8,t)} photoData={photos[8]}
               src={p(8)} alt="couple on bench" className="bl-ty-photo"/>
             {/* Right column: flowers + banner */}
             <div className="bl-ty-right-col">
