@@ -374,6 +374,18 @@ export default function MemoryGame({ couple, onComplete, isEditing = false, onCo
     onContentChange?.({ ...pc, __memoryGamePhotos: updated });
   };
 
+  const savePhotoTransform = (i, transform) => {
+    const updated = Array.from({ length: SLOTS }, (_, idx) => ({
+      url:        savedSlots[idx]?.url        || '',
+      label:      savedSlots[idx]?.label      || `Pair ${idx + 1}`,
+      translateX: savedSlots[idx]?.translateX || 0,
+      translateY: savedSlots[idx]?.translateY || 0,
+      scale:      savedSlots[idx]?.scale      || 1,
+    }));
+    updated[i] = { ...updated[i], ...transform };
+    onContentChange?.({ ...pc, __memoryGamePhotos: updated });
+  };
+
   
   const [cards]   = useState(() => buildCards(photos));
   const [flipped, setFlipped] = useState([]);
@@ -438,9 +450,11 @@ export default function MemoryGame({ couple, onComplete, isEditing = false, onCo
                   key={i}
                   index={i}
                   url={savedSlots[i]?.url || ''}
+                  photoData={savedSlots[i]}
                   fileRef={el => { fileRefs.current[i] = el; }}
                   onPick={() => fileRefs.current[i]?.click()}
                   onRemove={() => removeSlot(i)}
+                  onTransformChange={(transform) => savePhotoTransform(i, transform)}
                   onConfirm={(key) => {
                     const updated = Array.from({ length: SLOTS }, (_, idx) => ({
                       url:   savedSlots[idx]?.url   || '',
@@ -505,12 +519,12 @@ export default function MemoryGame({ couple, onComplete, isEditing = false, onCo
 }
 
 
-function SlotPicker({ index, url, fileRef, onPick, onRemove, onConfirm }) {
+function SlotPicker({ index, url, fileRef, onPick, onRemove, onConfirm, onTransformChange, photoData }) {
   const resolved   = useImageUrl(url);
   const imgRef     = useRef(null);
   const zoomValRef = useRef(null);
-  const translateRef = useRef({ x: 0, y: 0 });  
-  const scaleRef   = useRef(1);
+  const translateRef = useRef({ x: photoData?.translateX || 0, y: photoData?.translateY || 0 });  
+  const scaleRef   = useRef(photoData?.scale || 1);
   const dragging   = useRef(false);
   const dragStart  = useRef({ mx: 0, my: 0, tx: 0, ty: 0 });
 
@@ -522,6 +536,15 @@ function SlotPicker({ index, url, fileRef, onPick, onRemove, onConfirm }) {
       zoomValRef.current.textContent = `${Math.round(scaleRef.current * 100)}%`;
     }
   };
+
+  // Apply saved transform on mount and when photoData changes
+  useEffect(() => {
+    if (photoData) {
+      translateRef.current = { x: photoData.translateX || 0, y: photoData.translateY || 0 };
+      scaleRef.current = photoData.scale || 1;
+      applyTransform();
+    }
+  }, [photoData]);
 
   const onMouseDown = (e) => {
     if (!resolved) return;
@@ -544,6 +567,7 @@ function SlotPicker({ index, url, fileRef, onPick, onRemove, onConfirm }) {
     const onUp = () => {
       dragging.current = false;
       if (imgRef.current) imgRef.current.style.cursor = 'grab';
+      saveTransform();
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     };
@@ -557,11 +581,23 @@ function SlotPicker({ index, url, fileRef, onPick, onRemove, onConfirm }) {
     e.preventDefault(); e.stopPropagation();
     scaleRef.current = Math.max(0.5, Math.min(4, parseFloat((scaleRef.current - e.deltaY * 0.002).toFixed(3))));
     applyTransform();
+    saveTransform();
   };
 
   const zoom = (delta) => {
     scaleRef.current = Math.max(0.5, Math.min(4, parseFloat((scaleRef.current + delta).toFixed(3))));
     applyTransform();
+    saveTransform();
+  };
+
+  const saveTransform = () => {
+    if (onTransformChange) {
+      onTransformChange({
+        translateX: translateRef.current.x,
+        translateY: translateRef.current.y,
+        scale: scaleRef.current
+      });
+    }
   };
 
   const handleFile = async (e) => {
