@@ -246,7 +246,7 @@ const TornPhoto = memo(function TornPhoto({ src, alt='', className='', rotate=0,
           isEditing={isEditing}
           onReplace={onReplace}
           onRemove={onRemove}
-          objectFit="contain"
+          objectFit="cover"
         />
       </div>
     </div>
