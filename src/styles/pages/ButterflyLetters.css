@@ -525,7 +525,7 @@
   align-self: center;
 }
 .bl-wonderful-h {
-  font-size: clamp(20px, 2.8vw, 36px);
+  font-size: clamp(16px, 2vw, 26px);
   line-height: 1.15;
   color: #3d1e0a;
   margin-bottom: 10px;
