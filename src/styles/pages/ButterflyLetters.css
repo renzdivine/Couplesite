@@ -523,7 +523,7 @@
   padding-right: 8px;
 }
 .bl-wonderful-h {
-  font-size: clamp(26px, 3.8vw, 50px);
+  font-size: clamp(24px, 3.4vw, 42px);
   line-height: 1.15;
   color: #3d1e0a;
   margin-bottom: 10px;
