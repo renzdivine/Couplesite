@@ -131,15 +131,19 @@ export default function AdminDashboard() {
             couple={myCouple} onComplete={() => {}}
             isEditing
             onContentChange={v => {
-              console.log('[AdminDashboard] MemoryGame onContentChange:', v);
-              
-              if (v.__memoryGamePhotos) {
-                console.log('[AdminDashboard] Updating memoryGamePhotos:', v.__memoryGamePhotos);
-                updateCouple(myCouple.slug, { memoryGamePhotos: v.__memoryGamePhotos });
-                const { __memoryGamePhotos: _, ...textFields } = v;
-                if (Object.keys(textFields).length) save('memoryGame', textFields);
-              } else {
-                save('memoryGame', v);
+              try {
+                console.log('[AdminDashboard] MemoryGame onContentChange:', v);
+                
+                if (v.__memoryGamePhotos) {
+                  console.log('[AdminDashboard] Updating memoryGamePhotos:', v.__memoryGamePhotos);
+                  updateCouple(myCouple.slug, { memoryGamePhotos: v.__memoryGamePhotos });
+                  const { __memoryGamePhotos: _, ...textFields } = v;
+                  if (Object.keys(textFields).length) save('memoryGame', textFields);
+                } else {
+                  save('memoryGame', v);
+                }
+              } catch (err) {
+                console.error('[AdminDashboard] Error in MemoryGame onContentChange:', err);
               }
             }}
           />

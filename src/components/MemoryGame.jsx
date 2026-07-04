@@ -623,9 +623,10 @@ function SlotPicker({ index, url, fileRef, onPick, onRemove, onConfirm, onTransf
       translateRef.current = { x: 0, y: 0 };
       scaleRef.current = 1;
       onConfirm(key);
-      // Save the reset transform to database
-      saveTransform();
-    } catch (err) { console.error(err); }
+      // No need to call saveTransform() - onConfirm already saves with default transforms
+    } catch (err) { 
+      console.error('[SlotPicker] Error uploading image:', err); 
+    }
     e.target.value = '';
   };
 
