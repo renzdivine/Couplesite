@@ -383,7 +383,8 @@ export default function MemoryGame({ couple, onComplete, isEditing = false, onCo
       scale:      savedSlots[idx]?.scale      || 1,
     }));
     updated[i] = { ...updated[i], ...transform };
-    onContentChange?.({ ...pc, __memoryGamePhotos: updated });
+    console.log('[MemoryGame] Saving photo transform:', { index: i, transform, updated: updated[i] });
+    onContentChange?.({ __memoryGamePhotos: updated });
   };
 
   
@@ -540,6 +541,7 @@ function SlotPicker({ index, url, fileRef, onPick, onRemove, onConfirm, onTransf
   // Apply saved transform on mount and when photoData changes
   useEffect(() => {
     if (photoData) {
+      console.log('[SlotPicker] Loading saved photoData:', { index, photoData });
       translateRef.current = { x: photoData.translateX || 0, y: photoData.translateY || 0 };
       scaleRef.current = photoData.scale || 1;
       applyTransform();
@@ -592,11 +594,13 @@ function SlotPicker({ index, url, fileRef, onPick, onRemove, onConfirm, onTransf
 
   const saveTransform = () => {
     if (onTransformChange) {
-      onTransformChange({
+      const transform = {
         translateX: translateRef.current.x,
         translateY: translateRef.current.y,
         scale: scaleRef.current
-      });
+      };
+      console.log('[SlotPicker] Saving transform:', { index, transform });
+      onTransformChange(transform);
     }
   };
 

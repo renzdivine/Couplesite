@@ -439,7 +439,10 @@ export async function updateCouple(slug, updates) {
   if ('accessCode'       in updates) mapped.access_code       = updates.accessCode;
   if ('active'           in updates) mapped.active            = updates.active;
   if ('bouquet'          in updates) mapped.bouquet           = updates.bouquet;
-  if ('memoryGamePhotos' in updates) mapped.memory_game_photos= stripBase64(updates.memoryGamePhotos);
+  if ('memoryGamePhotos' in updates) {
+    console.log('[db.js] Updating memory_game_photos:', updates.memoryGamePhotos);
+    mapped.memory_game_photos = stripBase64(updates.memoryGamePhotos);
+  }
   if ('bgMusic'         in updates) mapped.bg_music           = updates.bgMusic;
 
   
