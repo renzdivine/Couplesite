@@ -356,22 +356,30 @@ export default function MemoryGame({ couple, onComplete, isEditing = false, onCo
     try {
       const key     = await saveImage(file);
       const updated = Array.from({ length: SLOTS }, (_, idx) => ({
-        url:   savedSlots[idx]?.url   || '',
-        label: savedSlots[idx]?.label || `Pair ${idx + 1}`,
+        url:        savedSlots[idx]?.url        || '',
+        label:      savedSlots[idx]?.label      || `Pair ${idx + 1}`,
+        translateX: savedSlots[idx]?.translateX || 0,
+        translateY: savedSlots[idx]?.translateY || 0,
+        scale:      savedSlots[idx]?.scale      || 1,
       }));
-      updated[i] = { ...updated[i], url: key };
-      onContentChange?.({ ...pc, __memoryGamePhotos: updated });
+      // Reset transform for new image
+      updated[i] = { ...updated[i], url: key, translateX: 0, translateY: 0, scale: 1 };
+      onContentChange?.({ __memoryGamePhotos: updated });
     } catch (err) { console.error(err); }
     e.target.value = '';
   };
 
   const removeSlot = (i) => {
     const updated = Array.from({ length: SLOTS }, (_, idx) => ({
-      url:   savedSlots[idx]?.url   || '',
-      label: savedSlots[idx]?.label || `Pair ${idx + 1}`,
+      url:        savedSlots[idx]?.url        || '',
+      label:      savedSlots[idx]?.label      || `Pair ${idx + 1}`,
+      translateX: savedSlots[idx]?.translateX || 0,
+      translateY: savedSlots[idx]?.translateY || 0,
+      scale:      savedSlots[idx]?.scale      || 1,
     }));
-    updated[i] = { ...updated[i], url: '' };
-    onContentChange?.({ ...pc, __memoryGamePhotos: updated });
+    // Reset transform when removing
+    updated[i] = { ...updated[i], url: '', translateX: 0, translateY: 0, scale: 1 };
+    onContentChange?.({ __memoryGamePhotos: updated });
   };
 
   const savePhotoTransform = (i, transform) => {
@@ -458,11 +466,15 @@ export default function MemoryGame({ couple, onComplete, isEditing = false, onCo
                   onTransformChange={(transform) => savePhotoTransform(i, transform)}
                   onConfirm={(key) => {
                     const updated = Array.from({ length: SLOTS }, (_, idx) => ({
-                      url:   savedSlots[idx]?.url   || '',
-                      label: savedSlots[idx]?.label || `Pair ${idx + 1}`,
+                      url:        savedSlots[idx]?.url        || '',
+                      label:      savedSlots[idx]?.label      || `Pair ${idx + 1}`,
+                      translateX: savedSlots[idx]?.translateX || 0,
+                      translateY: savedSlots[idx]?.translateY || 0,
+                      scale:      savedSlots[idx]?.scale      || 1,
                     }));
-                    updated[i] = { ...updated[i], url: key };
-                    onContentChange?.({ ...pc, __memoryGamePhotos: updated });
+                    // For new image, reset transform to default
+                    updated[i] = { ...updated[i], url: key, translateX: 0, translateY: 0, scale: 1 };
+                    onContentChange?.({ __memoryGamePhotos: updated });
                   }}
                 />
               ))}
@@ -611,6 +623,8 @@ function SlotPicker({ index, url, fileRef, onPick, onRemove, onConfirm, onTransf
       translateRef.current = { x: 0, y: 0 };
       scaleRef.current = 1;
       onConfirm(key);
+      // Save the reset transform to database
+      saveTransform();
     } catch (err) { console.error(err); }
     e.target.value = '';
   };
