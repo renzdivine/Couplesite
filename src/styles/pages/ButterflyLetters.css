@@ -509,7 +509,7 @@
   align-self: center; 
   margin-left: auto;
   position: relative;
-  right: -8px;
+  right: -12px;
 }
 .bl-circ-bc { flex-shrink: 0; transform: rotate(2deg) !important; }
 .bl-circ-br { flex-shrink: 0; transform: rotate(-2deg); }
@@ -519,7 +519,7 @@
   text-align: right;
   align-self: center;
   min-width: 0;
-  max-width: 52%;
+  max-width: 48%;
   padding-right: 8px;
 }
 .bl-wonderful-h {
