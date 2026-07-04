@@ -480,17 +480,18 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 12px 12px 8px 8px;
+  padding: 12px 16px 8px 8px;
   gap: 0;
+  overflow: hidden;
 }
 
 .bl-wonderful-top {
   display: flex;
   flex: 1;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
   min-height: 0;
-  padding-right: 12px;
+  padding-right: 4px;
 }
 
 .bl-wonderful-bottom {
@@ -503,7 +504,13 @@
   padding-bottom: 4px;
 }
 
-.bl-circ-tl { flex-shrink: 0; align-self: center; margin-left: auto; }
+.bl-circ-tl { 
+  flex-shrink: 0; 
+  align-self: center; 
+  margin-left: auto;
+  position: relative;
+  right: -8px;
+}
 .bl-circ-bc { flex-shrink: 0; transform: rotate(2deg) !important; }
 .bl-circ-br { flex-shrink: 0; transform: rotate(-2deg); }
 
@@ -512,8 +519,8 @@
   text-align: right;
   align-self: center;
   min-width: 0;
-  max-width: 55%;
-  padding-right: 12px;
+  max-width: 52%;
+  padding-right: 8px;
 }
 .bl-wonderful-h {
   font-size: clamp(26px, 3.8vw, 50px);
