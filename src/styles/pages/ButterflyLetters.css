@@ -480,20 +480,20 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 12px 16px 8px 8px;
+  padding: 12px 8px 8px 8px;
   gap: 0;
-  overflow: visible;
+  overflow: hidden;
   position: relative;
 }
 
 .bl-wonderful-top {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  grid-template-rows: 1fr;
   flex: 1;
   align-items: center;
-  gap: 16px;
   min-height: 0;
-  padding-right: 4px;
-  position: relative;
+  gap: 8px;
 }
 
 .bl-wonderful-bottom {
@@ -507,26 +507,22 @@
 }
 
 .bl-circ-tl-wrap {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 5;
-  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: hidden;
+  height: 100%;
 }
 .bl-circ-tl { 
-  flex-shrink: 0; 
+  flex-shrink: 0;
 }
 .bl-circ-bc { flex-shrink: 0; transform: rotate(2deg) !important; }
 .bl-circ-br { flex-shrink: 0; transform: rotate(-2deg); }
 
 .bl-wonderful-text {
-  flex: 1;
-  text-align: left;
-  align-self: center;
   min-width: 0;
-  max-width: 44%;
-  padding-right: 8px;
+  overflow: hidden;
+  align-self: center;
 }
 .bl-wonderful-h {
   font-size: clamp(20px, 2.8vw, 36px);

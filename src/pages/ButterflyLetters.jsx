@@ -573,14 +573,8 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
         <div className={pageClass(3)} style={{ zIndex: pageZ(3) }}>
           <Spine/>
           <div className="bl-page-content bl-wonderful-layout">
-            {/* Top row */}
+            {/* Two-column grid: text left, heart right — heart never moves */}
             <div className="bl-wonderful-top">
-              {/* Heart photo — absolutely pinned to right edge, never affected by text width */}
-              <div className="bl-circ-tl-wrap">
-                <TornCircle size={270} rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(4,k)} onRemove={()=>removePhoto(4)}
-                  onTransformChange={t=>savePhotoTransform(4,t)} photoData={photos[4]}
-                  src={p(4)} alt="couple" className="bl-circ-tl"/>
-              </div>
               <div className="bl-wonderful-text">
                 <EditableText as="h2" className="bl-script-xl bl-wonderful-h"
                   value={s('wonderfulTitle','May you enjoy your wonderful day.')}
@@ -588,6 +582,12 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
                 <EditableText as="p" className="bl-wonderful-sub"
                   value={s('wonderfulSub',"Here's to more prosperous and joyous years to come.")}
                   isEditing={isEditing} onChange={v=>save('wonderfulSub',v)} multiline/>
+              </div>
+              {/* Heart photo — in its own fixed column, never pushed by text */}
+              <div className="bl-circ-tl-wrap">
+                <TornCircle size={250} rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(4,k)} onRemove={()=>removePhoto(4)}
+                  onTransformChange={t=>savePhotoTransform(4,t)} photoData={photos[4]}
+                  src={p(4)} alt="couple" className="bl-circ-tl"/>
               </div>
             </div>
             {/* Bottom row */}
