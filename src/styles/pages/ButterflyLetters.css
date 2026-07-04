@@ -488,7 +488,7 @@
   display: flex;
   flex: 1;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   min-height: 0;
 }
 
@@ -511,12 +511,16 @@
   text-align: right;
   align-self: center;
   min-width: 0;
+  padding-right: 8px;
+  max-width: calc(100% - 290px);
 }
 .bl-wonderful-h {
   font-size: clamp(26px, 3.8vw, 50px);
   line-height: 1.15;
   color: #3d1e0a;
   margin-bottom: 10px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 .bl-wonderful-sub {
   font-family: 'Playfair Display', serif;
