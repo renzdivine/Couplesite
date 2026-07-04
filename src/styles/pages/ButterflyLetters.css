@@ -483,6 +483,7 @@
   padding: 12px 16px 8px 8px;
   gap: 0;
   overflow: hidden;
+  position: relative;
 }
 
 .bl-wonderful-top {
@@ -492,6 +493,7 @@
   gap: 16px;
   min-height: 0;
   padding-right: 4px;
+  position: relative;
 }
 
 .bl-wonderful-bottom {
@@ -506,20 +508,21 @@
 
 .bl-circ-tl { 
   flex-shrink: 0; 
-  align-self: center; 
-  margin-left: auto;
-  position: relative;
+  position: absolute;
   right: -12px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-3deg);
+  z-index: 5;
 }
 .bl-circ-bc { flex-shrink: 0; transform: rotate(2deg) !important; }
 .bl-circ-br { flex-shrink: 0; transform: rotate(-2deg); }
 
 .bl-wonderful-text {
-  flex: 0 1 auto;
-  text-align: right;
+  flex: 1;
+  text-align: left;
   align-self: center;
   min-width: 0;
-  max-width: 48%;
+  max-width: 54%;
   padding-right: 8px;
 }
 .bl-wonderful-h {
