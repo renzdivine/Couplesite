@@ -160,7 +160,7 @@
   font-family: 'Playfair Display', 'Georgia', serif;
   font-style: italic;
   font-weight: 700;
-  font-size: clamp(82px, 12.5vw, 168px);
+  font-size: clamp(48px, 7vw, 96px);
   line-height: 0.88;
   color: #7a3a10;
   letter-spacing: -0.03em;
@@ -320,5 +320,5 @@
   .ch-ring  { width: 28px; height: 26px; }
   .ch-heart-svg { width: clamp(200px, 60vw, 280px); }
   .ch-word-our   { font-size: clamp(52px, 14vw, 80px); }
-  .ch-word-anniv { font-size: clamp(62px, 18vw, 100px); }
+  .ch-word-anniv { font-size: clamp(38px, 11vw, 70px); }
 }
