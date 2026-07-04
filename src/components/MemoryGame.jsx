@@ -26,16 +26,44 @@ function shuffle(arr) {
 function buildCards(photos) {
   const pool  = [...photos, ...FALLBACK_PHOTOS].slice(0, 6);
   const pairs = pool.flatMap((photo, idx) => [
-    { cardId: `${idx}-a`, photoId: idx, url: photo.url, caption: photo.caption || '' },
-    { cardId: `${idx}-b`, photoId: idx, url: photo.url, caption: photo.caption || '' },
+    { 
+      cardId: `${idx}-a`, 
+      photoId: idx, 
+      url: photo.url, 
+      caption: photo.caption || '',
+      translateX: photo.translateX || 0,
+      translateY: photo.translateY || 0,
+      scale: photo.scale || 1,
+    },
+    { 
+      cardId: `${idx}-b`, 
+      photoId: idx, 
+      url: photo.url, 
+      caption: photo.caption || '',
+      translateX: photo.translateX || 0,
+      translateY: photo.translateY || 0,
+      scale: photo.scale || 1,
+    },
   ]);
   return shuffle(pairs);
 }
 
 
-function CardImage({ url, className }) {
+function CardImage({ url, className, translateX = 0, translateY = 0, scale = 1 }) {
   const resolved = useImageUrl(url);
-  return <img src={resolved || ''} alt="couple memory" className={className} draggable={false} decoding="async"/>;
+  return (
+    <img 
+      src={resolved || ''} 
+      alt="couple memory" 
+      className={className} 
+      draggable={false} 
+      decoding="async"
+      style={{
+        transform: `translate(${translateX}px, ${translateY}px) scale(${scale})`,
+        transformOrigin: 'center center'
+      }}
+    />
+  );
 }
 
 
@@ -55,7 +83,13 @@ function Card({ card, isFlipped, isMatched, onClick }) {
           <span className="mg-card-back-icon">♥</span>
         </div>
         <div className={`mg-card-front ${isMatched ? 'mg-card-front--matched' : 'mg-card-front--unmatched'}`}>
-          <CardImage url={card.url} className="mg-card-img"/>
+          <CardImage 
+            url={card.url} 
+            className="mg-card-img"
+            translateX={card.translateX}
+            translateY={card.translateY}
+            scale={card.scale}
+          />
           {isMatched && (
             <div className="mg-card-match-overlay">
               <svg width="20" height="18" viewBox="0 0 100 90" fill="#fff" opacity="0.9">
