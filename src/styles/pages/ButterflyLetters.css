@@ -533,6 +533,12 @@
   overflow-wrap: break-word;
   hyphens: auto;
 }
+
+/* Force override bl-script-xl when used as the anniversary title */
+.bl-wonderful-text .bl-script-xl,
+.bl-wonderful-text h2 {
+  font-size: clamp(16px, 2vw, 26px) !important;
+}
 .bl-wonderful-sub {
   font-family: 'Playfair Display', serif;
   font-style: italic;
