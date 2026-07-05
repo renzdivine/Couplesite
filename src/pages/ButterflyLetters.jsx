@@ -623,7 +623,7 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
 
             {/* Top-right: circle photo */}
             <div className="bl-circ-tl-wrap">
-              <TornCircle size={220} rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(4,k)} onRemove={()=>removePhoto(4)}
+              <TornCircle size={260} rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(4,k)} onRemove={()=>removePhoto(4)}
                 onTransformChange={t=>savePhotoTransform(4,t)} photoData={photos[4]}
                 src={p(4)} alt="couple" className="bl-circ-tl"/>
             </div>
@@ -645,7 +645,7 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
                   ))}
                 </svg>
               </div>
-              <TornCircle size={220} rotate={2} isEditing={isEditing} onReplace={k=>replacePhoto(5,k)} onRemove={()=>removePhoto(5)}
+              <TornCircle size={260} rotate={2} isEditing={isEditing} onReplace={k=>replacePhoto(5,k)} onRemove={()=>removePhoto(5)}
                 onTransformChange={t=>savePhotoTransform(5,t)} photoData={photos[5]}
                 src={p(5)} alt="couple" className="bl-circ-bc"/>
             </div>
