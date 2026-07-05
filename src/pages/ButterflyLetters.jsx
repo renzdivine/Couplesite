@@ -375,18 +375,27 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
   const s         = (field, fallback) => lp[field] ?? fallback;
   const save      = (field, val) => onContentChange?.('lettersPage', { ...lp, [field]: val });
 
+  // Keep a ref that always points to the latest photos array so transform
+  // save callbacks never close over a stale copy.
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
+
   /* photo replace / remove helpers */
   const replacePhoto = (idx, key) => {
-    const updated = [...photos];
-    if (updated[idx]) updated[idx] = { ...updated[idx], url: key };
-    else updated[idx] = { id: Date.now(), url: key, caption: '' };
+    const updated = [...photosRef.current];
+    if (updated[idx]) updated[idx] = { ...updated[idx], url: key, translateX: 0, translateY: 0, scale: 1 };
+    else updated[idx] = { id: Date.now(), url: key, caption: '', translateX: 0, translateY: 0, scale: 1 };
     onContentChange?.('lettersPhotos', updated);
   };
-  const removePhoto = (idx) => replacePhoto(idx, '');
-  
-  /* photo transform save helper */
+  const removePhoto = (idx) => {
+    const updated = [...photosRef.current];
+    if (updated[idx]) updated[idx] = { ...updated[idx], url: '' };
+    onContentChange?.('lettersPhotos', updated);
+  };
+
+  /* photo transform save helper — always reads fresh photos from ref */
   const savePhotoTransform = (idx, transform) => {
-    const updated = [...photos];
+    const updated = [...photosRef.current];
     if (updated[idx]) {
       updated[idx] = { ...updated[idx], ...transform };
     } else {

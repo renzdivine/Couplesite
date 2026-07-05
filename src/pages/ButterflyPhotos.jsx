@@ -519,7 +519,6 @@ export default function ButterflyPhotos({ isEditing = false, onContentChange }) 
   const navigate = useNavigate();
   const { getCoupleBySlug, coupleAuth, myCouple } = useApp();
   const couple = isEditing ? myCouple : getCoupleBySlug(coupleAuth?.slug);
-
   const FALLBACK = [
     
     { id:0,  url:'', caption:'' },
@@ -557,6 +556,10 @@ export default function ButterflyPhotos({ isEditing = false, onContentChange }) 
     (couple?.photos?.[i]) ?? FALLBACK[i]
   );
 
+  // Always-current ref so save callbacks never close over a stale photos array
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
+
   const [current, setCurrent] = useState(0);
   const [anims, setAnims] = useState({ frame:'agv-anim-rise', text:'agv-anim-fade-up' });
   const total = LAYOUTS.length;
@@ -573,8 +576,8 @@ export default function ButterflyPhotos({ isEditing = false, onContentChange }) 
 
   // Replace/remove a photo URL; reset transform for new uploads
   const handleReplacePhoto = (idx, key) => {
-    const updated = Array.from({ length: Math.max(photos.length, idx + 1) }, (_, i) => photos[i] ?? FALLBACK[i] ?? { id: Date.now() + i, url: '', caption: '' });
-    // Reset transform when setting a new image (key != ''), preserve when removing
+    const cur = photosRef.current;
+    const updated = Array.from({ length: Math.max(cur.length, idx + 1) }, (_, i) => cur[i] ?? FALLBACK[i] ?? { id: Date.now() + i, url: '', caption: '' });
     if (key) {
       updated[idx] = { ...(updated[idx] || {}), url: key, translateX: 0, translateY: 0, scale: 1 };
     } else {
@@ -585,7 +588,8 @@ export default function ButterflyPhotos({ isEditing = false, onContentChange }) 
 
   // Save photo transform (translateX, translateY, scale) back to couple data
   const handleSavePosition = (idx, transform) => {
-    const updated = Array.from({ length: Math.max(photos.length, idx + 1) }, (_, i) => photos[i] ?? FALLBACK[i] ?? { id: Date.now() + i, url: '', caption: '' });
+    const cur = photosRef.current;
+    const updated = Array.from({ length: Math.max(cur.length, idx + 1) }, (_, i) => cur[i] ?? FALLBACK[i] ?? { id: Date.now() + i, url: '', caption: '' });
     updated[idx] = { ...(updated[idx] || {}), ...transform };
     onContentChange?.('photosList', updated);
   };
