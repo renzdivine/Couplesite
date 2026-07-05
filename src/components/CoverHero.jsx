@@ -75,14 +75,35 @@ function useKraftCanvas() {
 }
 
 
-function HeartFrame({ photoSrc, ids, isEditing, onReplace, onRemove, zoomRef }) {
+function HeartFrame({ photoSrc, ids, isEditing, onReplace, onRemove, zoomRef, photoData, onTransformChange }) {
   const resolved = useImageUrl(photoSrc);
   const fileRef  = useRef(null);
   const imgRef   = useRef(null);
-  const translateRef = useRef({ x: 0, y: 0 });
-  const scaleRef     = useRef(1);
+
+  // Initialise from saved data so zoom/pan survives refresh
+  const savedX     = photoData?.translateX ?? 0;
+  const savedY     = photoData?.translateY ?? 0;
+  const savedScale = photoData?.scale      ?? 1;
+
+  const translateRef = useRef({ x: savedX, y: savedY });
+  const scaleRef     = useRef(savedScale);
   const dragging     = useRef(false);
   const dragStart    = useRef({ mx: 0, my: 0, tx: 0, ty: 0 });
+
+  // Restore saved transform when photoData first arrives (async load)
+  useEffect(() => {
+    if (dragging.current) return;
+    translateRef.current = { x: savedX, y: savedY };
+    scaleRef.current = savedScale;
+    applyTransform();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedX, savedY, savedScale]);
+
+  // Re-apply when image URL resolves
+  useEffect(() => {
+    if (resolved) applyTransform();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolved]);
 
   const handleFile = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
@@ -91,6 +112,7 @@ function HeartFrame({ photoSrc, ids, isEditing, onReplace, onRemove, zoomRef }) 
     const key = await saveImage(file);
     translateRef.current = { x: 0, y: 0 };
     scaleRef.current = 1;
+    onTransformChange?.({ translateX: 0, translateY: 0, scale: 1 });
     onReplace?.(key);
   };
 
@@ -98,10 +120,17 @@ function HeartFrame({ photoSrc, ids, isEditing, onReplace, onRemove, zoomRef }) 
     if (!imgRef.current) return;
     const { x, y } = translateRef.current;
     const s = scaleRef.current;
-    
     imgRef.current.setAttribute('transform',
       `translate(${150 + x}, ${130 + y}) scale(${s}) translate(-150, -130)`
     );
+  };
+
+  const saveTransform = () => {
+    onTransformChange?.({
+      translateX: translateRef.current.x,
+      translateY: translateRef.current.y,
+      scale: scaleRef.current,
+    });
   };
 
   const onMouseDown = (e) => {
@@ -119,6 +148,7 @@ function HeartFrame({ photoSrc, ids, isEditing, onReplace, onRemove, zoomRef }) 
     };
     const onUp = () => {
       dragging.current = false;
+      saveTransform();
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     };
@@ -129,8 +159,9 @@ function HeartFrame({ photoSrc, ids, isEditing, onReplace, onRemove, zoomRef }) 
   const zoom = (delta) => {
     scaleRef.current = Math.max(0.5, Math.min(4, parseFloat((scaleRef.current + delta).toFixed(3))));
     applyTransform();
+    saveTransform();
   };
-  
+
   if (zoomRef) zoomRef.current = zoom;
 
   const onWheel = (e) => {
@@ -188,6 +219,7 @@ function HeartFrame({ photoSrc, ids, isEditing, onReplace, onRemove, zoomRef }) 
               href={resolved}
               x="0" y="0" width="300" height="260"
               preserveAspectRatio="xMidYMid meet"
+              transform={`translate(${150 + translateRef.current.x}, ${130 + translateRef.current.y}) scale(${scaleRef.current}) translate(-150, -130)`}
               onMouseDown={onMouseDown}
               onDoubleClick={isEditing ? () => fileRef.current?.click() : undefined}
               style={{ cursor: isEditing ? 'grab' : undefined }}
@@ -425,11 +457,13 @@ function PageCurl() {
 export default function CoverHero({
   name1, name2,
   photoSrc,
+  photoData,
   titleWord1, titleWord2, subtitle,
   onChangeTitleWord1, onChangeTitleWord2, onChangeSubtitle,
   isEditing = false,
   onReplacePhoto,
   onRemovePhoto,
+  onTransformChange,
 }) {
   
   const [ids] = useState(() => {
@@ -566,7 +600,7 @@ export default function CoverHero({
       <animated.div className="ch-heart-wrap" style={{ ...heartSpring }}>
         <animated.div style={floatSpring}>
           <div style={{ position: 'relative', display: 'inline-block' }}>
-            <HeartFrame photoSrc={photoSrc} ids={ids} isEditing={isEditing} onReplace={onReplacePhoto} onRemove={onRemovePhoto} zoomRef={heartZoomRef}/>
+            <HeartFrame photoSrc={photoSrc} ids={ids} isEditing={isEditing} onReplace={onReplacePhoto} onRemove={onRemovePhoto} zoomRef={heartZoomRef} photoData={photoData} onTransformChange={onTransformChange}/>
             {isEditing && photoSrc && (
               <>
                 {}

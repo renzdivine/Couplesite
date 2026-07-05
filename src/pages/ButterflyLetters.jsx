@@ -52,6 +52,11 @@ function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing =
     applyTransform();
   }, [savedX, savedY, savedScale, applyTransform]);
 
+  // Also re-apply whenever the resolved URL changes (idb blob loads async)
+  useEffect(() => {
+    if (resolved) applyTransform();
+  }, [resolved, applyTransform]);
+
   const saveTransform = useCallback(() => {
     if (onTransformChange) {
       onTransformChange({
@@ -124,7 +129,8 @@ function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing =
   if (!isEditing && resolved) {
     return <img src={resolved} alt={alt} className={className} style={{ width: '100%', height: '100%', objectFit: objectFit, display: 'block', background: '#1a0a0e',
       transform: `translate(${savedX}px, ${savedY}px) scale(${savedScale})`,
-      transformOrigin: 'center center', ...style }} loading="lazy" decoding="async"/>;
+      transformOrigin: 'center center', ...style }} loading="lazy" decoding="async"
+      ref={imgRef} onLoad={applyTransform}/>;
   }
 
   return (
@@ -145,6 +151,7 @@ function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing =
               transformOrigin: 'center center',
               cursor: 'grab',
             }}
+            onLoad={applyTransform}
             onMouseDown={onMouseDown}
             onDoubleClick={() => fileRef.current?.click()}
             draggable={false}
@@ -499,6 +506,7 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
           <CoverHero
             name1={name1} name2={name2}
             photoSrc={p(0)}
+            photoData={photos[0]}
             titleWord1={s('coverTitle1','Our')}
             titleWord2={s('coverTitle2','50th')}
             subtitle={s('coverSub',`A 50th wedding anniversary\npresentation celebrating\n${name1} & ${name2}.`)}
@@ -508,6 +516,7 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
             isEditing={isEditing}
             onReplacePhoto={k => replacePhoto(0, k)}
             onRemovePhoto={() => removePhoto(0)}
+            onTransformChange={t => savePhotoTransform(0, t)}
           />
         </div>
 
