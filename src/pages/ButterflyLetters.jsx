@@ -622,7 +622,7 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
               </div>
               {/* Heart photo — in its own fixed column, never pushed by text */}
               <div className="bl-circ-tl-wrap">
-                <TornCircle size={250} rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(4,k)} onRemove={()=>removePhoto(4)}
+                <TornCircle size={200} rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(4,k)} onRemove={()=>removePhoto(4)}
                   onTransformChange={t=>savePhotoTransform(4,t)} photoData={photos[4]}
                   src={p(4)} alt="couple" className="bl-circ-tl"/>
               </div>
@@ -643,10 +643,10 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
                   ))}
                 </svg>
               </div>
-              <TornCircle size={260} rotate={2} isEditing={isEditing} onReplace={k=>replacePhoto(5,k)} onRemove={()=>removePhoto(5)}
+              <TornCircle size={210} rotate={2} isEditing={isEditing} onReplace={k=>replacePhoto(5,k)} onRemove={()=>removePhoto(5)}
                 onTransformChange={t=>savePhotoTransform(5,t)} photoData={photos[5]}
                 src={p(5)} alt="couple" className="bl-circ-bc"/>
-              <TornCircle size={255} rotate={-2} isEditing={isEditing} onReplace={k=>replacePhoto(6,k)} onRemove={()=>removePhoto(6)}
+              <TornCircle size={210} rotate={-2} isEditing={isEditing} onReplace={k=>replacePhoto(6,k)} onRemove={()=>removePhoto(6)}
                 onTransformChange={t=>savePhotoTransform(6,t)} photoData={photos[6]}
                 src={p(6)} alt="couple" className="bl-circ-br"/>
             </div>
