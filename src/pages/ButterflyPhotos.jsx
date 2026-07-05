@@ -111,6 +111,26 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
     applyTransform();
   };
 
+  const handleDrop = useCallback(async (e) => {
+    if (!isEditing) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    const key = await saveImage(file);
+    onReplace?.(key);
+    translateRef.current = { x: 0, y: 0 };
+    scaleRef.current = 1;
+    applyTransform();
+  }, [isEditing, onReplace, applyTransform]);
+
+  const handleDragOver = useCallback((e) => {
+    if (!isEditing) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'copy';
+  }, [isEditing]);
+
   const handleClick    = isEditing && !resolvedSrc ? () => fileRef.current?.click() : undefined;
   const handleDblClick = isEditing && resolvedSrc  ? () => fileRef.current?.click() : undefined;
   const isDraggable    = isEditing && !!resolvedSrc;
@@ -121,7 +141,9 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
       style={{ position:'relative', animationDelay: frozenAnimDelay.current != null ? `${frozenAnimDelay.current}ms` : undefined }}
       onClick={handleClick}
       onDoubleClick={handleDblClick}
-      title={isEditing ? (resolvedSrc ? 'Scroll to zoom · Drag to reposition · Double-click to change' : 'Click to add photo') : undefined}
+      onDrop={isEditing ? handleDrop : undefined}
+      onDragOver={isEditing ? handleDragOver : undefined}
+      title={isEditing ? (resolvedSrc ? 'Scroll to zoom · Drag to reposition · Double-click to change · Drop image to replace' : 'Click or drop an image to add photo') : undefined}
     >
       {}
       <div style={{ width: '100%', height: '100%' }}>
@@ -150,7 +172,7 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
                     <line x1="18" y1="10" x2="18" y2="26" stroke="rgba(233,30,140,1)" strokeWidth="2.5" strokeLinecap="round"/>
                     <line x1="10" y1="18" x2="26" y2="18" stroke="rgba(233,30,140,1)" strokeWidth="2.5" strokeLinecap="round"/>
                   </svg>
-                  <span style={{ fontSize:'0.6rem', fontFamily:'system-ui,sans-serif', color:'rgba(233,30,140,0.9)', fontWeight:700, textAlign:'center', lineHeight:1.3, textTransform:'uppercase', letterSpacing:'0.06em', marginTop:4 }}>Click to add photo</span>
+                  <span style={{ fontSize:'0.6rem', fontFamily:'system-ui,sans-serif', color:'rgba(233,30,140,0.9)', fontWeight:700, textAlign:'center', lineHeight:1.3, textTransform:'uppercase', letterSpacing:'0.06em', marginTop:4 }}>Click or drop image</span>
                 </>
               ) : (
                 <svg width="28" height="24" viewBox="0 0 28 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
