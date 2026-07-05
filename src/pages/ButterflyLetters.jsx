@@ -652,7 +652,7 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
 
             {/* Bottom-right: circle photo */}
             <div className="bl-circ-br-wrap">
-              <TornCircle size={220} rotate={-2} isEditing={isEditing} onReplace={k=>replacePhoto(6,k)} onRemove={()=>removePhoto(6)}
+              <TornCircle size={260} rotate={-2} isEditing={isEditing} onReplace={k=>replacePhoto(6,k)} onRemove={()=>removePhoto(6)}
                 onTransformChange={t=>savePhotoTransform(6,t)} photoData={photos[6]}
                 src={p(6)} alt="couple" className="bl-circ-br"/>
             </div>
