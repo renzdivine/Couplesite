@@ -477,46 +477,77 @@
 
 
 .bl-wonderful-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  height: 100%;
+  padding: 16px 16px 16px 12px;
+  gap: 16px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Text block — top-left cell */
+.bl-wonderful-text {
+  grid-column: 1;
+  grid-row: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  padding: 12px 8px 8px 8px;
-  gap: 0;
-  overflow: hidden;
-  position: relative;
-}
-
-.bl-wonderful-top {
-  display: grid;
-  grid-template-columns: 1fr 240px;
-  grid-template-rows: 1fr;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 8px;
-  padding-bottom: 8px;
-}
-
-.bl-wonderful-bottom {
-  flex: 1;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 24px;
-  min-height: 0;
-  padding-bottom: 8px;
+  min-width: 0;
+  padding-right: 8px;
 }
 
+/* Top-right circle */
 .bl-circ-tl-wrap {
+  grid-column: 2;
+  grid-row: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: visible;
 }
-.bl-circ-tl { 
-  flex-shrink: 0;
+
+/* Bottom-left circle */
+.bl-circ-bc-wrap {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  position: relative;
 }
-.bl-circ-bc { flex-shrink: 0; transform: rotate(2deg) !important; }
-.bl-circ-br { flex-shrink: 0; transform: rotate(-2deg); }
+
+/* Bottom-right circle */
+.bl-circ-br-wrap {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+/* Flower decoration — absolute so it doesn't affect layout */
+.bl-wonderful-flower {
+  position: absolute;
+  bottom: -8px;
+  left: -8px;
+  width: min(70px, 8vw);
+  height: min(80px, 9vw);
+  pointer-events: none;
+  z-index: 2;
+}
+.bl-wonderful-flower svg { width: 100%; height: 100%; }
+
+.bl-circ-tl  { flex-shrink: 0; }
+.bl-circ-bc  { flex-shrink: 0; transform: rotate(2deg)  !important; }
+.bl-circ-br  { flex-shrink: 0; transform: rotate(-2deg) !important; }
+
+/* Remove the old top/bottom row containers */
+.bl-wonderful-top,
+.bl-wonderful-bottom { display: contents; }
 
 .bl-wonderful-text {
   min-width: 0;
@@ -524,10 +555,10 @@
   align-self: center;
 }
 .bl-wonderful-h {
-  font-size: clamp(16px, 2vw, 26px) !important;
+  font-size: clamp(20px, 2.6vw, 36px) !important;
   line-height: 1.15;
   color: #3d1e0a;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
@@ -536,12 +567,12 @@
 /* Force override bl-script-xl when used as the anniversary title */
 .bl-wonderful-text .bl-script-xl,
 .bl-wonderful-text h2 {
-  font-size: clamp(16px, 2vw, 26px) !important;
+  font-size: clamp(20px, 2.6vw, 36px) !important;
 }
 .bl-wonderful-sub {
   font-family: 'Playfair Display', serif;
   font-style: italic;
-  font-size: clamp(15px, 1.7vw, 21px);
+  font-size: clamp(15px, 1.8vw, 22px);
   color: #5a3020;
   line-height: 1.55;
   margin: 0;

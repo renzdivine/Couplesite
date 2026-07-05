@@ -610,25 +610,27 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
         <div className={pageClass(3)} style={{ zIndex: pageZ(3) }}>
           <Spine/>
           <div className="bl-page-content bl-wonderful-layout">
-            {/* Two-column grid: text left, heart right — heart never moves */}
-            <div className="bl-wonderful-top">
-              <div className="bl-wonderful-text">
-                <EditableText as="h2" className="bl-script-xl bl-wonderful-h"
-                  value={s('wonderfulTitle','May you enjoy your wonderful day.')}
-                  isEditing={isEditing} onChange={v=>save('wonderfulTitle',v)} multiline/>
-                <EditableText as="p" className="bl-wonderful-sub"
-                  value={s('wonderfulSub',"Here's to more prosperous and joyous years to come.")}
-                  isEditing={isEditing} onChange={v=>save('wonderfulSub',v)} multiline/>
-              </div>
-              {/* Heart photo — in its own fixed column, never pushed by text */}
-              <div className="bl-circ-tl-wrap">
-                <TornCircle size={200} rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(4,k)} onRemove={()=>removePhoto(4)}
-                  onTransformChange={t=>savePhotoTransform(4,t)} photoData={photos[4]}
-                  src={p(4)} alt="couple" className="bl-circ-tl"/>
-              </div>
+
+            {/* Top-left: text */}
+            <div className="bl-wonderful-text">
+              <EditableText as="h2" className="bl-script-xl bl-wonderful-h"
+                value={s('wonderfulTitle','May you enjoy your wonderful day.')}
+                isEditing={isEditing} onChange={v=>save('wonderfulTitle',v)} multiline/>
+              <EditableText as="p" className="bl-wonderful-sub"
+                value={s('wonderfulSub',"Here's to more prosperous and joyous years to come.")}
+                isEditing={isEditing} onChange={v=>save('wonderfulSub',v)} multiline/>
             </div>
-            {/* Bottom row */}
-            <div className="bl-wonderful-bottom">
+
+            {/* Top-right: circle photo */}
+            <div className="bl-circ-tl-wrap">
+              <TornCircle size={220} rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(4,k)} onRemove={()=>removePhoto(4)}
+                onTransformChange={t=>savePhotoTransform(4,t)} photoData={photos[4]}
+                src={p(4)} alt="couple" className="bl-circ-tl"/>
+            </div>
+
+            {/* Bottom-left: circle photo + flower deco */}
+            <div className="bl-circ-bc-wrap">
+              {/* Flower decoration */}
               <div className="bl-wonderful-flower" aria-hidden="true">
                 <svg viewBox="0 0 120 140" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M60 135 Q55 110 45 90 Q35 70 38 50 Q42 30 60 20 Q78 30 82 50 Q85 70 75 90 Q65 110 60 135Z" fill="#8a3028" opacity="0.75"/>
@@ -643,13 +645,18 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
                   ))}
                 </svg>
               </div>
-              <TornCircle size={210} rotate={2} isEditing={isEditing} onReplace={k=>replacePhoto(5,k)} onRemove={()=>removePhoto(5)}
+              <TornCircle size={220} rotate={2} isEditing={isEditing} onReplace={k=>replacePhoto(5,k)} onRemove={()=>removePhoto(5)}
                 onTransformChange={t=>savePhotoTransform(5,t)} photoData={photos[5]}
                 src={p(5)} alt="couple" className="bl-circ-bc"/>
-              <TornCircle size={210} rotate={-2} isEditing={isEditing} onReplace={k=>replacePhoto(6,k)} onRemove={()=>removePhoto(6)}
+            </div>
+
+            {/* Bottom-right: circle photo */}
+            <div className="bl-circ-br-wrap">
+              <TornCircle size={220} rotate={-2} isEditing={isEditing} onReplace={k=>replacePhoto(6,k)} onRemove={()=>removePhoto(6)}
                 onTransformChange={t=>savePhotoTransform(6,t)} photoData={photos[6]}
                 src={p(6)} alt="couple" className="bl-circ-br"/>
             </div>
+
           </div>
         </div>
 
