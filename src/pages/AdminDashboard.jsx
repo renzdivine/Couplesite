@@ -19,10 +19,28 @@ import '../styles/pages/AdminDashboard.css';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const { clientSession, clientLogout, myCouple, updateCouple } = useApp();
+  const { clientSession, clientLogout, myCouple, updateCouple, loading } = useApp();
   const [toast, setToast] = useState('');
 
   if (!clientSession) { navigate('/admin/login', { replace: true }); return null; }
+
+  // Wait for Supabase data to load before rendering so components mount with
+  // real photoData (translateX/Y/scale) — prevents transform flash on refresh
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: '#0e0705',
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+          <Heart size={32} color="#e91e8c" fill="#e91e8c" style={{ animation: 'adHeartBeat 1.2s ease-in-out infinite' }}/>
+          <span style={{ color: 'rgba(255,154,181,0.7)', fontSize: '0.85rem', fontFamily: 'system-ui,sans-serif', letterSpacing: '0.05em' }}>
+            Loading your love page…
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   if (!myCouple) {
     return (
@@ -162,13 +180,13 @@ export default function AdminDashboard() {
       {}
       <div className="ad-section" id="section-photos">
         <SectionLabel>📷 Butterfly Photos</SectionLabel>
-        <ButterflyPhotos isEditing onContentChange={save}/>
+        <ButterflyPhotos key={myCouple.slug} isEditing onContentChange={save}/>
       </div>
 
       {}
       <div className="ad-section" id="section-letters">
         <SectionLabel>✉️ Butterfly Letters</SectionLabel>
-        <ButterflyLetters isEditing onContentChange={save}/>
+        <ButterflyLetters key={myCouple.slug} isEditing onContentChange={save}/>
       </div>
 
       {}

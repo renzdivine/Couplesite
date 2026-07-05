@@ -480,3 +480,10 @@
 .ad-bf360-hint-input:focus {
   border-bottom-color: rgba(233,30,140,0.6);
 }
+
+/* Loading spinner heartbeat */
+@keyframes adHeartBeat {
+  0%, 100% { transform: scale(1);    filter: drop-shadow(0 0 6px rgba(233,30,140,0.4)); }
+  30%       { transform: scale(1.35); filter: drop-shadow(0 0 14px rgba(233,30,140,0.8)); }
+  60%       { transform: scale(1.15); filter: drop-shadow(0 0 10px rgba(233,30,140,0.6)); }
+}
