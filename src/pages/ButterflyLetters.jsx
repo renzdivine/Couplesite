@@ -117,7 +117,9 @@ function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing =
   }
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}
+    <div
+      className="bl-dp-wrap"
+      style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}
       onWheel={isDraggable ? onWheel : undefined}
     >
       {resolved ? (
@@ -125,15 +127,21 @@ function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing =
           <img
             ref={imgRef}
             src={resolved} alt={alt} className={className}
-            style={{ width: '100%', height: '100%', objectFit: objectFit, display: 'block', background: '#1a0a0e', transform: 'translate(0px,0px) scale(1)', transformOrigin: 'center center', cursor: 'grab' }}
+            style={{
+              width: '100%', height: '100%', objectFit: objectFit, display: 'block',
+              background: '#1a0a0e',
+              transform: `translate(${translateRef.current.x}px, ${translateRef.current.y}px) scale(${scaleRef.current})`,
+              transformOrigin: 'center center',
+              cursor: 'grab',
+            }}
             onMouseDown={onMouseDown}
             onDoubleClick={() => fileRef.current?.click()}
             draggable={false}
           />
-          {/* zoom controls */}
+          {/* zoom controls — visible on hover of .bl-dp-wrap */}
           <div className="bl-dp-zoom-btns" onClick={e => e.stopPropagation()}>
             <button className="bl-dp-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(0.1); }}>＋</button>
-            <span ref={zoomValRef} className="bl-dp-zoom-val">100%</span>
+            <span ref={zoomValRef} className="bl-dp-zoom-val">{Math.round(scaleRef.current * 100)}%</span>
             <button className="bl-dp-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(-0.1); }}>－</button>
           </div>
           <div className="bl-dp-drag-hint">✥ drag · ctrl+scroll · dbl-click to replace</div>
