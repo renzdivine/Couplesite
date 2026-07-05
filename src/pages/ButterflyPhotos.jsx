@@ -11,6 +11,7 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
                         isEditing = false, onReplace, onRemove,
                         objectPosition = '50% 50%', onPositionChange,
                         objectScale = 1, onScaleChange }) {
+  const frameRef    = useRef(null);
   const fileRef     = useRef(null);
   const imgRef      = useRef(null);
   const resolvedSrc = useImageUrl(src);
@@ -115,6 +116,7 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
     if (!isEditing) return;
     e.preventDefault();
     e.stopPropagation();
+    frameRef.current?.classList.remove('drag-over');
     const file = e.dataTransfer.files?.[0];
     if (!file || !file.type.startsWith('image/')) return;
     const key = await saveImage(file);
@@ -131,23 +133,44 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
     e.dataTransfer.dropEffect = 'copy';
   }, [isEditing]);
 
+  const handleDragEnter = useCallback((e) => {
+    if (!isEditing) return;
+    e.preventDefault();
+    e.stopPropagation();
+    frameRef.current?.classList.add('drag-over');
+  }, [isEditing]);
+
+  const handleDragLeave = useCallback((e) => {
+    if (!isEditing) return;
+    // only remove if leaving the frame entirely (not entering a child)
+    if (!frameRef.current?.contains(e.relatedTarget)) {
+      frameRef.current?.classList.remove('drag-over');
+    }
+  }, [isEditing]);
+
   const handleClick    = isEditing && !resolvedSrc ? () => fileRef.current?.click() : undefined;
   const handleDblClick = isEditing && resolvedSrc  ? () => fileRef.current?.click() : undefined;
   const isDraggable    = isEditing && !!resolvedSrc;
 
   return (
     <div
+      ref={frameRef}
       className={`agv-fp ${shapeClass[frame]} ${className}${frozenAnimClass.current ? ` ${frozenAnimClass.current}` : ''}`}
       style={{ position:'relative', animationDelay: frozenAnimDelay.current != null ? `${frozenAnimDelay.current}ms` : undefined }}
       onClick={handleClick}
       onDoubleClick={handleDblClick}
       onDrop={isEditing ? handleDrop : undefined}
       onDragOver={isEditing ? handleDragOver : undefined}
+      onDragEnter={isEditing ? handleDragEnter : undefined}
+      onDragLeave={isEditing ? handleDragLeave : undefined}
       title={isEditing ? (resolvedSrc ? 'Scroll to zoom · Drag to reposition · Double-click to change · Drop image to replace' : 'Click or drop an image to add photo') : undefined}
     >
-      {}
-      <div style={{ width: '100%', height: '100%' }}>
-        <div className="agv-fp-inner" onWheel={isDraggable ? onWheel : undefined}>
+      <div style={{ width: '100%', height: '100%', pointerEvents: 'none' }}>
+        <div
+          className="agv-fp-inner"
+          onWheel={isDraggable ? onWheel : undefined}
+          style={{ pointerEvents: 'auto' }}
+        >
         {resolvedSrc
           ? <img
               ref={imgRef}

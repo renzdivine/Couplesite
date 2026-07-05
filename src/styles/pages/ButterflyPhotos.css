@@ -482,6 +482,12 @@
   border-color: rgba(233, 30, 140, 0.9);
 }
 
+.agv-fp.drag-over .agv-fp-inner {
+  outline: 3px dashed rgba(233, 30, 140, 0.9);
+  outline-offset: -3px;
+  background: rgba(233, 30, 140, 0.18);
+}
+
 .agv-fp-frame { display: none; }
 
 
