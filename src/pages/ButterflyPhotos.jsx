@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { EditableText } from '../components/EditableField';
@@ -7,38 +7,37 @@ import { useImageUrl } from '../utils/useImageUrl';
 import '../styles/pages/ButterflyPhotos.css';
 
 
+/* ─── FramedPhoto — drag to pan, ctrl+scroll/buttons to zoom, ✕ to remove ── */
 function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '', animDelay = 0,
                         isEditing = false, onReplace, onRemove,
-                        objectPosition = '50% 50%', onPositionChange,
-                        objectScale = 1, onScaleChange }) {
+                        photoData, onTransformChange }) {
   const frameRef    = useRef(null);
   const fileRef     = useRef(null);
   const imgRef      = useRef(null);
   const resolvedSrc = useImageUrl(src);
   const shapeClass  = { rect:'agv-fp--rect', square:'agv-fp--square', oval:'agv-fp--oval', heart:'agv-fp--heart' };
 
-  
-  
+  // Freeze animation class/delay so it never changes after mount (editing mode has no anims)
   const frozenAnimClass = useRef(isEditing ? '' : animClass);
   const frozenAnimDelay = useRef(isEditing ? undefined : animDelay);
 
-  
-  const translateRef = useRef({ x: 0, y: 0 });  
-  const scaleRef   = useRef(Math.max(0.5, Math.min(4, objectScale || 1)));
-  const zoomValRef = useRef(null);
+  // Transform state stored in refs for perf (no re-renders on every drag pixel)
+  const translateRef = useRef({ x: photoData?.translateX || 0, y: photoData?.translateY || 0 });
+  const scaleRef     = useRef(Math.max(0.5, Math.min(4, photoData?.scale || 1)));
+  const zoomValRef   = useRef(null);
 
   const dragging  = useRef(false);
   const dragStart = useRef({ mx: 0, my: 0, tx: 0, ty: 0 });
 
-  
+  // When src changes (new image uploaded), reset transform to defaults
   const prevSrc = useRef(src);
   if (src !== prevSrc.current) {
     prevSrc.current = src;
-    translateRef.current = { x: 0, y: 0 };
-    scaleRef.current = 1;
+    translateRef.current = { x: photoData?.translateX || 0, y: photoData?.translateY || 0 };
+    scaleRef.current = Math.max(0.5, Math.min(4, photoData?.scale || 1));
   }
 
-  
+  // Apply CSS transform to the img element
   const applyTransform = useCallback(() => {
     if (!imgRef.current) return;
     const { x, y } = translateRef.current;
@@ -48,7 +47,25 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
     }
   }, []);
 
-  
+  // Restore saved transform on mount and whenever photoData changes
+  useEffect(() => {
+    if (photoData) {
+      translateRef.current = { x: photoData.translateX || 0, y: photoData.translateY || 0 };
+      scaleRef.current = Math.max(0.5, Math.min(4, photoData.scale || 1));
+      applyTransform();
+    }
+  }, [photoData, applyTransform]);
+
+  // Persist transform back to parent
+  const saveTransform = useCallback(() => {
+    onTransformChange?.({
+      translateX: translateRef.current.x,
+      translateY: translateRef.current.y,
+      scale: scaleRef.current,
+    });
+  }, [onTransformChange]);
+
+  // Mouse drag to pan
   const onMouseDown = useCallback((e) => {
     if (!isEditing || !resolvedSrc) return;
     e.preventDefault();
@@ -73,43 +90,41 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
       if (!dragging.current) return;
       dragging.current = false;
       if (imgRef.current) imgRef.current.style.cursor = 'grab';
-      onPositionChange?.(`${translateRef.current.x}px ${translateRef.current.y}px`);
+      saveTransform();
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup', onUp);
     };
 
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
-  }, [isEditing, resolvedSrc, applyTransform, onPositionChange]);
+  }, [isEditing, resolvedSrc, applyTransform, saveTransform]);
 
-  
+  // Ctrl+scroll to zoom
   const onWheel = useCallback((e) => {
     if (!isEditing || !resolvedSrc) return;
-    if (!e.ctrlKey && !e.metaKey) return; 
+    if (!e.ctrlKey && !e.metaKey) return;
     e.preventDefault();
     e.stopPropagation();
-    const next = Math.max(0.5, Math.min(4, scaleRef.current - e.deltaY * 0.002));
-    scaleRef.current = parseFloat(next.toFixed(3));
+    scaleRef.current = Math.max(0.5, Math.min(4, parseFloat((scaleRef.current - e.deltaY * 0.002).toFixed(3))));
     applyTransform();
-    onScaleChange?.(scaleRef.current);
-  }, [isEditing, resolvedSrc, applyTransform, onScaleChange]);
+    saveTransform();
+  }, [isEditing, resolvedSrc, applyTransform, saveTransform]);
 
-  
+  // +/- button zoom
   const zoom = useCallback((delta) => {
-    const next = Math.max(0.5, Math.min(4, parseFloat((scaleRef.current + delta).toFixed(3))));
-    scaleRef.current = next;
+    scaleRef.current = Math.max(0.5, Math.min(4, parseFloat((scaleRef.current + delta).toFixed(3))));
     applyTransform();
-    onScaleChange?.(next);
-  }, [applyTransform, onScaleChange]);
+    saveTransform();
+  }, [applyTransform, saveTransform]);
 
   const handleFile = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
     e.target.value = '';
     const key = await saveImage(file);
-    onReplace?.(key);
+    // Reset transform for new image
     translateRef.current = { x: 0, y: 0 };
     scaleRef.current = 1;
-    applyTransform();
+    onReplace?.(key);
   };
 
   const handleDrop = useCallback(async (e) => {
@@ -120,9 +135,9 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
     const file = e.dataTransfer.files?.[0];
     if (!file || !file.type.startsWith('image/')) return;
     const key = await saveImage(file);
-    onReplace?.(key);
     translateRef.current = { x: 0, y: 0 };
     scaleRef.current = 1;
+    onReplace?.(key);
     applyTransform();
   }, [isEditing, onReplace, applyTransform]);
 
@@ -180,7 +195,7 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
               loading="lazy"
               decoding="async"
               style={{
-                transform: `translate(0px, 0px) scale(${scaleRef.current})`,
+                transform: `translate(${translateRef.current.x}px, ${translateRef.current.y}px) scale(${scaleRef.current})`,
                 transformOrigin: 'center center',
                 cursor: isDraggable ? 'grab' : undefined,
               }}
@@ -273,17 +288,14 @@ function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveT
       value={s(field, fallback)} isEditing={isEditing}
       onChange={v => onSaveText?.(field, v)}/>
   );
-  const FRAME_ASPECT = { rect: 3/4, square: 1, oval: 1, heart: 1 };
   const FP   = ({ idx, frame, animDelay=0, className='' }) => (
     <FramedPhoto src={pg(idx).url} alt={pg(idx).caption}
       frame={frame} animClass={frameAnim} animDelay={animDelay} className={className}
-      objectPosition={pg(idx).objectPosition || '50% 50%'}
-      objectScale={pg(idx).objectScale || 1}
+      photoData={pg(idx)}
       isEditing={isEditing}
       onReplace={url => onReplacePhoto?.(idx, url)}
       onRemove={() => onReplacePhoto?.(idx, '')}
-      onPositionChange={pos => onSavePosition?.(idx, { pos })}
-      onScaleChange={scale => onSavePosition?.(idx, { scale })}
+      onTransformChange={transform => onSavePosition?.(idx, transform)}
     />
   );
 
@@ -559,17 +571,22 @@ export default function ButterflyPhotos({ isEditing = false, onContentChange }) 
     onContentChange?.('photos', { ...pc, [field]: val });
   };
 
-  
+  // Replace/remove a photo URL; reset transform for new uploads
   const handleReplacePhoto = (idx, key) => {
     const updated = Array.from({ length: Math.max(photos.length, idx + 1) }, (_, i) => photos[i] ?? FALLBACK[i] ?? { id: Date.now() + i, url: '', caption: '' });
-    updated[idx] = { ...(updated[idx] || {}), url: key };
+    // Reset transform when setting a new image (key != ''), preserve when removing
+    if (key) {
+      updated[idx] = { ...(updated[idx] || {}), url: key, translateX: 0, translateY: 0, scale: 1 };
+    } else {
+      updated[idx] = { ...(updated[idx] || {}), url: '' };
+    }
     onContentChange?.('photosList', updated);
   };
 
-  
-  const handleSavePosition = (idx, patch) => {
+  // Save photo transform (translateX, translateY, scale) back to couple data
+  const handleSavePosition = (idx, transform) => {
     const updated = Array.from({ length: Math.max(photos.length, idx + 1) }, (_, i) => photos[i] ?? FALLBACK[i] ?? { id: Date.now() + i, url: '', caption: '' });
-    updated[idx] = { ...(updated[idx] || {}), ...('pos' in patch ? { objectPosition: patch.pos } : {}), ...('scale' in patch ? { objectScale: patch.scale } : {}) };
+    updated[idx] = { ...(updated[idx] || {}), ...transform };
     onContentChange?.('photosList', updated);
   };
 
