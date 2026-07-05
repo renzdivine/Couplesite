@@ -13,16 +13,23 @@ function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing =
   const imgRef       = useRef(null);
   const fileRef      = useRef(null);
   const zoomValRef   = useRef(null);
-  const translateRef = useRef({ x: photoData?.translateX || 0, y: photoData?.translateY || 0 });
-  const scaleRef     = useRef(photoData?.scale || 1);
+
+  // Pull saved values out as stable primitives
+  const savedX     = photoData?.translateX ?? 0;
+  const savedY     = photoData?.translateY ?? 0;
+  const savedScale = photoData?.scale      ?? 1;
+
+  const translateRef = useRef({ x: savedX, y: savedY });
+  const scaleRef     = useRef(savedScale);
   const dragging     = useRef(false);
   const dragStart    = useRef({ mx: 0, my: 0, tx: 0, ty: 0 });
 
+  // When src changes (new image uploaded) reset transform
   const prevSrc = useRef(src);
   if (src !== prevSrc.current) {
     prevSrc.current = src;
-    translateRef.current = { x: photoData?.translateX || 0, y: photoData?.translateY || 0 };
-    scaleRef.current = photoData?.scale || 1;
+    translateRef.current = { x: savedX, y: savedY };
+    scaleRef.current = savedScale;
   }
 
   const applyTransform = useCallback(() => {
@@ -34,14 +41,16 @@ function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing =
     }
   }, []);
 
-  // Apply saved transform on mount and when data changes
+  // Restore saved transform when data first loads (e.g. after async Supabase fetch).
+  // Use primitive deps so this only fires when the actual values change, not on
+  // every render where photoData gets a new object reference.
   useEffect(() => {
-    if (photoData) {
-      translateRef.current = { x: photoData.translateX || 0, y: photoData.translateY || 0 };
-      scaleRef.current = photoData.scale || 1;
-      applyTransform();
-    }
-  }, [photoData, applyTransform]);
+    // Only apply if NOT mid-drag (don't interrupt user interaction)
+    if (dragging.current) return;
+    translateRef.current = { x: savedX, y: savedY };
+    scaleRef.current = savedScale;
+    applyTransform();
+  }, [savedX, savedY, savedScale, applyTransform]);
 
   const saveTransform = useCallback(() => {
     if (onTransformChange) {
@@ -113,7 +122,9 @@ function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing =
   }
 
   if (!isEditing && resolved) {
-    return <img src={resolved} alt={alt} className={className} style={{ width: '100%', height: '100%', objectFit: objectFit, display: 'block', background: '#1a0a0e', ...style }} loading="lazy" decoding="async"/>;
+    return <img src={resolved} alt={alt} className={className} style={{ width: '100%', height: '100%', objectFit: objectFit, display: 'block', background: '#1a0a0e',
+      transform: `translate(${savedX}px, ${savedY}px) scale(${savedScale})`,
+      transformOrigin: 'center center', ...style }} loading="lazy" decoding="async"/>;
   }
 
   return (

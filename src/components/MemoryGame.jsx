@@ -570,8 +570,14 @@ function SlotPicker({ index, url, fileRef, onPick, onRemove, onConfirm, onTransf
   const resolved   = useImageUrl(url);
   const imgRef     = useRef(null);
   const zoomValRef = useRef(null);
-  const translateRef = useRef({ x: photoData?.translateX || 0, y: photoData?.translateY || 0 });  
-  const scaleRef   = useRef(photoData?.scale || 1);
+
+  // Stable primitive deps so useEffect only fires when values actually change
+  const savedX     = photoData?.translateX ?? 0;
+  const savedY     = photoData?.translateY ?? 0;
+  const savedScale = photoData?.scale      ?? 1;
+
+  const translateRef = useRef({ x: savedX, y: savedY });
+  const scaleRef     = useRef(savedScale);
   const dragging   = useRef(false);
   const dragStart  = useRef({ mx: 0, my: 0, tx: 0, ty: 0 });
 
@@ -584,15 +590,15 @@ function SlotPicker({ index, url, fileRef, onPick, onRemove, onConfirm, onTransf
     }
   };
 
-  // Apply saved transform on mount and when photoData changes
+  // Restore saved transform when Supabase data loads — primitive deps avoid
+  // fighting with live drags on every render
   useEffect(() => {
-    if (photoData) {
-      console.log('[SlotPicker] Loading saved photoData:', { index, photoData });
-      translateRef.current = { x: photoData.translateX || 0, y: photoData.translateY || 0 };
-      scaleRef.current = photoData.scale || 1;
-      applyTransform();
-    }
-  }, [photoData]);
+    if (dragging.current) return;
+    translateRef.current = { x: savedX, y: savedY };
+    scaleRef.current = savedScale;
+    applyTransform();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedX, savedY, savedScale]);
 
   const onMouseDown = (e) => {
     if (!resolved) return;

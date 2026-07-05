@@ -22,8 +22,12 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
   const frozenAnimDelay = useRef(isEditing ? undefined : animDelay);
 
   // Transform state stored in refs for perf (no re-renders on every drag pixel)
-  const translateRef = useRef({ x: photoData?.translateX || 0, y: photoData?.translateY || 0 });
-  const scaleRef     = useRef(Math.max(0.5, Math.min(4, photoData?.scale || 1)));
+  const savedX     = photoData?.translateX ?? 0;
+  const savedY     = photoData?.translateY ?? 0;
+  const savedScale = Math.max(0.5, Math.min(4, photoData?.scale ?? 1));
+
+  const translateRef = useRef({ x: savedX, y: savedY });
+  const scaleRef     = useRef(savedScale);
   const zoomValRef   = useRef(null);
 
   const dragging  = useRef(false);
@@ -33,8 +37,8 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
   const prevSrc = useRef(src);
   if (src !== prevSrc.current) {
     prevSrc.current = src;
-    translateRef.current = { x: photoData?.translateX || 0, y: photoData?.translateY || 0 };
-    scaleRef.current = Math.max(0.5, Math.min(4, photoData?.scale || 1));
+    translateRef.current = { x: savedX, y: savedY };
+    scaleRef.current = savedScale;
   }
 
   // Apply CSS transform to the img element
@@ -47,14 +51,14 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
     }
   }, []);
 
-  // Restore saved transform on mount and whenever photoData changes
+  // Restore saved transform when Supabase data loads (uses primitive deps to
+  // avoid fighting with live drags on every render)
   useEffect(() => {
-    if (photoData) {
-      translateRef.current = { x: photoData.translateX || 0, y: photoData.translateY || 0 };
-      scaleRef.current = Math.max(0.5, Math.min(4, photoData.scale || 1));
-      applyTransform();
-    }
-  }, [photoData, applyTransform]);
+    if (dragging.current) return;
+    translateRef.current = { x: savedX, y: savedY };
+    scaleRef.current = savedScale;
+    applyTransform();
+  }, [savedX, savedY, savedScale, applyTransform]);
 
   // Persist transform back to parent
   const saveTransform = useCallback(() => {
