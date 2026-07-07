@@ -76,6 +76,8 @@ export default function ButterflyWish({ isEditing = false, onContentChange }) {
           value={title}
           isEditing={isEditing}
           onChange={v => savePC('title', v)}
+          style={pc.style_title || {}}
+          onStyleSave={st => savePC('style_title', st)}
         />
         <EditableText
           as="p"
@@ -83,6 +85,8 @@ export default function ButterflyWish({ isEditing = false, onContentChange }) {
           value={sub}
           isEditing={isEditing}
           onChange={v => savePC('subtitle', v)}
+          style={pc.style_subtitle || {}}
+          onStyleSave={st => savePC('style_subtitle', st)}
         />
       </motion.header>
 
@@ -209,6 +213,8 @@ export default function ButterflyWish({ isEditing = false, onContentChange }) {
                   value={wish.to}
                   isEditing={isEditing}
                   onChange={v => saveWish(wish.id, 'to', v)}
+                  style={wish.style_to || {}}
+                  onStyleSave={st => saveWish(wish.id, 'style_to', st)}
                 />
               </div>
               <div className="bw-edit-card-row">
@@ -219,6 +225,8 @@ export default function ButterflyWish({ isEditing = false, onContentChange }) {
                   value={wish.title}
                   isEditing={isEditing}
                   onChange={v => saveWish(wish.id, 'title', v)}
+                  style={wish.style_title || {}}
+                  onStyleSave={st => saveWish(wish.id, 'style_title', st)}
                 />
               </div>
               <div className="bw-edit-card-row bw-edit-card-row--message">
@@ -229,6 +237,8 @@ export default function ButterflyWish({ isEditing = false, onContentChange }) {
                   value={wish.message}
                   isEditing={isEditing}
                   onChange={v => saveWish(wish.id, 'message', v)}
+                  style={wish.style_message || {}}
+                  onStyleSave={st => saveWish(wish.id, 'style_message', st)}
                 />
               </div>
             </div>

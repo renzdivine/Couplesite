@@ -1,7 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useCanvas } from '../context/CanvasContext';
 import { EditableText } from '../components/EditableField';
+import PositionDraggable from '../components/PositionDraggable';
 import { saveImage }   from '../utils/imageStore';
 import { useImageUrl } from '../utils/useImageUrl';
 import '../styles/pages/ButterflyPhotos.css';
@@ -16,6 +18,11 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
   const imgRef      = useRef(null);
   const resolvedSrc = useImageUrl(src);
   const shapeClass  = { rect:'agv-fp--rect', square:'agv-fp--square', oval:'agv-fp--oval', heart:'agv-fp--heart' };
+
+  // Canvas toolbar integration
+  const { selected, select } = useCanvas();
+  const uid = useRef(`fp-${Math.random().toString(36).slice(2, 9)}`).current;
+  const isSelected = selected?.id === uid;
 
   // Freeze animation class/delay so it never changes after mount (editing mode has no anims)
   const frozenAnimClass = useRef(isEditing ? '' : animClass);
@@ -69,11 +76,11 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
     });
   }, [onTransformChange]);
 
-  // Mouse drag to pan
+  // Mouse drag to pan — fires directly (overlay passes through when cursor is over the photo)
   const onMouseDown = useCallback((e) => {
     if (!isEditing || !resolvedSrc) return;
     e.preventDefault();
-    e.stopPropagation();
+    e.stopPropagation(); // don't bubble to PD overlay — this is a photo pan, not a frame move
     dragging.current = true;
     if (imgRef.current) imgRef.current.style.cursor = 'grabbing';
     dragStart.current = {
@@ -167,29 +174,70 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
     }
   }, [isEditing]);
 
-  const handleClick    = isEditing && !resolvedSrc ? () => fileRef.current?.click() : undefined;
-  const handleDblClick = isEditing && resolvedSrc  ? () => fileRef.current?.click() : undefined;
-  const isDraggable    = isEditing && !!resolvedSrc;
+  const handleDblClick = useCallback(() => {
+    if (!isEditing) return;
+    fileRef.current?.click();
+  }, [isEditing]);
+  const isDraggable = isEditing && !!resolvedSrc;
+
+  // Empty frame: double-click opens picker (single click is handled by PositionDraggable wrapper for selection)
+  const handleEmptyClick = useCallback((e) => {
+    // Do nothing on single click — let PositionDraggable handle selection
+  }, []);
+
+  // Register with canvas toolbar when clicked — do NOT stopPropagation so
+  // the event still reaches the PositionDraggable wrapper for frame selection/move.
+  const handleSelectForToolbar = useCallback((e) => {
+    if (!isEditing || !resolvedSrc) return;
+    if (dragging.current) return;
+    // Don't stopPropagation — let it bubble to PositionDraggable so the frame
+    // can be selected and dragged. Just register the image with the canvas toolbar.
+    select({
+      id: uid,
+      type: 'image',
+      value: src,
+      style: {},
+      onUpdate: onReplace,
+      onStyleChange: (newStyle) => {
+        if (!imgRef.current) return;
+        if (newStyle.filter  !== undefined) imgRef.current.style.filter  = newStyle.filter;
+        if (newStyle.opacity !== undefined) imgRef.current.style.opacity = newStyle.opacity;
+        if (newStyle.transform !== undefined) {
+          imgRef.current.style.transform =
+            `translate(${translateRef.current.x}px,${translateRef.current.y}px) scale(${scaleRef.current}) ${newStyle.transform}`;
+        }
+      },
+      onAction: (action) => {
+        if (action === 'replaceImage') fileRef.current?.click();
+        if (action === 'delete') onRemove?.();
+      },
+      ref: frameRef,
+    });
+  }, [isEditing, resolvedSrc, src, onReplace, onRemove, select, uid]);
 
   return (
     <div
       ref={frameRef}
-      className={`agv-fp ${shapeClass[frame]} ${className}${frozenAnimClass.current ? ` ${frozenAnimClass.current}` : ''}`}
-      style={{ position:'relative', animationDelay: frozenAnimDelay.current != null ? `${frozenAnimDelay.current}ms` : undefined }}
-      onClick={handleClick}
-      onDoubleClick={handleDblClick}
+      className={`agv-fp ${shapeClass[frame]} ${className}${frozenAnimClass.current ? ` ${frozenAnimClass.current}` : ''}${isSelected ? ' agv-fp--selected' : ''}`}
+      style={{
+        position:'relative',
+        animationDelay: frozenAnimDelay.current != null ? `${frozenAnimDelay.current}ms` : undefined,
+        outline: isSelected ? '2px solid rgba(233,30,140,0.9)' : undefined,
+        outlineOffset: isSelected ? 3 : undefined,
+      }}
+      onClick={isEditing ? (resolvedSrc ? handleSelectForToolbar : undefined) : undefined}
+      onDoubleClick={isEditing ? handleDblClick : undefined}
       onDrop={isEditing ? handleDrop : undefined}
       onDragOver={isEditing ? handleDragOver : undefined}
       onDragEnter={isEditing ? handleDragEnter : undefined}
       onDragLeave={isEditing ? handleDragLeave : undefined}
-      title={isEditing ? (resolvedSrc ? 'Scroll to zoom · Drag to reposition · Double-click to change · Drop image to replace' : 'Click or drop an image to add photo') : undefined}
+      title={isEditing ? (resolvedSrc ? 'Click to select · drag to pan · scroll to zoom · double-click to replace' : 'Double-click to add photo, or drop an image here') : undefined}
     >
-      <div style={{ width: '100%', height: '100%', pointerEvents: 'none' }}>
-        <div
-          className="agv-fp-inner"
-          onWheel={isDraggable ? onWheel : undefined}
-          style={{ pointerEvents: 'auto' }}
-        >
+      {/* Photo + inner clip — pointerEvents handled per-child */}
+      <div
+        className="agv-fp-inner"
+        onWheel={isDraggable ? onWheel : undefined}
+      >
         {resolvedSrc
           ? <img
               ref={imgRef}
@@ -198,12 +246,14 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
               alt={alt}
               loading="lazy"
               decoding="async"
+              draggable={false}
               style={{
                 transform: `translate(${translateRef.current.x}px, ${translateRef.current.y}px) scale(${scaleRef.current})`,
                 transformOrigin: 'center center',
                 cursor: isDraggable ? 'grab' : undefined,
               }}
               onMouseDown={isDraggable ? onMouseDown : undefined}
+              onLoad={applyTransform}
             />
           : (
             <div className={`agv-fp-photo agv-fp-placeholder${isEditing ? ' agv-fp-placeholder--editing' : ''}`}>
@@ -214,7 +264,11 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
                     <line x1="18" y1="10" x2="18" y2="26" stroke="rgba(233,30,140,1)" strokeWidth="2.5" strokeLinecap="round"/>
                     <line x1="10" y1="18" x2="26" y2="18" stroke="rgba(233,30,140,1)" strokeWidth="2.5" strokeLinecap="round"/>
                   </svg>
-                  <span style={{ fontSize:'0.6rem', fontFamily:'system-ui,sans-serif', color:'rgba(233,30,140,0.9)', fontWeight:700, textAlign:'center', lineHeight:1.3, textTransform:'uppercase', letterSpacing:'0.06em', marginTop:4 }}>Click or drop image</span>
+                  <span style={{
+                    fontSize:'0.6rem', fontFamily:'system-ui,sans-serif',
+                    color:'rgba(233,30,140,0.9)', fontWeight:700, textAlign:'center',
+                    lineHeight:1.3, textTransform:'uppercase', letterSpacing:'0.06em', marginTop:4
+                  }}>Double-click to add</span>
                 </>
               ) : (
                 <svg width="28" height="24" viewBox="0 0 28 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -226,18 +280,26 @@ function FramedPhoto({ src, alt, frame = 'rect', className = '', animClass = '',
             </div>
           )
         }
-      </div>{}
-      </div>{}
+      </div>
 
-      {}
-      {isDraggable && (
+      {/* zoom controls — always in DOM when editing, visibility via CSS hover */}
+      {isEditing && resolvedSrc && (
         <>
-          <div className="agv-fp-zoom-btns" onClick={e => e.stopPropagation()}>
-            <button className="agv-fp-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(0.1); }} aria-label="Zoom in">＋</button>
+          <div className="agv-fp-zoom-btns"
+            onClick={e => e.stopPropagation()}
+            onDoubleClick={e => e.stopPropagation()}
+          >
+            <button className="agv-fp-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(0.1); }} onClick={e => e.stopPropagation()} aria-label="Zoom in" title="Zoom in">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
             <span ref={zoomValRef} className="agv-fp-zoom-val">{Math.round(scaleRef.current * 100)}%</span>
-            <button className="agv-fp-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(-0.1); }} aria-label="Zoom out">－</button>
+            <button className="agv-fp-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(-0.1); }} onClick={e => e.stopPropagation()} aria-label="Zoom out" title="Zoom out">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="8" y1="11" x2="14" y2="11"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
           </div>
-          <div className="agv-fp-drag-hint" aria-hidden="true">✥ drag · ctrl+scroll to zoom · dbl-click to replace</div>
+          <div className="agv-fp-drag-hint" aria-hidden="true">
+            {isSelected ? '✥ drag · ctrl+scroll · toolbar below to style' : '✥ drag · ctrl+scroll · dbl-click to replace'}
+          </div>
         </>
       )}
 
@@ -279,170 +341,257 @@ const TEXT_ANIMS  = ['agv-anim-fade-up','agv-anim-fade-left','agv-anim-fade-righ
 const LAYOUTS     = ['hero','intro','timeline','dual','feature','bullets','tech','role','collection'];
 function pickRandom(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
 
-
-function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveText, onReplacePhoto, onSavePosition }) {
-  
-  
-  
-  const pg   = (n) => photos[n] ?? photos[n % photos.length] ?? { url: '', caption: '' };
-  const pc   = couple?.pageContent?.photos || {};
-  const s    = (field, fallback) => pc[field] ?? fallback;
-  const ET   = ({ field, fallback, as='span', className='', multiline=false, style }) => (
-    <EditableText as={as} className={className} style={style}
-      value={s(field, fallback)} isEditing={isEditing}
-      onChange={v => onSaveText?.(field, v)}/>
-  );
-  const FP   = ({ idx, frame, animDelay=0, className='' }) => (
-    <FramedPhoto src={pg(idx).url} alt={pg(idx).caption}
-      frame={frame} animClass={frameAnim} animDelay={animDelay} className={className}
-      photoData={pg(idx)}
+/* ── FP — FramedPhoto in a PositionDraggable, defined OUTSIDE Slide
+   so React never unmounts it on parent re-renders ───────────────── */
+function FP({ idx, frame, animDelay=0, className='', layout, photos, frameAnim,
+              isEditing, framePositions, onSaveFramePosition, onReplacePhoto, onSavePosition }) {
+  const pg     = photos[idx] ?? { url: '', caption: '' };
+  const posKey = `frame_${layout}_${idx}`;
+  const pos    = framePositions?.[posKey] || { offsetX:0, offsetY:0, width:null, height:null, rotation:0 };
+  return (
+    <PositionDraggable
+      id={`agv-${layout}-${idx}`}
       isEditing={isEditing}
-      onReplace={url => onReplacePhoto?.(idx, url)}
-      onRemove={() => onReplacePhoto?.(idx, '')}
-      onTransformChange={transform => onSavePosition?.(idx, transform)}
+      offsetX={pos.offsetX ?? 0}
+      offsetY={pos.offsetY ?? 0}
+      width={pos.width ?? null}
+      height={pos.height ?? null}
+      rotation={pos.rotation ?? 0}
+      onPositionChange={(_, p) => onSaveFramePosition?.(posKey, p)}
+      label="Move Frame"
+    >
+      <FramedPhoto
+        src={pg.url} alt={pg.caption}
+        frame={frame} animClass={frameAnim} animDelay={animDelay} className={className}
+        photoData={pg}
+        isEditing={isEditing}
+        onReplace={url => onReplacePhoto?.(idx, url)}
+        onRemove={() => onReplacePhoto?.(idx, '')}
+        onTransformChange={transform => onSavePosition?.(idx, transform)}
+      />
+    </PositionDraggable>
+  );
+}
+
+/* ── TP — text block in a PositionDraggable, defined OUTSIDE Slide ── */
+function TP({ posKey, label='Move Text', style: tpStyle={}, children,
+              layout, isEditing, framePositions, onSaveFramePosition }) {
+  const pos = framePositions?.[posKey] || { offsetX:0, offsetY:0, width:null, height:null, rotation:0 };
+  return (
+    <PositionDraggable
+      id={`agv-txt-${layout}-${posKey}`}
+      isEditing={isEditing}
+      offsetX={pos.offsetX ?? 0}
+      offsetY={pos.offsetY ?? 0}
+      width={pos.width ?? null}
+      height={pos.height ?? null}
+      rotation={pos.rotation ?? 0}
+      onPositionChange={(_, p) => onSaveFramePosition?.(posKey, p)}
+      label={label}
+      style={tpStyle}
+      className="pd-inline"
+    >
+      {children}
+    </PositionDraggable>
+  );
+}
+
+
+function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveText, onReplacePhoto, onSavePosition, framePositions, onSaveFramePosition }) {
+  const pg  = (n) => photos[n] ?? photos[n % photos.length] ?? { url: '', caption: '' };
+  const pc  = couple?.pageContent?.photos || {};
+  const s   = (field, fallback) => pc[field] ?? fallback;
+
+  // et() — renders EditableText directly (NOT as a component) to preserve focus/state
+  const et = (field, fallback, as = 'span', className = '', extraStyle, multiline = false) => (
+    <EditableText
+      as={as}
+      className={className}
+      style={{ ...(extraStyle || {}), ...(pc[`style_${field}`] || {}) }}
+      value={s(field, fallback)}
+      isEditing={isEditing}
+      multiline={multiline}
+      onChange={v => onSaveText?.(field, v)}
+      onStyleSave={st => onSaveText?.(`style_${field}`, st)}
     />
   );
 
-  
+  // Shared props passed to every FP and TP
+  const fpProps = { layout, photos, frameAnim, isEditing, framePositions, onSaveFramePosition, onReplacePhoto, onSavePosition };
+  const tpProps = { layout, isEditing, framePositions, onSaveFramePosition };
   if (layout === 'hero') return (
     <div className="agv-slide agv-slide--hero">
       <div className="agv-hw-spotlight" aria-hidden="true"/>
       <div className="agv-hw-wall">
         <div className="agv-hw-col agv-hw-col--left">
-          <div className="agv-hw-sm-frame agv-hw-sm-frame--tl"><FP idx={0} frame="square"/></div>
-          <div className="agv-hw-sm-frame agv-hw-sm-frame--bl"><FP idx={2} frame="rect" animDelay={120}/></div>
+          <div className="agv-hw-sm-frame agv-hw-sm-frame--tl"><FP {...fpProps} idx={0} frame="square"/></div>
+          <div className="agv-hw-sm-frame agv-hw-sm-frame--bl"><FP {...fpProps} idx={2} frame="rect" animDelay={120}/></div>
         </div>
-        <div className="agv-hw-center-frame">
-          <FP idx={4} frame="square" animDelay={60}/>
-          <div className={`agv-hw-title-overlay ${textAnim}`} style={{ animationDelay:'200ms' }}>
-            <ET field="heroTitle1" fallback="Our" as="h1" className="agv-hw-title-script" style={{ pointerEvents:'auto' }}/>
-            <ET field="heroTitle2" fallback="MEMORIES" as="h1" className="agv-hw-title-caps" style={{ pointerEvents:'auto' }}/>
+        <div className="agv-hw-center-frame" style={{ position: 'relative' }}>
+          <FP {...fpProps} idx={4} frame="square" animDelay={60}/>
+          {/* Title overlay — positioned by CSS, TP allows free-moving in edit mode */}
+          <div style={{ position: 'absolute', top: '14%', left: '13%', width: '74%', height: '72%', zIndex: 60, pointerEvents: 'none' }}>
+            <div style={{ pointerEvents: 'auto', display: 'inline-block' }}>
+              <TP {...tpProps} posKey="txt_hero_title" label="Move Title">
+                <div className={`agv-hw-title-overlay ${textAnim}`} style={{ animationDelay: '200ms' }}>
+                  {et('heroTitle1', 'Our',      'h1', 'agv-hw-title-script')}
+                  {et('heroTitle2', 'MEMORIES', 'h1', 'agv-hw-title-caps')}
+                </div>
+              </TP>
+            </div>
           </div>
         </div>
         <div className="agv-hw-col agv-hw-col--right">
-          <div className="agv-hw-sm-frame agv-hw-sm-frame--tr"><FP idx={1} frame="rect" animDelay={80}/></div>
-          <div className="agv-hw-sm-frame agv-hw-sm-frame--br"><FP idx={3} frame="square" animDelay={160}/></div>
+          <div className="agv-hw-sm-frame agv-hw-sm-frame--tr"><FP {...fpProps} idx={1} frame="rect" animDelay={80}/></div>
+          <div className="agv-hw-sm-frame agv-hw-sm-frame--br"><FP {...fpProps} idx={3} frame="square" animDelay={160}/></div>
         </div>
       </div>
     </div>
   );
 
-  
-  if (layout === 'intro') { const p1=pg(5),p2=pg(6),p3=pg(7); return (
+  if (layout === 'intro') { const p1=pg(5); return (
     <div className="agv-slide agv-slide--intro">
       <div className="agv-intro-left">
-        <div className={`agv-placard ${textAnim}`} style={{ animationDelay:'0ms' }}>
-          <p className="agv-meta">OUR STORY</p>
-        </div>
+        <TP {...tpProps} posKey="txt_intro_label1" label="Move Text">
+          <div className={`agv-placard ${textAnim}`} style={{ animationDelay:'0ms' }}>
+            {et('intro1label', 'OUR STORY', 'p', 'agv-meta')}
+          </div>
+        </TP>
         <div className="agv-intro-photo1">
-          <FP idx={5} frame="rect" animDelay={80}/>
-          <p className={`agv-photo-label ${textAnim}`} style={{ animationDelay:'180ms' }}>{p1.caption}</p>
+          <FP {...fpProps} idx={5} frame="rect" animDelay={80}/>
+          <TP {...tpProps} posKey="txt_intro_caption1" label="Move Caption">
+            {et('intro1caption', p1.caption || 'Our first chapter', 'p', `agv-photo-label ${textAnim}`)}
+          </TP>
         </div>
       </div>
       <div className="agv-intro-center">
-        <ET field="slide2title" fallback="A Story of Love" as="h2" className={`agv-serif-lg ${textAnim}`}/>
+        <TP {...tpProps} posKey="txt_intro_title" label="Move Title">
+          {et('slide2title', 'A Story of Love', 'h2', `agv-serif-lg ${textAnim}`)}
+        </TP>
         <div className="agv-intro-photo2">
-          <FP idx={6} frame="square" animDelay={120}/>
+          <FP {...fpProps} idx={6} frame="square" animDelay={120}/>
         </div>
       </div>
       <div className="agv-intro-right">
         <div className="agv-intro-photo3">
-          <FP idx={7} frame="oval" animDelay={160}/>
+          <FP {...fpProps} idx={7} frame="oval" animDelay={160}/>
         </div>
-        <div className={`agv-placard ${textAnim}`} style={{ marginTop:'12px', animationDelay:'240ms' }}>
-          <p className="agv-section-title">BEGINNING</p>
-          <p className="agv-body-text">{couple?.tagline || 'Two hearts beating as one, every moment a treasure.'}</p>
-        </div>
+        <TP {...tpProps} posKey="txt_intro_label2" label="Move Text">
+          <div className={`agv-placard ${textAnim}`} style={{ marginTop:'12px', animationDelay:'240ms' }}>
+            {et('intro2label', 'BEGINNING', 'p', 'agv-section-title')}
+            {et('intro2body', couple?.tagline || 'Two hearts beating as one, every moment a treasure.', 'p', 'agv-body-text')}
+          </div>
+        </TP>
       </div>
     </div>
   );}
 
-  
   if (layout === 'timeline') {
     const items = couple?.timeline?.slice(0,3)||[{title:'First Meeting',date:couple?.relationshipDate},{title:'First Adventure',date:''},{title:'Together Forever',date:''}];
     return (
     <div className="agv-slide agv-slide--timeline">
       <div className="agv-tl-left">
-        <ET field="slide3title" fallback="Moments in Time" as="h2" className={`agv-serif-lg ${textAnim}`}/>
-        <div className={`agv-placard ${textAnim}`} style={{ animationDelay:'80ms' }}>
-          <ET field="tagline" fallback="Every photo tells our story" as="p" className="agv-body-text"/>
-        </div>
+        <TP {...tpProps} posKey="txt_tl_title" label="Move Title">
+          {et('slide3title', 'Moments in Time', 'h2', `agv-serif-lg ${textAnim}`)}
+        </TP>
+        <TP {...tpProps} posKey="txt_tl_tagline" label="Move Text">
+          <div className={`agv-placard ${textAnim}`} style={{ animationDelay:'80ms' }}>
+            {et('tagline', 'Every photo tells our story', 'p', 'agv-body-text')}
+          </div>
+        </TP>
       </div>
       <div className="agv-tl-center-photo">
-        <FP idx={8} frame="rect" animDelay={60}/>
+        <FP {...fpProps} idx={8} frame="rect" animDelay={60}/>
       </div>
       <div className="agv-tl-right">
         {items.map((item,i)=>(
-          <div className={`agv-tl-item ${textAnim}`} key={i} style={{ animationDelay:`${100+i*80}ms` }}>
-            <p className="agv-tl-year">{item.date?new Date(item.date).getFullYear():'—'}</p>
-            <p className="agv-tl-name">{item.title?.toUpperCase()}</p>
-          </div>
+          <TP {...tpProps} key={i} posKey={`txt_tl_item_${i}`} label="Move Item">
+            <div className={`agv-tl-item ${textAnim}`} style={{ animationDelay:`${100+i*80}ms` }}>
+              {et(`tl_year_${i}`, item.date ? String(new Date(item.date).getFullYear()) : '—', 'p', 'agv-tl-year')}
+              {et(`tl_name_${i}`, item.title?.toUpperCase() || 'MILESTONE', 'p', 'agv-tl-name')}
+            </div>
+          </TP>
         ))}
       </div>
     </div>
   );}
 
-  
   if (layout === 'dual') { const p1=pg(9),p2=pg(10); return (
     <div className="agv-slide agv-slide--dual">
       <div className="agv-dual-left">
-        <ET field="slide4title" fallback="Our Favourite Moments" as="h2" className={`agv-serif-lg ${textAnim}`}/>
+        <TP {...tpProps} posKey="txt_dual_title" label="Move Title">
+          {et('slide4title', 'Our Favourite Moments', 'h2', `agv-serif-lg ${textAnim}`)}
+        </TP>
         <div className="agv-dual-photo2">
-          <FP idx={10} frame="oval" animDelay={100}/>
+          <FP {...fpProps} idx={10} frame="oval" animDelay={100}/>
         </div>
       </div>
       <div className="agv-dual-right">
         <div className="agv-dual-photo1">
-          <FP idx={9} frame="square" animDelay={40}/>
+          <FP {...fpProps} idx={9} frame="square" animDelay={40}/>
         </div>
         <div className="agv-dual-desc-row">
-          <div className={`agv-dual-desc ${textAnim}`} style={{ animationDelay:'160ms' }}>
-            <ET field="dual1caption" fallback={p1.caption || 'TOGETHER ALWAYS'} as="p" className="agv-section-title"/>
-            <ET field="dual1body" fallback="A memory we will always treasure together." as="p" className="agv-body-text"/>
-          </div>
-          <div className={`agv-dual-desc agv-dual-desc--dark ${textAnim}`} style={{ animationDelay:'220ms' }}>
-            <ET field="dual2caption" fallback={p2.caption || 'PURE HAPPINESS'} as="p" className="agv-section-title"/>
-            <ET field="dual2body" fallback="Every smile captured, every laugh remembered." as="p" className="agv-body-text"/>
-          </div>
+          <TP {...tpProps} posKey="txt_dual_desc1" label="Move Text">
+            <div className={`agv-dual-desc ${textAnim}`} style={{ animationDelay:'160ms' }}>
+              {et('dual1caption', p1.caption || 'TOGETHER ALWAYS', 'p', 'agv-section-title')}
+              {et('dual1body', 'A memory we will always treasure together.', 'p', 'agv-body-text')}
+            </div>
+          </TP>
+          <TP {...tpProps} posKey="txt_dual_desc2" label="Move Text">
+            <div className={`agv-dual-desc agv-dual-desc--dark ${textAnim}`} style={{ animationDelay:'220ms' }}>
+              {et('dual2caption', p2.caption || 'PURE HAPPINESS', 'p', 'agv-section-title')}
+              {et('dual2body', 'Every smile captured, every laugh remembered.', 'p', 'agv-body-text')}
+            </div>
+          </TP>
         </div>
       </div>
     </div>
   );}
 
-  
   if (layout === 'feature') { const p1=pg(11); return (
     <div className="agv-slide agv-slide--feature">
       <div className="agv-feat-left">
-        <div className={`agv-placard ${textAnim}`}>
-          <ET field="feat1label" fallback="TREASURED" as="p" className="agv-section-title"/>
-          <ET field="feat1body" fallback="Every moment framed forever." as="p" className="agv-body-text"/>
-        </div>
+        <TP {...tpProps} posKey="txt_feat_label1" label="Move Text">
+          <div className={`agv-placard ${textAnim}`}>
+            {et('feat1label', 'TREASURED', 'p', 'agv-section-title')}
+            {et('feat1body', 'Every moment framed forever.', 'p', 'agv-body-text')}
+          </div>
+        </TP>
         <div className="agv-feat-photo1">
-          <FP idx={11} frame="square" animDelay={80}/>
+          <FP {...fpProps} idx={11} frame="square" animDelay={80}/>
         </div>
-        <p className={`agv-photo-label ${textAnim}`} style={{ animationDelay:'180ms' }}>{p1.caption}</p>
+        <TP {...tpProps} posKey="txt_feat_caption1" label="Move Caption">
+          {et('feat1caption', p1.caption || 'A precious memory', 'p', `agv-photo-label ${textAnim}`)}
+        </TP>
       </div>
       <div className="agv-feat-center-photo">
-        <FP idx={12} frame="rect" animDelay={40}/>
+        <FP {...fpProps} idx={12} frame="rect" animDelay={40}/>
       </div>
       <div className="agv-feat-right">
-        <ET field="slide5title" fallback="Beautiful Together" as="h2" className={`agv-serif-lg ${textAnim}`}/>
-        <div className={`agv-placard ${textAnim}`} style={{ animationDelay:'140ms' }}>
-          <ET field="feat2body" fallback="From every adventure to quiet evenings, these are the frames of our love story." as="p" className="agv-body-text"/>
-        </div>
+        <TP {...tpProps} posKey="txt_feat_title" label="Move Title">
+          {et('slide5title', 'Beautiful Together', 'h2', `agv-serif-lg ${textAnim}`)}
+        </TP>
+        <TP {...tpProps} posKey="txt_feat_body2" label="Move Text">
+          <div className={`agv-placard ${textAnim}`} style={{ animationDelay:'140ms' }}>
+            {et('feat2body', 'From every adventure to quiet evenings, these are the frames of our love story.', 'p', 'agv-body-text')}
+          </div>
+        </TP>
         <div className="agv-feat-photo2">
-          <FP idx={13} frame="heart" animDelay={200}/>
+          <FP {...fpProps} idx={13} frame="heart" animDelay={200}/>
         </div>
       </div>
     </div>
   );}
 
-  
   if (layout === 'bullets') { const moments=[pg(14),pg(15),pg(16)].map(p=>p?.caption).filter(Boolean); return (
     <div className="agv-slide agv-slide--bullets">
       <div className="agv-bul-left">
-        <ET field="slide6title" fallback="The Story of Us" as="h2" className={`agv-serif-lg ${textAnim}`}/>
-        <p className={`agv-section-title ${textAnim}`} style={{ marginTop:'24px', animationDelay:'80ms' }}>OUR HIGHLIGHTS</p>
+        <TP {...tpProps} posKey="txt_bul_title" label="Move Title">
+          {et('slide6title', 'The Story of Us', 'h2', `agv-serif-lg ${textAnim}`)}
+        </TP>
+        <TP {...tpProps} posKey="txt_bul_label" label="Move Text">
+          {et('bul1label', 'OUR HIGHLIGHTS', 'p', `agv-section-title ${textAnim}`)}
+        </TP>
         <div className={`agv-bul-divider ${textAnim}`} style={{ animationDelay:'120ms' }}/>
         <ul className="agv-bul-list">
           {moments.map((m,i)=>(
@@ -453,66 +602,85 @@ function Slide({ layout, photos, couple, frameAnim, textAnim, isEditing, onSaveT
         </ul>
       </div>
       <div className="agv-bul-photo">
-        <FP idx={14} frame="rect" animDelay={60}/>
+        <FP {...fpProps} idx={14} frame="rect" animDelay={60}/>
       </div>
     </div>
   );}
 
-  
   if (layout === 'tech') { return (
     <div className="agv-slide agv-slide--tech">
       <div className="agv-tech-left">
-        <ET field="tech1label" fallback="OUR ADVENTURES" as="p" className={`agv-section-title ${textAnim}`}/>
-        <ET field="tech1body" fallback="Every trip, every outing — adventures that brought us closer every single day." as="p" className={`agv-body-text ${textAnim}`} style={{ animationDelay:'80ms' }}/>
+        <TP {...tpProps} posKey="txt_tech_left" label="Move Text">
+          <div>
+            {et('tech1label', 'OUR ADVENTURES', 'p', `agv-section-title ${textAnim}`)}
+            {et('tech1body', 'Every trip, every outing — adventures that brought us closer every single day.', 'p', `agv-body-text ${textAnim}`)}
+          </div>
+        </TP>
       </div>
       <div className="agv-tech-center">
-        <ET field="slide7title" fallback="Adventures Together" as="h2" className={`agv-serif-lg ${textAnim}`}/>
+        <TP {...tpProps} posKey="txt_tech_title" label="Move Title">
+          {et('slide7title', 'Adventures Together', 'h2', `agv-serif-lg ${textAnim}`)}
+        </TP>
         <div className="agv-tech-photo">
-          <FP idx={15} frame="square" animDelay={100}/>
+          <FP {...fpProps} idx={15} frame="square" animDelay={100}/>
         </div>
       </div>
       <div className="agv-tech-right">
-        <ET field="tech2label" fallback="OUR JOURNEY" as="p" className={`agv-section-title ${textAnim}`}/>
-        <ET field="tech2body" fallback="Hand in hand, we explore the world and find home in each other." as="p" className={`agv-body-text ${textAnim}`} style={{ animationDelay:'100ms' }}/>
+        <TP {...tpProps} posKey="txt_tech_right" label="Move Text">
+          <div>
+            {et('tech2label', 'OUR JOURNEY', 'p', `agv-section-title ${textAnim}`)}
+            {et('tech2body', 'Hand in hand, we explore the world and find home in each other.', 'p', `agv-body-text ${textAnim}`)}
+          </div>
+        </TP>
       </div>
     </div>
   );}
 
-  
   if (layout === 'role') { return (
     <div className="agv-slide agv-slide--role">
       <div className="agv-role-left">
-        <ET field="role1label" fallback="LOVE" as="p" className={`agv-section-title ${textAnim}`}/>
-        <div className={`agv-placard ${textAnim}`} style={{ animationDelay:'60ms' }}>
-          <ET field="role1body" fallback="We don't just share moments; we build a life together." as="p" className="agv-body-text"/>
-        </div>
-        <ET field="role2label" fallback="LAUGHTER" as="p" className={`agv-section-title ${textAnim}`} style={{ marginTop:'16px', animationDelay:'120ms' }}/>
-        <div className={`agv-placard ${textAnim}`} style={{ animationDelay:'180ms' }}>
-          <ET field="role2body" fallback="Every laugh echoes through all the years to come." as="p" className="agv-body-text"/>
-        </div>
-        <ET field="slide8title" fallback="The Role of Love" as="h2" className={`agv-serif-lg ${textAnim}`} style={{ animationDelay:'80ms', marginTop:'12px' }}/>
+        <TP {...tpProps} posKey="txt_role_label1" label="Move Text">
+          {et('role1label', 'LOVE', 'p', `agv-section-title ${textAnim}`)}
+        </TP>
+        <TP {...tpProps} posKey="txt_role_body1" label="Move Text">
+          <div className={`agv-placard ${textAnim}`} style={{ animationDelay:'60ms' }}>
+            {et('role1body', "We don't just share moments; we build a life together.", 'p', 'agv-body-text')}
+          </div>
+        </TP>
+        <TP {...tpProps} posKey="txt_role_label2" label="Move Text">
+          {et('role2label', 'LAUGHTER', 'p', `agv-section-title ${textAnim}`)}
+        </TP>
+        <TP {...tpProps} posKey="txt_role_body2" label="Move Text">
+          <div className={`agv-placard ${textAnim}`} style={{ animationDelay:'180ms' }}>
+            {et('role2body', 'Every laugh echoes through all the years to come.', 'p', 'agv-body-text')}
+          </div>
+        </TP>
+        <TP {...tpProps} posKey="txt_role_title" label="Move Title">
+          {et('slide8title', 'The Role of Love', 'h2', `agv-serif-lg ${textAnim}`)}
+        </TP>
       </div>
       <div className="agv-role-center-photo">
-        <FP idx={16} frame="rect" animDelay={40}/>
+        <FP {...fpProps} idx={16} frame="rect" animDelay={40}/>
       </div>
       <div className="agv-role-right">
         <div className="agv-role-photo2">
-          <FP idx={17} frame="oval" animDelay={160}/>
+          <FP {...fpProps} idx={17} frame="oval" animDelay={160}/>
         </div>
       </div>
     </div>
   );}
 
-  
   return (
     <div className="agv-slide agv-slide--collection">
-      <div className="agv-col-header">
-        <ET field="slide9title" fallback="Our Memories Collection" as="h2" className={`agv-serif-lg ${textAnim}`}/>
-      </div>
+      <TP {...tpProps} posKey="txt_col_title" label="Move Title">
+        <div className="agv-col-header">
+          {et('slide9title', 'Our Memories Collection', 'h2', `agv-serif-lg ${textAnim}`)}
+        </div>
+      </TP>
       <div className="agv-col-strip">
-        <div className="agv-col-photo"><FP idx={18} frame="rect" animDelay={60}/></div>
-        <div className="agv-col-photo"><FP idx={19} frame="square" animDelay={140}/></div>
-        <div className="agv-col-photo"><FP idx={20} frame="rect" animDelay={220}/></div>
+        <div className="agv-col-photo"><FP {...fpProps} idx={18} frame="rect" animDelay={60}/></div>
+        <div className="agv-col-photo"><FP {...fpProps} idx={19} frame="square" animDelay={140}/></div>
+        <div className="agv-col-photo"><FP {...fpProps} idx={20} frame="rect" animDelay={220}/></div>
       </div>
     </div>
   );
@@ -598,6 +766,14 @@ export default function ButterflyPhotos({ isEditing = false, onContentChange }) 
     onContentChange?.('photosList', updated);
   };
 
+  // Save free-move frame position to pageContent.photos
+  const handleSaveFramePosition = (posKey, pos) => {
+    const pc = couple?.pageContent?.photos || {};
+    onContentChange?.('photos', { ...pc, [posKey]: pos });
+  };
+
+  const framePositions = couple?.pageContent?.photos || {};
+
   return (
     <div className="agv-root" role="main">
       <div className={`agv-stage${current === 0 ? ' is-hero' : ''}`}>
@@ -619,6 +795,8 @@ export default function ButterflyPhotos({ isEditing = false, onContentChange }) 
             onSaveText={handleSaveText}
             onReplacePhoto={handleReplacePhoto}
             onSavePosition={handleSavePosition}
+            framePositions={framePositions}
+            onSaveFramePosition={handleSaveFramePosition}
           />
         </div>
 

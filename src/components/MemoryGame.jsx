@@ -473,13 +473,17 @@ export default function MemoryGame({ couple, onComplete, isEditing = false, onCo
       <div className="mg-panel">
 
         <EditableText as="div" className="mg-eyebrow"
-          value={eyebrow} isEditing={isEditing} onChange={v => savePC('eyebrow', v)}/>
+          value={eyebrow} isEditing={isEditing} onChange={v => savePC('eyebrow', v)}
+          style={pc.style_eyebrow || {}} onStyleSave={st => savePC('style_eyebrow', st)}/>
         <EditableText as="h2" className="mg-title"
-          value={mgTitle} isEditing={isEditing} onChange={v => savePC('title', v)}/>
-        <p className="mg-subtitle">
-          <EditableText value={subtitle} isEditing={isEditing} onChange={v => savePC('subtitle', v)}/>
-          {!isEditing && `, ${name1}!`}
-        </p>
+          value={mgTitle} isEditing={isEditing} onChange={v => savePC('title', v)}
+          style={pc.style_title || {}} onStyleSave={st => savePC('style_title', st)}/>
+        <EditableText as="div" className="mg-subtitle"
+          value={subtitle} isEditing={isEditing}
+          onChange={v => savePC('subtitle', v)}
+          style={pc.style_subtitle || {}} onStyleSave={st => savePC('style_subtitle', st)}
+          multiline={false}
+        />
 
         {}
         {isEditing ? (
@@ -552,7 +556,8 @@ export default function MemoryGame({ couple, onComplete, isEditing = false, onCo
               </div>
             ) : (
               <EditableText as="p" className="mg-hint"
-                value={hintTxt} isEditing={isEditing} onChange={v => savePC('hint', v)}/>
+                value={hintTxt} isEditing={isEditing} onChange={v => savePC('hint', v)}
+                style={pc.style_hint || {}} onStyleSave={st => savePC('style_hint', st)}/>
             )}
           </>
         )}

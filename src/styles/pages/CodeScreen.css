@@ -5,6 +5,8 @@
   gap: 24px;
   width: 100%;
   max-width: 380px;
+  position: relative;
+  z-index: 2;
 }
 
 
@@ -21,10 +23,10 @@
   margin: 0 0 6px;
   line-height: 1.15;
   text-shadow:
-    0 0 2px rgba(0, 0, 0, 0.9),
-    0 2px 8px rgba(0, 0, 0, 0.8),
-    0 4px 20px rgba(80, 0, 15, 0.9),
-    0 0 40px rgba(255, 140, 160, 0.5);
+    0 0 4px rgba(0, 0, 0, 1),
+    0 2px 8px rgba(0, 0, 0, 1),
+    0 4px 20px rgba(0, 0, 0, 0.95),
+    0 0 40px rgba(255, 140, 160, 0.4);
   letter-spacing: 0.01em;
 }
 
@@ -35,11 +37,10 @@
   color: #ffffff;
   margin: 0;
   text-shadow:
-    0 0 3px rgba(0, 0, 0, 1),
-    0 1px 2px rgba(0, 0, 0, 1),
-    0 2px 12px rgba(0, 0, 0, 0.95),
-    0 4px 20px rgba(80, 0, 15, 0.9),
-    0 0 30px rgba(0, 0, 0, 0.7);
+    0 0 4px rgba(0, 0, 0, 1),
+    0 1px 4px rgba(0, 0, 0, 1),
+    0 2px 12px rgba(0, 0, 0, 1),
+    0 4px 20px rgba(0, 0, 0, 0.9);
   letter-spacing: 0.03em;
 }
 
@@ -338,4 +339,37 @@
 }
 .cs-admin-cancel-btn:hover {
   background: rgba(255, 200, 210, 0.14);
+}
+
+/* ── Editable title/hint/footer inside the code card ─────── */
+.cs-card-title {
+  font-family: 'Georgia', serif;
+  font-size: clamp(1.4rem, 4vw, 1.9rem);
+  font-weight: 800;
+  color: #fce8ea;
+  margin: 0 0 8px;
+  text-align: center;
+  text-shadow: 0 2px 10px rgba(80,0,15,0.7), 0 0 28px rgba(255,130,150,0.35);
+  letter-spacing: 0.04em;
+}
+
+.cs-card-hint {
+  font-family: 'Georgia', serif;
+  font-size: 0.83rem;
+  color: rgba(255,215,220,0.88);
+  text-align: center;
+  margin: 0 0 16px;
+  padding: 0 8px;
+  font-style: italic;
+  text-shadow: 0 1px 4px rgba(80,0,15,0.45);
+}
+
+.cs-footer {
+  font-family: system-ui, sans-serif;
+  font-size: 0.72rem;
+  color: rgba(255,190,200,0.45);
+  text-align: center;
+  margin: 8px 0 0;
+  letter-spacing: 0.02em;
+  font-style: italic;
 }

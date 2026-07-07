@@ -1,0 +1,111 @@
+/* ═══════════════════════════════════════════════════════════════
+   SelectableElement — selection wrapper styling
+   ═══════════════════════════════════════════════════════════════ */
+
+.se-wrap {
+  position: relative;
+  cursor: pointer;
+  outline: 2px solid transparent;
+  outline-offset: 3px;
+  border-radius: 3px;
+  transition: outline-color 0.12s;
+  display: inline-block;
+}
+
+/* Hover — show a faint pink dashed outline */
+.se-wrap:hover {
+  outline: 2px dashed rgba(233, 30, 140, 0.55);
+}
+
+/* Selected — solid pink outline */
+.se-wrap.se-wrap--selected {
+  outline: 2px solid rgba(233, 30, 140, 0.9);
+  outline-offset: 3px;
+}
+
+/* Make block elements work */
+.se-wrap.se-type-image {
+  display: block;
+}
+.se-wrap.se-type-shape {
+  display: block;
+}
+
+/* ─── Selection overlay — handles ─────────────────────────── */
+.se-selection-overlay {
+  position: absolute;
+  inset: -4px;
+  pointer-events: none;
+  z-index: 200;
+}
+
+/* Resize handles — small pink squares at corners + midpoints */
+.se-handle {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  background: #fff;
+  border: 2px solid #e91e8c;
+  border-radius: 2px;
+  box-shadow: 0 1px 4px rgba(233, 30, 140, 0.4);
+  pointer-events: all;
+  cursor: pointer;
+}
+
+/* Corner handles */
+.se-handle-tl { top: 0;   left: 0;   transform: translate(-50%, -50%); cursor: nwse-resize; }
+.se-handle-tr { top: 0;   right: 0;  transform: translate(50%, -50%);  cursor: nesw-resize; }
+.se-handle-bl { bottom: 0; left: 0;  transform: translate(-50%, 50%);  cursor: nesw-resize; }
+.se-handle-br { bottom: 0; right: 0; transform: translate(50%, 50%);   cursor: nwse-resize; }
+
+/* Mid handles */
+.se-handle-tm { top: 0;    left: 50%; transform: translate(-50%, -50%); cursor: ns-resize; }
+.se-handle-bm { bottom: 0; left: 50%; transform: translate(-50%, 50%);  cursor: ns-resize; }
+.se-handle-ml { top: 50%;  left: 0;   transform: translate(-50%, -50%); cursor: ew-resize; }
+.se-handle-mr { top: 50%;  right: 0;  transform: translate(50%, -50%);  cursor: ew-resize; }
+
+/* Element type badge — top-left corner */
+.se-badge {
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  transform: translate(-50%, -50%);
+  background: #e91e8c;
+  color: #fff;
+  font-size: 0.55rem;
+  font-family: system-ui, sans-serif;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 4px;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.3px;
+}
+
+/* ─── Hover "click to edit" tooltip ─────────────────────────── */
+.se-wrap:not(.se-wrap--selected):hover::before {
+  content: attr(aria-label);
+  position: absolute;
+  top: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(233, 30, 140, 0.92);
+  color: #fff;
+  font-size: 0.6rem;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 300;
+  font-family: system-ui, sans-serif;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.3px;
+}
+
+/* ─── Focus ring (keyboard navigation) ────────────────────── */
+.se-wrap:focus-visible {
+  outline: 2px solid rgba(233, 30, 140, 0.8);
+  outline-offset: 3px;
+}

@@ -1,0 +1,270 @@
+/* ═══════════════════════════════════════════════════════════════
+   CanvasToolbar — floating popup above selected element
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --ctb-bg:        rgba(10, 2, 20, 0.96);
+  --ctb-border:    rgba(233, 30, 140, 0.28);
+  --ctb-accent:    #e91e8c;
+  --ctb-text:      rgba(255, 200, 220, 0.9);
+  --ctb-muted:     rgba(255, 180, 200, 0.38);
+  --ctb-hover-bg:  rgba(233, 30, 140, 0.18);
+  --ctb-active-bg: rgba(233, 30, 140, 0.32);
+  --ctb-radius:    10px;
+  --ctb-gap:       4px;
+}
+
+/* ── Floating popup ────────────────────────────────────────── */
+.ctb-popup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ctb-gap);
+  padding: 6px 10px;
+  background: var(--ctb-bg);
+  border: 1px solid var(--ctb-border);
+  border-radius: 20px;
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.7),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  pointer-events: all;
+  user-select: none;
+  white-space: nowrap;
+  animation: ctb-pop-in 0.16s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes ctb-pop-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* ── Tool button ───────────────────────────────────────────── */
+.ctb-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 36px;
+  height: 40px;
+  padding: 0 6px;
+  border: none;
+  border-radius: var(--ctb-radius);
+  background: transparent;
+  color: var(--ctb-text);
+  font-family: system-ui, sans-serif;
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.1s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ctb-btn:hover:not(:disabled) {
+  background: var(--ctb-hover-bg);
+  color: #fff;
+}
+.ctb-btn:active:not(:disabled) {
+  transform: scale(0.93);
+}
+.ctb-btn--active {
+  background: var(--ctb-active-bg);
+  color: var(--ctb-accent);
+}
+.ctb-btn--danger { color: #ff6b88; }
+.ctb-btn--danger:hover { background: rgba(255, 60, 90, 0.18); color: #ff4d6d; }
+.ctb-btn:disabled { opacity: 0.3; cursor: default; }
+
+/* ── Divider ───────────────────────────────────────────────── */
+.ctb-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(233, 30, 140, 0.18);
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+/* ── Numeric stepper ───────────────────────────────────────── */
+.ctb-stepper {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+}
+.ctb-stepper-label {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--ctb-muted);
+  font-family: system-ui, sans-serif;
+}
+.ctb-stepper-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(233, 30, 140, 0.08);
+  border: 1px solid rgba(233, 30, 140, 0.2);
+  border-radius: 8px;
+  padding: 2px 4px;
+}
+.ctb-stepper-btn {
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: none;
+  color: var(--ctb-text);
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  padding: 0;
+  transition: background 0.1s;
+  font-family: system-ui, sans-serif;
+  line-height: 1;
+}
+.ctb-stepper-btn:hover { background: var(--ctb-hover-bg); }
+.ctb-stepper-val {
+  min-width: 28px;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+}
+
+/* ── Font picker ───────────────────────────────────────────── */
+.ctb-font-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  flex-shrink: 0;
+}
+.ctb-font-label {
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--ctb-muted);
+  font-family: system-ui, sans-serif;
+}
+.ctb-font-select {
+  background: rgba(233, 30, 140, 0.08);
+  border: 1px solid rgba(233, 30, 140, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 3px 6px;
+  font-family: system-ui, sans-serif;
+  cursor: pointer;
+  outline: none;
+  max-width: 110px;
+}
+.ctb-font-select:focus { border-color: var(--ctb-accent); }
+
+/* ── Dismiss button ────────────────────────────────────────── */
+.ctb-popup-dismiss {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(233, 30, 140, 0.25);
+  background: rgba(233, 30, 140, 0.1);
+  color: rgba(255, 180, 200, 0.6);
+  font-size: 0.6rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 4px;
+  transition: background 0.12s, color 0.12s;
+}
+.ctb-popup-dismiss:hover {
+  background: rgba(233, 30, 140, 0.25);
+  color: #fff;
+}
+
+/* ── Color picker ──────────────────────────────────────────── */
+.ctb-color-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+}
+.ctb-color-label {
+  font-size: 0.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--ctb-muted);
+  letter-spacing: 0.4px;
+  font-family: system-ui, sans-serif;
+}
+.ctb-color-swatch {
+  width: 28px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1.5px solid rgba(233, 30, 140, 0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: rgba(255, 180, 200, 0.5);
+  transition: border-color 0.12s;
+  position: relative;
+  overflow: hidden;
+}
+.ctb-color-swatch:hover { border-color: var(--ctb-accent); }
+.ctb-color-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  border: none;
+  padding: 0;
+}
+
+/* ── Slider ────────────────────────────────────────────────── */
+.ctb-slider-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  flex-shrink: 0;
+  min-width: 80px;
+}
+.ctb-slider-header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  align-items: center;
+}
+.ctb-slider-label {
+  font-size: 0.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--ctb-muted);
+  letter-spacing: 0.4px;
+  font-family: system-ui, sans-serif;
+}
+.ctb-slider-val {
+  font-size: 0.58rem;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+}
+.ctb-slider {
+  width: 80px;
+  height: 3px;
+  accent-color: var(--ctb-accent);
+  cursor: pointer;
+}

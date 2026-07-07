@@ -99,16 +99,40 @@ export default function CodeScreen({
           value={topLabel}
           isEditing={isEditing}
           onChange={saveTopLabel}
+          style={pc.style_topLabel || {}}
+          onStyleSave={st => savePC('style_topLabel', st)}
         />
         <EditableText
           as="p" className="cs-top-subtitle"
           value={subLabel}
           isEditing={isEditing}
           onChange={saveSubLabel}
+          style={pc.style_subLabel || {}}
+          onStyleSave={st => savePC('style_subLabel', st)}
         />
       </div>
 
     <div className="cs-wrapper" data-editing={isEditing || undefined}>
+
+      {/* Title — editable */}
+      <EditableText
+        as="h2" className="cs-card-title"
+        value={title}
+        isEditing={isEditing}
+        onChange={val => savePC('title', val)}
+        style={pc.style_title || {}}
+        onStyleSave={st => savePC('style_title', st)}
+      />
+
+      {/* Hint — editable */}
+      <EditableText
+        as="p" className="cs-card-hint"
+        value={hint}
+        isEditing={isEditing}
+        onChange={val => savePC('hint', val)}
+        style={pc.style_hint || {}}
+        onStyleSave={st => savePC('style_hint', st)}
+      />
 
       {}
       <div className={`cs-slots${shake ? ' cs-shake' : ''}`}>
@@ -182,6 +206,16 @@ export default function CodeScreen({
           )}
         </div>
       )}
+      {/* Footer hint — editable */}
+      <EditableText
+        as="p" className="cs-footer"
+        value={footer}
+        isEditing={isEditing}
+        onChange={val => savePC('footer', val)}
+        style={pc.style_footer || {}}
+        onStyleSave={st => savePC('style_footer', st)}
+      />
+
     </div>
     </div>
   );

@@ -1,0 +1,382 @@
+/* ═══════════════════════════════════════════════════════════════
+   PositionDraggable — click-select · move · resize · rotate
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Base ─────────────────────────────────────────────────── */
+.pd-wrap {
+  display: inline-block;
+  position: relative;
+}
+
+/* ── Editing unselected ───────────────────────────────────── */
+.pd-wrap--editing {
+  display: block;
+  position: relative;
+  overflow: visible !important;
+  outline: 1.5px dashed rgba(233, 30, 140, 0.0);
+  outline-offset: 4px;
+  border-radius: 3px;
+  transition:
+    outline-color 0.18s ease,
+    outline-width 0.18s ease,
+    box-shadow 0.18s ease;
+  will-change: transform;
+}
+.pd-wrap--editing:hover {
+  outline-color: rgba(233, 30, 140, 0.3);
+}
+
+/* Inline variant — for text elements that should shrink-wrap to content width */
+.pd-wrap--editing.pd-inline {
+  display: inline-block;
+}
+
+/* Text children inside PD wrappers show pointer cursor so users know they're clickable */
+.pd-wrap--editing [data-et-wrap] {
+  cursor: pointer !important;
+}
+.pd-wrap--editing [data-et-wrap]:hover {
+  border-bottom-color: rgba(233, 30, 140, 0.3) !important;
+}
+/* Text elements always keep pointer cursor — even when the PD wrapper is selected */
+.pd-wrap--selected [data-et-wrap] {
+  cursor: text !important;
+}
+
+/* ── Selected state ───────────────────────────────────────── */
+.pd-wrap--selected {
+  outline: 2px solid rgba(233, 30, 140, 0.9) !important;
+  outline-offset: 3px;
+  z-index: 50;
+  cursor: move !important;
+  box-shadow: 0 0 0 4px rgba(233, 30, 140, 0.08);
+}
+
+/* ── Dragging state ───────────────────────────────────────── */
+.pd-wrap--dragging {
+  opacity: 0.92;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.35));
+}
+
+/* ── Resizing state ───────────────────────────────────────── */
+.pd-wrap--resizing {
+  outline-color: rgba(233, 30, 140, 1) !important;
+}
+
+/* ── "Click to select" hint — tiny badge, bottom-right corner ─ */
+.pd-select-hint {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  left: auto;
+  transform: translateY(4px);
+  background: rgba(8, 2, 18, 0.82);
+  border: 1px solid rgba(233, 30, 140, 0.5);
+  border-radius: 20px;
+  color: #ff9ab5;
+  font-family: system-ui, sans-serif;
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 2px 7px 2px 5px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  letter-spacing: 0.3px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 100;
+}
+.pd-wrap--editing:not(.pd-wrap--selected):hover .pd-select-hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HANDLES — animated in when selected
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Dedicated drag handle — bottom-center, inside the element ── */
+.pd-drag-handle {
+  position: absolute;
+  bottom: 10px;
+  left: calc(50% - 16px);
+  transform: scale(0.7) translateY(4px);
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: rgba(8, 2, 18, 0.82);
+  border: 2px solid #e91e8c;
+  color: #ff9ab5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  z-index: 350;
+  box-shadow: 0 2px 12px rgba(233, 30, 140, 0.5);
+  user-select: none;
+  touch-action: none;
+  opacity: 0;
+  transition: opacity 0.18s ease,
+              transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background 0.12s ease;
+  pointer-events: all;
+}
+/* Show on hover of the pd-wrap (even when unselected) */
+.pd-wrap--editing:hover .pd-drag-handle {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+/* Highlight when selected */
+.pd-wrap--selected .pd-drag-handle {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  border-color: #e91e8c;
+  background: rgba(233, 30, 140, 0.25);
+}
+.pd-drag-handle:hover {
+  background: rgba(233, 30, 140, 0.4) !important;
+  transform: scale(1.18) translateY(0) !important;
+}
+.pd-drag-handle:active {
+  cursor: grabbing;
+  background: rgba(233, 30, 140, 0.6) !important;
+}
+
+/* ── Move overlay ─────────────────────────────────────────── */
+.pd-move-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  cursor: move;
+  background: transparent;
+}
+
+/* ── Resize handles — 8 squares ──────────────────────────── */
+.pd-resize-handle {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  background: #fff;
+  border: 2px solid #e91e8c;
+  border-radius: 2px;
+  box-shadow: 0 1px 6px rgba(233, 30, 140, 0.5);
+  z-index: 200;
+  /* Animate in */
+  opacity: 0;
+  transform: scale(0.4);
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background 0.12s ease,
+              opacity 0.15s ease;
+}
+.pd-wrap--selected .pd-resize-handle {
+  opacity: 1;
+  transform: scale(1);
+}
+.pd-resize-handle:hover {
+  transform: scale(1.5) !important;
+  background: #e91e8c;
+}
+.pd-wrap--resizing .pd-resize-handle {
+  transition: none; /* instant during active resize */
+}
+
+/* Stagger each handle's entrance */
+.pd-rh-nw { transition-delay: 0ms;  }
+.pd-rh-n  { transition-delay: 20ms; }
+.pd-rh-ne { transition-delay: 40ms; }
+.pd-rh-e  { transition-delay: 30ms; }
+.pd-rh-se { transition-delay: 50ms; }
+.pd-rh-s  { transition-delay: 40ms; }
+.pd-rh-sw { transition-delay: 60ms; }
+.pd-rh-w  { transition-delay: 20ms; }
+
+/* Corner + edge positions — centered on the border */
+.pd-rh-nw { top:    -6px; left:   -6px; }
+.pd-rh-n  { top:    -6px; left: calc(50% - 6px); }
+.pd-rh-ne { top:    -6px; right:  -6px; }
+.pd-rh-e  { top: calc(50% - 6px); right: -6px; }
+.pd-rh-se { bottom: -6px; right:  -6px; }
+.pd-rh-s  { bottom: -6px; left: calc(50% - 6px); }
+.pd-rh-sw { bottom: -6px; left:   -6px; }
+.pd-rh-w  { top: calc(50% - 6px); left: -6px; }
+
+/* ── Rotation handle — above top-center ──────────────────── */
+.pd-rotate-handle {
+  position: absolute;
+  top: -40px;
+  left: calc(50% - 14px);
+  width: 28px;
+  height: 28px;
+  background: rgba(8, 2, 18, 0.92);
+  border: 2px solid #e91e8c;
+  border-radius: 50%;
+  color: #ff9ab5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: crosshair;
+  z-index: 200;
+  box-shadow: 0 2px 12px rgba(233, 30, 140, 0.5);
+  user-select: none;
+  /* Animate in */
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px) scale(0.7);
+  transition: opacity 0.22s ease,
+              transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+              background 0.12s ease;
+  transition-delay: 60ms;
+}
+.pd-wrap--selected .pd-rotate-handle {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0) scale(1);
+}
+.pd-rotate-handle:hover {
+  background: rgba(233, 30, 140, 0.3);
+  transform: translateY(0) scale(1.2) !important;
+}
+/* Connecting line stem */
+.pd-rotate-handle::before {
+  content: '';
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 14px;
+  background: rgba(233, 30, 140, 0.55);
+}
+
+/* ── Inline toolbar ───────────────────────────────────────── */
+.pd-toolbar {
+  position: absolute;
+  top: -68px;
+  left: 50%;
+  transform: translateX(-50%) translateY(6px) scale(0.94);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background: rgba(8, 2, 18, 0.96);
+  border: 1px solid rgba(233, 30, 140, 0.4);
+  border-radius: 20px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.65),
+              0 1px 0 rgba(255,255,255,0.04) inset;
+  white-space: nowrap;
+  user-select: none;
+  cursor: default;
+  pointer-events: none;
+  /* Animate in */
+  opacity: 0;
+  transition: opacity 0.2s ease,
+              transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
+  transition-delay: 40ms;
+}
+.pd-wrap--selected .pd-toolbar {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+.pd-toolbar-label {
+  font-family: system-ui, sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #ff9ab5;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding-right: 2px;
+}
+.pd-toolbar-sep {
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 150, 180, 0.2);
+  margin: 0 2px;
+}
+.pd-toolbar-btn {
+  background: none;
+  border: none;
+  color: rgba(255, 180, 200, 0.7);
+  font-family: system-ui, sans-serif;
+  font-size: 0.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 3px 7px;
+  border-radius: 12px;
+  transition: background 0.1s ease, color 0.1s ease, transform 0.1s ease;
+  white-space: nowrap;
+}
+.pd-toolbar-btn:hover {
+  background: rgba(233, 30, 140, 0.22);
+  color: #fff;
+  transform: scale(1.05);
+}
+.pd-toolbar-btn:active {
+  transform: scale(0.96);
+}
+.pd-toolbar-btn--close {
+  color: rgba(255, 120, 140, 0.6);
+  font-size: 0.7rem;
+  padding: 2px 5px;
+}
+.pd-toolbar-btn--close:hover {
+  background: rgba(255, 50, 80, 0.2);
+  color: #ff6b88;
+}
+
+/* ── Live size/angle label ────────────────────────────────── */
+.pd-size-label {
+  position: absolute;
+  top: -92px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(8, 2, 18, 0.82);
+  border: 1px solid rgba(233, 30, 140, 0.3);
+  color: rgba(255, 180, 210, 0.9);
+  font-size: 0.55rem;
+  font-family: monospace;
+  padding: 2px 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  z-index: 301;
+}
+.pd-wrap--resizing .pd-size-label { opacity: 1; }
+
+/* ── Locked badge ─────────────────────────────────────────── */
+.pd-locked-badge {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  background: rgba(10, 2, 20, 0.82);
+  border: 1px solid rgba(255, 150, 100, 0.3);
+  border-radius: 20px;
+  padding: 2px 7px;
+  color: rgba(255, 200, 150, 0.7);
+  font-family: system-ui, sans-serif;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.pd-wrap--locked:hover .pd-locked-badge { opacity: 1; }
+
+/* ── Touch / mobile — larger hit targets ──────────────────── */
+@media (pointer: coarse) {
+  .pd-resize-handle { width: 18px; height: 18px; }
+  .pd-rh-nw { top: -9px; left: -9px; }
+  .pd-rh-n  { top: -9px; left: calc(50% - 9px); }
+  .pd-rh-ne { top: -9px; right: -9px; }
+  .pd-rh-e  { top: calc(50% - 9px); right: -9px; }
+  .pd-rh-se { bottom: -9px; right: -9px; }
+  .pd-rh-s  { bottom: -9px; left: calc(50% - 9px); }
+  .pd-rh-sw { bottom: -9px; left: -9px; }
+  .pd-rh-w  { top: calc(50% - 9px); left: -9px; }
+  .pd-rotate-handle { width: 36px; height: 36px; top: -50px; left: calc(50% - 18px); }
+}

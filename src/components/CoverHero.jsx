@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useSpring, useTrail, animated } from '@react-spring/web';
 import { EditableText } from './EditableField';
 import { useImageUrl }  from '../utils/useImageUrl';
+import PositionDraggable from './PositionDraggable';
 import '../styles/components/CoverHero.css';
 
 
@@ -231,7 +232,7 @@ function HeartFrame({ photoSrc, ids, isEditing, onReplace, onRemove, zoomRef, ph
         {!resolved && (
           <g
             clipPath={`url(#${ids.clip})`}
-            onClick={isEditing ? () => fileRef.current?.click() : undefined}
+            onDoubleClick={isEditing ? () => fileRef.current?.click() : undefined}
             style={{ cursor: isEditing ? 'pointer' : undefined }}
           >
             <rect x="0" y="0" width="300" height="260" fill={isEditing ? 'rgba(220,180,190,0.9)' : '#c9adb5'}/>
@@ -240,7 +241,7 @@ function HeartFrame({ photoSrc, ids, isEditing, onReplace, onRemove, zoomRef, ph
                 <circle cx="150" cy="120" r="28" fill="none" stroke="rgba(233,30,140,0.7)" strokeWidth="2" strokeDasharray="5 3"/>
                 <line x1="150" y1="104" x2="150" y2="136" stroke="rgba(233,30,140,0.95)" strokeWidth="3" strokeLinecap="round"/>
                 <line x1="134" y1="120" x2="166" y2="120" stroke="rgba(233,30,140,0.95)" strokeWidth="3" strokeLinecap="round"/>
-                <text x="150" y="162" textAnchor="middle" fontFamily="system-ui,sans-serif" fontSize="11" fontWeight="700" fill="rgba(100,40,60,0.9)" letterSpacing="0.05em">CLICK TO ADD</text>
+                <text x="150" y="162" textAnchor="middle" fontFamily="system-ui,sans-serif" fontSize="11" fontWeight="700" fill="rgba(100,40,60,0.9)" letterSpacing="0.05em">DBL-CLICK TO ADD</text>
               </>
             ) : (
               <g transform="translate(136, 118)">
@@ -460,10 +461,16 @@ export default function CoverHero({
   photoData,
   titleWord1, titleWord2, subtitle,
   onChangeTitleWord1, onChangeTitleWord2, onChangeSubtitle,
+  // Persisted styles for text elements (from Supabase via pageContent)
+  titleWord1Style = {}, titleWord2Style = {}, subtitleStyle = {},
+  onStyleSaveTitleWord1, onStyleSaveTitleWord2, onStyleSaveSubtitle,
   isEditing = false,
   onReplacePhoto,
   onRemovePhoto,
   onTransformChange,
+  // Free-move positions for each decoration
+  positions = {},          // { heart, leaf, bouquet } — each { offsetX, offsetY }
+  onPositionChange,        // (key, { offsetX, offsetY }) => void
 }) {
   
   const [ids] = useState(() => {
@@ -561,12 +568,27 @@ export default function CoverHero({
             <div className="ch-word-our-wrap">
               {}
               <span className="ch-our-highlight" aria-hidden="true"/>
-              <EditableText
-                as="span" className="ch-word-our"
-                value={titleWord1}
+              <PositionDraggable
+                id="cover-title1"
                 isEditing={isEditing}
-                onChange={onChangeTitleWord1}
-              />
+                offsetX={positions?.title1?.offsetX ?? 0}
+                offsetY={positions?.title1?.offsetY ?? 0}
+                width={positions?.title1?.width ?? null}
+                height={positions?.title1?.height ?? null}
+                rotation={positions?.title1?.rotation ?? 0}
+                onPositionChange={(_, pos) => onPositionChange?.('title1', pos)}
+                label="Move Text"
+                className="pd-inline"
+              >
+                <EditableText
+                  as="span" className="ch-word-our"
+                  value={titleWord1}
+                  isEditing={isEditing}
+                  onChange={onChangeTitleWord1}
+                  style={titleWord1Style}
+                  onStyleSave={onStyleSaveTitleWord1}
+                />
+              </PositionDraggable>
             </div>
           </animated.div>
 
@@ -574,81 +596,144 @@ export default function CoverHero({
             <div className="ch-word-anniv-wrap">
               {}
               <span className="ch-zero-ring" aria-hidden="true"/>
-              <EditableText
-                as="span" className="ch-word-anniv"
-                value={titleWord2}
+              <PositionDraggable
+                id="cover-title2"
                 isEditing={isEditing}
-                onChange={onChangeTitleWord2}
-              />
+                offsetX={positions?.title2?.offsetX ?? 0}
+                offsetY={positions?.title2?.offsetY ?? 0}
+                width={positions?.title2?.width ?? null}
+                height={positions?.title2?.height ?? null}
+                rotation={positions?.title2?.rotation ?? 0}
+                onPositionChange={(_, pos) => onPositionChange?.('title2', pos)}
+                label="Move Text"
+                className="pd-inline"
+              >
+                <EditableText
+                  as="span" className="ch-word-anniv"
+                  value={titleWord2}
+                  isEditing={isEditing}
+                  onChange={onChangeTitleWord2}
+                  style={titleWord2Style}
+                  onStyleSave={onStyleSaveTitleWord2}
+                />
+              </PositionDraggable>
             </div>
           </animated.div>
         </div>
 
         {}
         <animated.div style={subSpring}>
-          <EditableText
-            as="p" className="ch-subtitle" multiline
-            value={subtitle}
+          <PositionDraggable
+            id="cover-subtitle"
             isEditing={isEditing}
-            onChange={onChangeSubtitle}
-          />
+            offsetX={positions?.subtitle?.offsetX ?? 0}
+            offsetY={positions?.subtitle?.offsetY ?? 0}
+            width={positions?.subtitle?.width ?? null}
+            height={positions?.subtitle?.height ?? null}
+            rotation={positions?.subtitle?.rotation ?? 0}
+            onPositionChange={(_, pos) => onPositionChange?.('subtitle', pos)}
+            label="Move Text"
+            className="pd-inline"
+          >
+            <EditableText
+              as="p" className="ch-subtitle" multiline
+              value={subtitle}
+              isEditing={isEditing}
+              onChange={onChangeSubtitle}
+              style={subtitleStyle}
+              onStyleSave={onStyleSaveSubtitle}
+            />
+          </PositionDraggable>
         </animated.div>
 
       </div>
 
       {}
       <animated.div className="ch-heart-wrap" style={{ ...heartSpring }}>
-        <animated.div style={floatSpring}>
-          <div style={{ position: 'relative', display: 'inline-block' }}>
-            <HeartFrame photoSrc={photoSrc} ids={ids} isEditing={isEditing} onReplace={onReplacePhoto} onRemove={onRemovePhoto} zoomRef={heartZoomRef} photoData={photoData} onTransformChange={onTransformChange}/>
-            {isEditing && photoSrc && (
-              <>
-                {}
-                <div style={{
-                  position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)',
-                  display: 'flex', alignItems: 'center', gap: 4,
-                  background: 'rgba(10,0,20,0.75)', border: '1px solid rgba(233,30,140,0.35)',
-                  borderRadius: 20, padding: '3px 8px', zIndex: 10, whiteSpace: 'nowrap',
-                }}>
-                  <button onMouseDown={e => { e.stopPropagation(); e.preventDefault(); heartZoomRef.current?.(0.1); }}
-                    style={{ background:'none', border:'none', color:'#ff9ab5', fontSize:'0.9rem', cursor:'pointer', padding:'0 3px', fontFamily:'system-ui,sans-serif' }}>＋</button>
-                  <span style={{ fontSize:'0.6rem', color:'rgba(255,180,200,0.7)', fontFamily:'system-ui,sans-serif', minWidth:28, textAlign:'center' }}>zoom</span>
-                  <button onMouseDown={e => { e.stopPropagation(); e.preventDefault(); heartZoomRef.current?.(-0.1); }}
-                    style={{ background:'none', border:'none', color:'#ff9ab5', fontSize:'0.9rem', cursor:'pointer', padding:'0 3px', fontFamily:'system-ui,sans-serif' }}>－</button>
-                </div>
-                {}
-                <div style={{
-                  position: 'absolute', top: 6, left: '50%', transform: 'translateX(-50%)',
-                  fontSize: '0.55rem', color: 'rgba(255,200,220,0.8)', background: 'rgba(10,0,20,0.65)',
-                  padding: '2px 8px', borderRadius: 10, whiteSpace: 'nowrap', pointerEvents: 'none',
-                  fontFamily: 'system-ui,sans-serif', zIndex: 10,
-                }}>✥ drag · ctrl+scroll · dbl-click to replace</div>
-                {}
-                <button
-                  onClick={() => onRemovePhoto?.()}
-                  title="Remove photo"
-                  style={{
-                    position: 'absolute', top: 8, right: 8,
-                    width: 24, height: 24, borderRadius: '50%', border: 'none',
-                    background: 'rgba(140,10,30,0.9)', color: '#fce8ea',
-                    fontSize: '0.7rem', cursor: 'pointer', zIndex: 10,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
-                >✕</button>
-              </>
-            )}
-          </div>
-        </animated.div>
+        <PositionDraggable
+          id="cover-heart"
+          isEditing={isEditing}
+          offsetX={positions?.heart?.offsetX ?? 0}
+          offsetY={positions?.heart?.offsetY ?? 0}
+          width={positions?.heart?.width ?? null}
+          height={positions?.heart?.height ?? null} rotation={positions?.heart?.rotation ?? 0}
+          onPositionChange={(id, pos) => onPositionChange?.('heart', pos)}
+          label="Move Heart"
+        >
+          <animated.div className="ch-heart-float-wrap" style={floatSpring}>
+            <div className="ch-heart-inner" style={{ position: 'relative', display: 'inline-block' }}>
+              <HeartFrame photoSrc={photoSrc} ids={ids} isEditing={isEditing} onReplace={onReplacePhoto} onRemove={onRemovePhoto} zoomRef={heartZoomRef} photoData={photoData} onTransformChange={onTransformChange}/>
+              {isEditing && photoSrc && (
+                <>
+                  {}
+                  <div style={{
+                    position: 'absolute', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    background: 'rgba(10,0,20,0.75)', border: '1px solid rgba(233,30,140,0.35)',
+                    borderRadius: 20, padding: '3px 8px', zIndex: 10, whiteSpace: 'nowrap',
+                  }}>
+                    <button onMouseDown={e => { e.stopPropagation(); e.preventDefault(); heartZoomRef.current?.(0.1); }}
+                      style={{ background:'none', border:'none', color:'#ff9ab5', fontSize:'0.9rem', cursor:'pointer', padding:'0 3px', fontFamily:'system-ui,sans-serif' }}>＋</button>
+                    <span style={{ fontSize:'0.6rem', color:'rgba(255,180,200,0.7)', fontFamily:'system-ui,sans-serif', minWidth:28, textAlign:'center' }}>zoom</span>
+                    <button onMouseDown={e => { e.stopPropagation(); e.preventDefault(); heartZoomRef.current?.(-0.1); }}
+                      style={{ background:'none', border:'none', color:'#ff9ab5', fontSize:'0.9rem', cursor:'pointer', padding:'0 3px', fontFamily:'system-ui,sans-serif' }}>－</button>
+                  </div>
+                  {}
+                  <div style={{
+                    position: 'absolute', top: 6, left: '50%', transform: 'translateX(-50%)',
+                    fontSize: '0.55rem', color: 'rgba(255,200,220,0.8)', background: 'rgba(10,0,20,0.65)',
+                    padding: '2px 8px', borderRadius: 10, whiteSpace: 'nowrap', pointerEvents: 'none',
+                    fontFamily: 'system-ui,sans-serif', zIndex: 10,
+                  }}>✥ drag · ctrl+scroll · dbl-click to replace</div>
+                  {}
+                  <button
+                    onClick={() => onRemovePhoto?.()}
+                    title="Remove photo"
+                    style={{
+                      position: 'absolute', top: 8, right: 8,
+                      width: 24, height: 24, borderRadius: '50%', border: 'none',
+                      background: 'rgba(140,10,30,0.9)', color: '#fce8ea',
+                      fontSize: '0.7rem', cursor: 'pointer', zIndex: 10,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >✕</button>
+                </>
+              )}
+            </div>
+          </animated.div>
+        </PositionDraggable>
       </animated.div>
 
       {}
       <animated.div className="ch-leaf-wrap" style={leafSpring}>
-        <DriedLeaf ids={ids}/>
+        <PositionDraggable
+          id="cover-leaf"
+          isEditing={isEditing}
+          offsetX={positions?.leaf?.offsetX ?? 0}
+          offsetY={positions?.leaf?.offsetY ?? 0}
+          width={positions?.leaf?.width ?? null}
+          height={positions?.leaf?.height ?? null} rotation={positions?.leaf?.rotation ?? 0}
+          onPositionChange={(id, pos) => onPositionChange?.('leaf', pos)}
+          label="Move Leaf"
+        >
+          <DriedLeaf ids={ids}/>
+        </PositionDraggable>
       </animated.div>
 
       {}
       <animated.div className="ch-bouquet-wrap" style={bouquetSpring}>
-        <Bouquet ids={ids}/>
+        <PositionDraggable
+          id="cover-bouquet"
+          isEditing={isEditing}
+          offsetX={positions?.bouquet?.offsetX ?? 0}
+          offsetY={positions?.bouquet?.offsetY ?? 0}
+          width={positions?.bouquet?.width ?? null}
+          height={positions?.bouquet?.height ?? null} rotation={positions?.bouquet?.rotation ?? 0}
+          onPositionChange={(id, pos) => onPositionChange?.('bouquet', pos)}
+          label="Move Bouquet"
+        >
+          <Bouquet ids={ids}/>
+        </PositionDraggable>
       </animated.div>
 
       {}

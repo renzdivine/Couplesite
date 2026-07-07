@@ -65,7 +65,7 @@ export default function VisitorEntry() {
       {(isCodeStep || isGameStep) && activeBg && (
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'rgba(120, 0, 20, 0.45)',
+          background: 'rgba(80, 0, 15, 0.62)',
           pointerEvents: 'none',
           zIndex: 1,
         }}/>
