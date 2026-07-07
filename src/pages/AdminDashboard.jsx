@@ -1,6 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useCanvas } from '../context/CanvasContext';
+import CanvasToolbar from '../components/CanvasToolbar';
 import { Heart, LogOut, ExternalLink, Copy, Check, Edit3, ImagePlus, QrCode } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -20,7 +22,9 @@ import '../styles/pages/AdminDashboard.css';
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { clientSession, clientLogout, myCouple, updateCouple, loading } = useApp();
+  const { selected, deselect } = useCanvas();
   const [toast, setToast] = useState('');
+  const [zoom, setZoom] = useState(100);
 
   if (!clientSession) { navigate('/admin/login', { replace: true }); return null; }
 
@@ -56,6 +60,56 @@ export default function AdminDashboard() {
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
   const siteUrl = `${window.location.origin}/love/${myCouple.slug}`;
 
+  // ── Toolbar action handler ─────────────────────────────────
+  const handleToolbarAction = useCallback((action, sel) => {
+    switch (action) {
+      case 'delete':
+        if (sel?.onAction) sel.onAction('delete');
+        deselect();
+        break;
+      case 'duplicate':
+        if (sel?.onAction) sel.onAction('duplicate');
+        showToast('Duplicated');
+        break;
+      case 'hide':
+        if (sel?.onStyleChange && sel?.style) {
+          sel.onStyleChange({ ...sel.style, visibility: sel.style.visibility === 'hidden' ? 'visible' : 'hidden' });
+        }
+        break;
+      case 'lock':
+        if (sel?.onAction) sel.onAction('lock');
+        showToast('Locked');
+        break;
+      case 'bringForward':
+        if (sel?.onAction) sel.onAction('bringForward');
+        break;
+      case 'sendBackward':
+        if (sel?.onAction) sel.onAction('sendBackward');
+        break;
+      case 'replaceImage':
+        if (sel?.onAction) sel.onAction('replaceImage');
+        break;
+      case 'save':
+        showToast('All changes saved!');
+        break;
+      case 'preview':
+        navigate(`/love/${myCouple.slug}`);
+        break;
+      case 'addText':
+        showToast('Click any text element to select and edit it');
+        break;
+      case 'addImage':
+        showToast('Click any photo to select and replace it');
+        break;
+      default:
+        break;
+    }
+  }, [deselect, navigate, myCouple?.slug]);
+
+  const handleZoom = useCallback((delta) => {
+    setZoom(z => Math.min(200, Math.max(25, z + delta)));
+  }, []);
+
   const save = (section, value) => {
     if (section === 'photosList') {
       updateCouple(myCouple.slug, { photos: value });
@@ -72,7 +126,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="ad-root">
+    <div className="ad-root has-ctb-toolbar">
       {toast && <div className="ad-toast"><Check size={12}/> {toast}</div>}
 
       {}
@@ -222,6 +276,12 @@ export default function AdminDashboard() {
         <SectionLabel>📱 Your Love Page QR Code</SectionLabel>
         <QrSection siteUrl={siteUrl} showToast={showToast} />
       </div>
+
+      {}
+      <CanvasToolbar
+        isEditing={true}
+        onAction={handleToolbarAction}
+      />
 
     </div>
   );

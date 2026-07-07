@@ -551,12 +551,15 @@ export default function ButterflyStory({ isEditing = false, onContentChange }) {
             <div className="bs-title-block">
               <div className="bs-title-row1">
                 <EditableText as="span" className="bs-title-italic"
-                  value={t1} isEditing={isEditing} onChange={v => savePC('boardTitle1', v)}/>
+                  value={t1} isEditing={isEditing} onChange={v => savePC('boardTitle1', v)}
+                  style={pc.style_boardTitle1 || {}} onStyleSave={st => savePC('style_boardTitle1', st)}/>
                 <EditableText as="span" className="bs-title-that"
-                  value={` ${t2}`} isEditing={isEditing} onChange={v => savePC('boardTitle2', v.trim())}/>
+                  value={` ${t2}`} isEditing={isEditing} onChange={v => savePC('boardTitle2', v.trim())}
+                  style={pc.style_boardTitle2 || {}} onStyleSave={st => savePC('style_boardTitle2', st)}/>
               </div>
               <EditableText as="div" className="bs-title-row2"
-                value={t3} isEditing={isEditing} onChange={v => savePC('boardTitle3', v)}/>
+                value={t3} isEditing={isEditing} onChange={v => savePC('boardTitle3', v)}
+                style={pc.style_boardTitle3 || {}} onStyleSave={st => savePC('style_boardTitle3', st)}/>
             </div>
 
             <div className="bs-song-list">

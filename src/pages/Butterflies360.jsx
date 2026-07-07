@@ -16,7 +16,7 @@ const SPECIES = [
 
 const CFG = {
   count:            80,       
-  wingsSpeed:       2.5,
+  wingsSpeed:       2.0,
   wingsDisp:        1.6,
   noiseCoordScale:  0.003,
   noiseTimeCoef:    0.002,
@@ -110,14 +110,13 @@ const FRAG = `
 `;
 
 
-function Overlay({ overlayTitle, overlayHint }) {
+function Overlay({ overlayHint }) {
   const [visible, setVisible] = useState(true);
   useEffect(() => { const t = setTimeout(() => setVisible(false), 4000); return () => clearTimeout(t); }, []);
   return (
     <div className={`bf360-overlay ${visible ? '' : 'bf360-overlay--hidden'}`}>
       <div className="bf360-overlay-inner">
         <div className="bf360-overlay-heart">🦋</div>
-        <h1 className="bf360-overlay-names">{overlayTitle}</h1>
         <p className="bf360-overlay-hint">{overlayHint}</p>
       </div>
     </div>
@@ -150,7 +149,6 @@ export default function Butterflies360() {
   const name1   = couple?.name1 || 'You';
   const name2   = couple?.name2 || 'Me';
   const bf360   = couple?.pageContent?.butterfly360;
-  const overlayTitle = bf360?.overlayTitle || `Hello Baby`;
   const overlayHint  = bf360?.overlayHint  || 'Drag to look around · tap a butterfly';
   const panoBgKey    = bf360?.bgImage      || '/Flower.png';
   const panoBg       = useImageUrl(panoBgKey) || panoBgKey; 
@@ -233,7 +231,7 @@ export default function Butterflies360() {
       const mesh         = new THREE.Mesh(geo, mat);
       const orbitRadius    = radiusMin + rng2() * (radiusMax - radiusMin);
       const orbitElevation = (rng2() - 0.5) * elevRange;
-      const orbitSpeed     = (0.18 + rng2() * 0.22) * speedMult * (rng2() > 0.5 ? 1 : -1);
+      const orbitSpeed     = (0.14 + rng2() * 0.18) * speedMult * (rng2() > 0.5 ? 1 : -1);
       const orbitAngle     = rng2() * Math.PI * 2;
       const wobbleAmp      = 15 + rng2() * 35;
       const wobbleSpeed    = 0.3 + rng2() * 0.7;
@@ -451,7 +449,7 @@ export default function Butterflies360() {
     <div className="bf360-root">
       <div ref={mountRef} className="bf360-mount" />
       <div className="bf360-vignette" />
-      <Overlay overlayTitle={overlayTitle} overlayHint={overlayHint} />
+      <Overlay overlayHint={overlayHint} />
 
       {}
       {hoverLabel && (

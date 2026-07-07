@@ -12,10 +12,27 @@
   background:
     radial-gradient(ellipse at 50% 30%, #2a1a0e 0%, #0e0705 100%);
   perspective: 2200px;
-  overflow: hidden;
+  /* overflow: visible so PositionDraggable handles aren't clipped */
+  overflow: visible;
   z-index: 0;
-  
-  contain: layout paint;
+}
+
+/* When inside the AdminDashboard section, offset the book down so
+   the fixed 48px topbar doesn't overlap the top of the book */
+.ad-section .bl-book-container {
+  padding-top: 56px;
+  box-sizing: border-box;
+}
+
+/* Disable all pointer events on non-current pages so their
+   overflowing PositionDraggable elements don't block the current page */
+.bl-page.is-past,
+.bl-page.is-future {
+  pointer-events: none !important;
+}
+.bl-page.is-past *,
+.bl-page.is-future * {
+  pointer-events: none !important;
 }
 
 
@@ -51,6 +68,12 @@
     0 10px 20px rgba(0,0,0,0.45);
 }
 
+/* In editing mode, let handles escape the book */
+[data-editing="true"] .bl-book,
+.ad-section .bl-book {
+  overflow: visible;
+}
+
 
 .bl-page {
   position: absolute;
@@ -69,6 +92,17 @@
   background-size: 400px 400px, 100% 100%, 100% 100%;
   color: #3d1e0a;
   isolation: isolate;
+}
+
+/* In editing mode, allow handles to overflow page boundaries */
+[data-editing="true"] .bl-page,
+.ad-section .bl-page,
+.bl-book-container[data-editing] .bl-page {
+  overflow: visible !important;
+  isolation: auto;
+  clip-path: none !important;
+  backface-visibility: visible !important;
+  -webkit-backface-visibility: visible !important;
 }
 
 
@@ -174,7 +208,14 @@
   top: 0; right: 0; bottom: 0;
   padding: 24px 32px 24px 28px;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
+  /* Don't block clicks in empty space — children re-enable their own */
+  pointer-events: none;
+}
+
+/* All direct children of page-content get pointer events back */
+.bl-page-content > * {
+  pointer-events: auto;
 }
 
 
@@ -190,6 +231,17 @@
 }
 
 
+.bl-torn-rect-outer {
+  position: relative;
+  display: inline-block;
+}
+
+.bl-torn-circle-outer {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
 .bl-torn-rect {
   position: relative;
   display: inline-block;
@@ -199,8 +251,11 @@
 
 .bl-torn-rect-inner {
   background: #fff;
-  padding: 8px 8px 22px;
+  padding: 8px;
   position: relative;
+  /* Ensure the inner area always has a height so bl-dp-wrap (height:100%) resolves */
+  display: flex;
+  flex-direction: column;
   
   clip-path: polygon(
     0% 2%,   1.5% 0%,  3% 1.8%,  4.5% 0.3%, 6% 2%,   7.5% 0%,  9% 1.5%,  10.5% 0.2%,
@@ -218,8 +273,10 @@
   display: block;
   width: 100%;
   height: 100%;
+  flex: 1;
   min-height: 0;
   object-fit: cover;
+  background: transparent;
 }
 
 
@@ -345,6 +402,11 @@
   grid-template-rows: 1fr;
   gap: 0;
   padding: 24px 20px 24px 18px;
+  pointer-events: none;
+}
+
+.bl-page-content.bl-facts-layout > * {
+  pointer-events: auto;
 }
 
 .bl-facts-left {
@@ -416,6 +478,12 @@
   justify-items: center;
   padding: 24px 24px 24px 16px;
   height: 100%;
+  /* Prevent empty grid cells from intercepting clicks */
+  pointer-events: none;
+}
+
+.bl-messages-layout > * {
+  pointer-events: auto;
 }
 
 .bl-note-1 {
@@ -485,6 +553,19 @@
   gap: 16px;
   overflow: hidden;
   box-sizing: border-box;
+  /* Prevent the grid itself from intercepting clicks in empty areas */
+  pointer-events: none;
+}
+
+/* Re-enable for direct children */
+.bl-wonderful-layout > * {
+  pointer-events: auto;
+}
+
+/* In editing mode, allow handles to overflow the layout */
+[data-editing="true"] .bl-wonderful-layout,
+.ad-section .bl-wonderful-layout {
+  overflow: visible;
 }
 
 /* Text block — top-left cell */
@@ -494,8 +575,11 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  gap: 10px;
   min-width: 0;
   padding-right: 8px;
+  overflow: hidden;
+  align-self: center;
 }
 
 /* Top-right circle */
@@ -506,6 +590,10 @@
   align-items: center;
   justify-content: center;
   overflow: visible;
+  pointer-events: none;
+}
+.bl-circ-tl-wrap > * {
+  pointer-events: auto;
 }
 
 /* Bottom-left circle */
@@ -517,6 +605,10 @@
   justify-content: center;
   overflow: visible;
   position: relative;
+  pointer-events: none;
+}
+.bl-circ-bc-wrap > * {
+  pointer-events: auto;
 }
 
 /* Bottom-right circle */
@@ -528,6 +620,10 @@
   justify-content: center;
   padding-right: 140px;
   overflow: visible;
+  pointer-events: none;
+}
+.bl-circ-br-wrap > * {
+  pointer-events: auto;
 }
 
 /* Flower decoration — absolute so it doesn't affect layout */
@@ -550,16 +646,16 @@
 .bl-wonderful-top,
 .bl-wonderful-bottom { display: contents; }
 
-.bl-wonderful-text {
-  min-width: 0;
-  overflow: hidden;
-  align-self: center;
+/* In editing mode, allow handles to overflow the text block */
+[data-editing="true"] .bl-wonderful-text,
+.ad-section .bl-wonderful-text {
+  overflow: visible;
 }
 .bl-wonderful-h {
   font-size: clamp(20px, 2.6vw, 36px) !important;
   line-height: 1.15;
   color: #3d1e0a;
-  margin-bottom: 12px;
+  margin-bottom: 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
@@ -577,6 +673,7 @@
   color: #5a3020;
   line-height: 1.55;
   margin: 0;
+  white-space: pre-line;
 }
 
 .bl-wonderful-flower {
@@ -594,6 +691,11 @@
   align-items: center;
   height: 100%;
   gap: 16px;
+  pointer-events: none;
+}
+
+.bl-eternal-layout > * {
+  pointer-events: auto;
 }
 
 .bl-eternal-text {
@@ -645,6 +747,11 @@
   gap: 12px;
   padding: 18px 18px 18px 10px;
   position: relative;
+  pointer-events: none;
+}
+
+.bl-thankyou-layout > * {
+  pointer-events: auto;
 }
 
 .bl-ty-photo {
@@ -820,12 +927,29 @@
 }
 
 
+/* Remove button lifted outside overflow boundary (used by TornPhoto & TornCircle) */
+.bl-torn-remove {
+  position: absolute !important;
+  top: 4px !important;
+  right: 4px !important;
+  z-index: 300 !important;  /* above pd-resize-handles (200) and pd-move-overlay (5) */
+  pointer-events: all !important;
+}
+
 /* ── DraggablePhoto editing wrapper ──────────────────────── */
 .bl-dp-wrap {
   position: relative;
   width: 100%;
   height: 100%;
+  flex: 1;           /* fills bl-torn-rect-inner flex container */
+  min-height: 0;     /* allows flex child to shrink */
   overflow: hidden;
+}
+
+/* In editing mode, allow drag/zoom handles to overflow the photo frame */
+[data-editing="true"] .bl-dp-wrap,
+.ad-section .bl-dp-wrap {
+  overflow: visible;
 }
 
 .bl-dp-placeholder {
@@ -877,12 +1001,25 @@
 .bl-dp-wrap:hover .bl-dp-zoom-btns { opacity: 1; }
 
 .bl-dp-zoom-btn {
-  background: none; border: none;
-  color: #ff9ab5; font-size: 0.85rem;
-  cursor: pointer; padding: 0 3px; line-height: 1;
+  background: rgba(0,0,0,0.72);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 3px 4px;
+  line-height: 1;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: system-ui, sans-serif;
 }
-.bl-dp-zoom-btn:hover { color: #fff; }
+.bl-dp-zoom-btn:hover {
+  background: rgba(60,60,60,0.92);
+  border-color: rgba(255,255,255,0.5);
+}
 
 .bl-dp-zoom-val {
   font-size: 0.65rem;
@@ -907,3 +1044,287 @@
   font-family: system-ui, sans-serif;
 }
 .bl-dp-wrap:hover .bl-dp-drag-hint { opacity: 1; }
+
+
+/* ── PositionDraggable sized override — when user resizes a frame,
+   the inner torn-rect/torn-circle fill the wrapper instead of
+   using their hardcoded min() widths ─────────────────────────── */
+
+/* Outer wrappers must fill the pd-wrap */
+.pd-wrap--sized .bl-torn-rect-outer {
+  display: block !important;
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.pd-wrap--sized .bl-torn-circle-outer {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.pd-wrap--sized .bl-torn-rect,
+.pd-wrap--sized .bl-torn-rect-inner {
+  width: 100% !important;
+  height: 100% !important;
+  aspect-ratio: unset !important;
+  max-width: none !important;
+  max-height: none !important;
+  box-sizing: border-box;
+}
+
+.pd-wrap--sized .bl-torn-circle {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* When PositionDraggable has an explicit size, let the washi note fill it */
+.pd-wrap--sized .bl-washi-note {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  box-sizing: border-box;
+}
+
+.pd-wrap--sized .bl-washi-note-body {
+  width: 100% !important;
+  height: 100% !important;
+  box-sizing: border-box;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   GalleryPhoto — no-crop, drag/zoom/remove photo frame
+   (mirrors FramedPhoto from ButterflyPhotos)
+═══════════════════════════════════════════════════════════ */
+.bl-gp {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border-radius: 4px;
+  overflow: visible;
+}
+
+.bl-gp-inner {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 4px;
+  background: rgba(200, 175, 155, 0.35);
+  /* Subtle inset frame look */
+  box-shadow:
+    inset 0 0 0 3px rgba(160, 120, 70, 0.55),
+    inset 0 0 0 5px rgba(100, 70, 30, 0.25),
+    0 4px 14px rgba(30, 15, 0, 0.45);
+}
+
+/* In editing mode, allow drag/zoom handles to overflow the gallery frame */
+[data-editing="true"] .bl-gp-inner,
+.ad-section .bl-gp-inner {
+  overflow: visible;
+}
+
+.bl-gp-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* object-fit: contain keeps the full image visible — no cropping */
+  object-fit: contain;
+  background: transparent;
+  transform-origin: center center;
+}
+
+/* Placeholder when no photo added */
+.bl-gp-placeholder {
+  width: 100%;
+  height: 100%;
+  background: rgba(200, 175, 155, 0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.bl-gp-placeholder--editing {
+  cursor: pointer;
+  border: 2px dashed rgba(233, 30, 140, 0.55);
+  transition: background 0.2s, border-color 0.2s;
+}
+.bl-gp-placeholder--editing:hover {
+  background: rgba(233, 30, 140, 0.12);
+  border-color: rgba(233, 30, 140, 0.9);
+}
+
+/* Drag-over highlight */
+.bl-gp--drag-over .bl-gp-inner {
+  box-shadow:
+    inset 0 0 0 3px rgba(233, 30, 140, 0.8),
+    0 4px 14px rgba(30, 15, 0, 0.45);
+}
+
+/* Remove button */
+.bl-gp-remove-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(140, 10, 30, 0.9);
+  color: #fce8ea;
+  font-size: 0.65rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  transition: background 0.15s, transform 0.15s;
+}
+.bl-gp-remove-btn:hover {
+  background: rgba(200, 10, 30, 1);
+  transform: scale(1.15);
+}
+
+/* Zoom controls bar */
+.bl-gp-zoom-btns {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(10, 0, 20, 0.75);
+  border: 1px solid rgba(233, 30, 140, 0.35);
+  border-radius: 20px;
+  padding: 3px 8px;
+  opacity: 0;
+  transition: opacity 0.18s;
+  z-index: 10;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+.bl-gp:hover .bl-gp-zoom-btns { opacity: 1; }
+
+.bl-gp-zoom-btn {
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  cursor: pointer;
+  padding: 3px 4px;
+  line-height: 1;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bl-gp-zoom-btn:hover {
+  background: rgba(60, 60, 60, 0.92);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.bl-gp-zoom-val {
+  font-size: 0.65rem;
+  color: rgba(255, 180, 200, 0.7);
+  min-width: 32px;
+  text-align: center;
+  font-family: system-ui, sans-serif;
+}
+
+/* Drag hint */
+.bl-gp-drag-hint {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.55rem;
+  color: rgba(255, 200, 220, 0.7);
+  background: rgba(10, 0, 20, 0.65);
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s;
+  z-index: 10;
+  font-family: system-ui, sans-serif;
+}
+.bl-gp:hover .bl-gp-drag-hint { opacity: 1; }
+
+/* PositionDraggable sized override */
+.pd-wrap--sized .bl-gp,
+.pd-wrap--sized .bl-gp-inner {
+  width: 100% !important;
+  height: 100% !important;
+  aspect-ratio: unset !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE 6 — Photo Gallery Layout
+═══════════════════════════════════════════════════════════ */
+.bl-gallery-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px 20px 16px;
+  height: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.bl-gallery-layout > * {
+  pointer-events: auto;
+}
+
+.bl-gallery-title {
+  flex-shrink: 0;
+}
+
+.bl-gallery-title .bl-script-xl {
+  font-size: clamp(22px, 3.2vw, 44px);
+  line-height: 1.1;
+  margin: 0;
+}
+
+.bl-gallery-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 12px;
+  min-height: 0;
+  overflow: visible;
+}
+
+.bl-gallery-photo {
+  width: 100%;
+  height: 100%;
+}
+
+/* Size of each gallery cell's inner photo frame */
+.bl-gallery-grid > * {
+  min-height: 0;
+}
+
+@media (max-width: 860px) {
+  .bl-gallery-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+}
+
+@media (max-width: 540px) {
+  .bl-gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 8px;
+  }
+}

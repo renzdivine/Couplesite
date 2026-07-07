@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import { MusicProvider } from './context/MusicContext';
+import { CanvasProvider } from './context/CanvasContext';
 import BgMusicPlayer from './components/BgMusicPlayer';
 import MusicLoader   from './components/MusicLoader';
 
@@ -67,9 +68,11 @@ function App() {
   return (
     <AppProvider>
       <MusicProvider>
-        <AppRoutes />
-        {}
-        <BgMusicPlayer />
+        <CanvasProvider>
+          <AppRoutes />
+          {}
+          <BgMusicPlayer />
+        </CanvasProvider>
       </MusicProvider>
     </AppProvider>
   );

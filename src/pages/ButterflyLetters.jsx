@@ -1,18 +1,26 @@
 import { useState, useEffect, useRef, useCallback, memo, Component } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { useCanvas } from '../context/CanvasContext';
 import { EditableText } from '../components/EditableField';
+import PositionDraggable from '../components/PositionDraggable';
 import { saveImage } from '../utils/imageStore';
 import { useImageUrl } from '../utils/useImageUrl';
 import CoverHero from '../components/CoverHero';
 import '../styles/pages/ButterflyLetters.css';
 
 /* ─── DraggablePhoto — drag to pan, ctrl+scroll to zoom, ✕ to remove ── */
-function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing = false, onReplace, onRemove, objectFit = 'contain', onTransformChange, photoData }) {
+function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing = false, onReplace, onRemove, objectFit = 'contain', onTransformChange, photoData, hideRemoveBtn = false, disableToolbar = false }) {
   const resolved     = useImageUrl(src);
   const imgRef       = useRef(null);
+  const wrapRef      = useRef(null);
   const fileRef      = useRef(null);
   const zoomValRef   = useRef(null);
+
+  // Canvas toolbar integration
+  const { selected, select, deselect } = useCanvas();
+  const uid = useRef(`dp-${Math.random().toString(36).slice(2, 9)}`).current;
+  const isSelected = selected?.id === uid;
 
   // Pull saved values out as stable primitives
   const savedX     = photoData?.translateX ?? 0;
@@ -127,7 +135,7 @@ function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing =
   }
 
   if (!isEditing && resolved) {
-    return <img src={resolved} alt={alt} className={className} style={{ width: '100%', height: '100%', objectFit: objectFit, display: 'block', background: '#1a0a0e',
+    return <img src={resolved} alt={alt} className={className} style={{ width: '100%', height: '100%', objectFit: objectFit, display: 'block', background: 'transparent',
       transform: `translate(${savedX}px, ${savedY}px) scale(${savedScale})`,
       transformOrigin: 'center center', ...style }} loading="lazy" decoding="async"
       ref={imgRef} onLoad={applyTransform}/>;
@@ -135,9 +143,42 @@ function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing =
 
   return (
     <div
+      ref={wrapRef}
       className="bl-dp-wrap"
-      style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}
+      style={{
+        position: 'relative', width: '100%', height: '100%', overflow: 'hidden',
+        outline: isSelected ? '2px solid rgba(233,30,140,0.9)' : '2px solid transparent',
+        outlineOffset: 2,
+        transition: 'outline 0.12s',
+        ...style,
+      }}
       onWheel={isDraggable ? onWheel : undefined}
+      onClick={(e) => {
+        if (!isEditing || !resolved || disableToolbar) return;
+        // Do NOT stopPropagation — let click bubble to PositionDraggable for frame selection.
+        // Just register the image with the canvas toolbar here.
+        select({
+          id: uid,
+          type: 'image',
+          value: src,
+          style: {},
+          onUpdate: onReplace,
+          onStyleChange: (newStyle) => {
+            if (!imgRef.current) return;
+            if (newStyle.filter   !== undefined) imgRef.current.style.filter  = newStyle.filter;
+            if (newStyle.opacity  !== undefined) imgRef.current.style.opacity = newStyle.opacity;
+            if (newStyle.transform !== undefined) {
+              imgRef.current.style.transform =
+                `translate(${translateRef.current.x}px, ${translateRef.current.y}px) scale(${scaleRef.current}) ${newStyle.transform}`;
+            }
+          },
+          onAction: (action) => {
+            if (action === 'replaceImage') fileRef.current?.click();
+            if (action === 'delete') onRemove?.();
+          },
+          ref: wrapRef,
+        });
+      }}
     >
       {resolved ? (
         <>
@@ -146,7 +187,7 @@ function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing =
             src={resolved} alt={alt} className={className}
             style={{
               width: '100%', height: '100%', objectFit: objectFit, display: 'block',
-              background: '#1a0a0e',
+              background: 'transparent',
               transform: `translate(${translateRef.current.x}px, ${translateRef.current.y}px) scale(${scaleRef.current})`,
               transformOrigin: 'center center',
               cursor: 'grab',
@@ -157,30 +198,269 @@ function DraggablePhoto({ src, alt = '', className = '', style = {}, isEditing =
             draggable={false}
           />
           {/* zoom controls — visible on hover of .bl-dp-wrap */}
-          <div className="bl-dp-zoom-btns" onClick={e => e.stopPropagation()}>
-            <button className="bl-dp-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(0.1); }}>＋</button>
+          <div className="bl-dp-zoom-btns"
+            onClick={e => e.stopPropagation()}
+            onDoubleClick={e => e.stopPropagation()}
+          >
+            <button className="bl-dp-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(0.1); }} onClick={e => e.stopPropagation()} title="Zoom in">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
             <span ref={zoomValRef} className="bl-dp-zoom-val">{Math.round(scaleRef.current * 100)}%</span>
-            <button className="bl-dp-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(-0.1); }}>－</button>
+            <button className="bl-dp-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(-0.1); }} onClick={e => e.stopPropagation()} title="Zoom out">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="8" y1="11" x2="14" y2="11"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
           </div>
-          <div className="bl-dp-drag-hint">✥ drag · ctrl+scroll · dbl-click to replace</div>
-          {/* remove button */}
-          <button className="bl-dp-remove-btn" onClick={e => { e.stopPropagation(); onRemove?.(); }} title="Remove photo">✕</button>
+          <div className="bl-dp-drag-hint">{isSelected ? '✥ drag · ctrl+scroll · toolbar below to style' : '✥ drag · ctrl+scroll · dbl-click to replace'}</div>
+          {/* remove button — hidden when parent (TornPhoto/TornCircle) renders its own */}
+          {!hideRemoveBtn && (
+            <button className="bl-dp-remove-btn" onClick={e => { e.stopPropagation(); onRemove?.(); }} title="Remove photo">✕</button>
+          )}
         </>
       ) : (
         <div
           className="bl-dp-placeholder"
-          onClick={() => fileRef.current?.click()}
-          title="Click to add photo"
+          onDoubleClick={(e) => { e.stopPropagation(); fileRef.current?.click(); }}
+          title="Double-click to add photo"
         >
           <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
             <circle cx="18" cy="18" r="17" fill="rgba(233,30,140,0.15)" stroke="rgba(233,30,140,0.7)" strokeWidth="1.8" strokeDasharray="4 3"/>
             <line x1="18" y1="10" x2="18" y2="26" stroke="rgba(233,30,140,1)" strokeWidth="2.5" strokeLinecap="round"/>
             <line x1="10" y1="18" x2="26" y2="18" stroke="rgba(233,30,140,1)" strokeWidth="2.5" strokeLinecap="round"/>
           </svg>
-          <span style={{ fontSize: '0.6rem', fontFamily: 'system-ui,sans-serif', color: 'rgba(233,30,140,0.9)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 4 }}>Click to add</span>
+          <span style={{ fontSize: '0.6rem', fontFamily: 'system-ui,sans-serif', color: 'rgba(233,30,140,0.9)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 4 }}>Dbl-click to add</span>
         </div>
       )}
       <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFile}/>
+    </div>
+  );
+}
+
+/* ─── GalleryPhoto — like ButterflyPhotos FramedPhoto: no crop, drag, zoom, remove ── */
+function GalleryPhoto({ src, alt = '', className = '', style = {}, isEditing = false,
+  onReplace, onRemove, photoData, onTransformChange }) {
+  const frameRef  = useRef(null);
+  const fileRef   = useRef(null);
+  const imgRef    = useRef(null);
+  const zoomValRef = useRef(null);
+  const resolved  = useImageUrl(src);
+
+  const { selected, select, deselect } = useCanvas();
+  const uid = useRef(`gp-${Math.random().toString(36).slice(2, 9)}`).current;
+  const isSelected = selected?.id === uid;
+
+  const savedX     = photoData?.translateX ?? 0;
+  const savedY     = photoData?.translateY ?? 0;
+  const savedScale = Math.max(0.5, Math.min(4, photoData?.scale ?? 1));
+
+  const translateRef = useRef({ x: savedX, y: savedY });
+  const scaleRef     = useRef(savedScale);
+  const dragging     = useRef(false);
+  const dragStart    = useRef({ mx: 0, my: 0, tx: 0, ty: 0 });
+
+  const prevSrc = useRef(src);
+  if (src !== prevSrc.current) {
+    prevSrc.current = src;
+    translateRef.current = { x: savedX, y: savedY };
+    scaleRef.current = savedScale;
+  }
+
+  const applyTransform = useCallback(() => {
+    if (!imgRef.current) return;
+    const { x, y } = translateRef.current;
+    imgRef.current.style.transform = `translate(${x}px, ${y}px) scale(${scaleRef.current})`;
+    if (zoomValRef.current) {
+      zoomValRef.current.textContent = `${Math.round(scaleRef.current * 100)}%`;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (dragging.current) return;
+    translateRef.current = { x: savedX, y: savedY };
+    scaleRef.current = savedScale;
+    applyTransform();
+  }, [savedX, savedY, savedScale, applyTransform]);
+
+  useEffect(() => { if (resolved) applyTransform(); }, [resolved, applyTransform]);
+
+  const saveTransform = useCallback(() => {
+    onTransformChange?.({
+      translateX: translateRef.current.x,
+      translateY: translateRef.current.y,
+      scale: scaleRef.current,
+    });
+  }, [onTransformChange]);
+
+  const onMouseDown = useCallback((e) => {
+    if (!isEditing || !resolved) return;
+    e.preventDefault(); e.stopPropagation();
+    dragging.current = true;
+    if (imgRef.current) imgRef.current.style.cursor = 'grabbing';
+    dragStart.current = { mx: e.clientX, my: e.clientY, tx: translateRef.current.x, ty: translateRef.current.y };
+    const onMove = (mv) => {
+      if (!dragging.current) return;
+      translateRef.current = {
+        x: dragStart.current.tx + (mv.clientX - dragStart.current.mx),
+        y: dragStart.current.ty + (mv.clientY - dragStart.current.my),
+      };
+      applyTransform();
+    };
+    const onUp = () => {
+      dragging.current = false;
+      if (imgRef.current) imgRef.current.style.cursor = 'grab';
+      saveTransform();
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }, [isEditing, resolved, applyTransform, saveTransform]);
+
+  const onWheel = useCallback((e) => {
+    if (!isEditing || !resolved) return;
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault(); e.stopPropagation();
+    scaleRef.current = Math.max(0.5, Math.min(4, parseFloat((scaleRef.current - e.deltaY * 0.002).toFixed(3))));
+    applyTransform();
+    saveTransform();
+  }, [isEditing, resolved, applyTransform, saveTransform]);
+
+  const zoom = useCallback((delta) => {
+    scaleRef.current = Math.max(0.5, Math.min(4, parseFloat((scaleRef.current + delta).toFixed(3))));
+    applyTransform();
+    saveTransform();
+  }, [applyTransform, saveTransform]);
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    e.target.value = '';
+    const key = await saveImage(file);
+    translateRef.current = { x: 0, y: 0 };
+    scaleRef.current = 1;
+    onReplace?.(key);
+  };
+
+  const handleDrop = useCallback(async (e) => {
+    if (!isEditing) return;
+    e.preventDefault(); e.stopPropagation();
+    frameRef.current?.classList.remove('bl-gp--drag-over');
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    const key = await saveImage(file);
+    translateRef.current = { x: 0, y: 0 }; scaleRef.current = 1;
+    onReplace?.(key); applyTransform();
+  }, [isEditing, onReplace, applyTransform]);
+
+  const handleDragOver  = useCallback((e) => { if (!isEditing) return; e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = 'copy'; }, [isEditing]);
+  const handleDragEnter = useCallback((e) => { if (!isEditing) return; e.preventDefault(); e.stopPropagation(); frameRef.current?.classList.add('bl-gp--drag-over'); }, [isEditing]);
+  const handleDragLeave = useCallback((e) => { if (!isEditing) return; if (!frameRef.current?.contains(e.relatedTarget)) frameRef.current?.classList.remove('bl-gp--drag-over'); }, [isEditing]);
+
+  const handleSelectForToolbar = useCallback((e) => {
+    if (!isEditing || !resolved) return;
+    if (dragging.current) return;
+    select({
+      id: uid, type: 'image', value: src, style: {},
+      onUpdate: onReplace,
+      onStyleChange: (newStyle) => {
+        if (!imgRef.current) return;
+        if (newStyle.filter  !== undefined) imgRef.current.style.filter  = newStyle.filter;
+        if (newStyle.opacity !== undefined) imgRef.current.style.opacity = newStyle.opacity;
+      },
+      onAction: (action) => {
+        if (action === 'replaceImage') fileRef.current?.click();
+        if (action === 'delete') onRemove?.();
+      },
+      ref: frameRef,
+    });
+  }, [isEditing, resolved, src, onReplace, onRemove, select, uid]);
+
+  const isDraggable = isEditing && !!resolved;
+
+  return (
+    <div
+      ref={frameRef}
+      className={`bl-gp ${className}${isSelected ? ' bl-gp--selected' : ''}`}
+      style={{
+        position: 'relative',
+        outline: isSelected ? '2px solid rgba(233,30,140,0.9)' : undefined,
+        outlineOffset: isSelected ? 3 : undefined,
+        ...style,
+      }}
+      onClick={isEditing ? (resolved ? handleSelectForToolbar : undefined) : undefined}
+      onDoubleClick={isEditing ? () => fileRef.current?.click() : undefined}
+      onDrop={isEditing ? handleDrop : undefined}
+      onDragOver={isEditing ? handleDragOver : undefined}
+      onDragEnter={isEditing ? handleDragEnter : undefined}
+      onDragLeave={isEditing ? handleDragLeave : undefined}
+      title={isEditing ? (resolved ? 'Drag to pan · Ctrl+scroll to zoom · double-click to replace' : 'Double-click to add photo') : undefined}
+    >
+      {/* Inner clip — keeps photo inside frame without cropping the source */}
+      <div className="bl-gp-inner" onWheel={isDraggable ? onWheel : undefined}>
+        {resolved ? (
+          <img
+            ref={imgRef}
+            className="bl-gp-photo"
+            src={resolved}
+            alt={alt}
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            style={{
+              transform: `translate(${translateRef.current.x}px, ${translateRef.current.y}px) scale(${scaleRef.current})`,
+              transformOrigin: 'center center',
+              cursor: isDraggable ? 'grab' : undefined,
+            }}
+            onMouseDown={isDraggable ? onMouseDown : undefined}
+            onLoad={applyTransform}
+          />
+        ) : (
+          <div className={`bl-gp-placeholder${isEditing ? ' bl-gp-placeholder--editing' : ''}`}>
+            {isEditing ? (
+              <>
+                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+                  <circle cx="18" cy="18" r="17" fill="rgba(233,30,140,0.15)" stroke="rgba(233,30,140,0.7)" strokeWidth="1.8" strokeDasharray="4 3"/>
+                  <line x1="18" y1="10" x2="18" y2="26" stroke="rgba(233,30,140,1)" strokeWidth="2.5" strokeLinecap="round"/>
+                  <line x1="10" y1="18" x2="26" y2="18" stroke="rgba(233,30,140,1)" strokeWidth="2.5" strokeLinecap="round"/>
+                </svg>
+                <span style={{ fontSize:'0.6rem', fontFamily:'system-ui,sans-serif', color:'rgba(233,30,140,0.9)', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', marginTop:4 }}>Double-click to add</span>
+              </>
+            ) : (
+              <svg width="28" height="24" viewBox="0 0 28 24" fill="none" aria-hidden="true">
+                <path d="M10 4L8 7H3a2 2 0 00-2 2v11a2 2 0 002 2h22a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-3H10z" stroke="rgba(120,85,95,0.55)" strokeWidth="1.4" fill="rgba(180,140,150,0.18)" strokeLinejoin="round"/>
+                <circle cx="14" cy="14" r="4" stroke="rgba(120,85,95,0.55)" strokeWidth="1.4" fill="none"/>
+                <circle cx="14" cy="14" r="1.5" fill="rgba(120,85,95,0.4)"/>
+              </svg>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Zoom controls */}
+      {isEditing && resolved && (
+        <>
+          <div className="bl-gp-zoom-btns"
+            onClick={e => e.stopPropagation()}
+            onDoubleClick={e => e.stopPropagation()}
+          >
+            <button className="bl-gp-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(0.1); }} onClick={e => e.stopPropagation()} title="Zoom in">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+            <span ref={zoomValRef} className="bl-gp-zoom-val">{Math.round(scaleRef.current * 100)}%</span>
+            <button className="bl-gp-zoom-btn" onMouseDown={e => { e.stopPropagation(); e.preventDefault(); zoom(-0.1); }} onClick={e => e.stopPropagation()} title="Zoom out">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="8" y1="11" x2="14" y2="11"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+          </div>
+          <div className="bl-gp-drag-hint" aria-hidden="true">✥ drag · ctrl+scroll · dbl-click to replace</div>
+        </>
+      )}
+
+      {/* Remove button */}
+      {isEditing && resolved && (
+        <button className="bl-gp-remove-btn" onClick={e => { e.stopPropagation(); onRemove?.(); }} title="Remove photo" aria-label="Remove photo">✕</button>
+      )}
+
+      {isEditing && (
+        <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFile}/>
+      )}
     </div>
   );
 }
@@ -282,23 +562,35 @@ const SpineDefs = memo(function SpineDefs() {
 
 /* ─── Torn-paper rectangular photo — memoized ───────────────── */
 const TornPhoto = memo(function TornPhoto({ src, alt='', className='', rotate=0, isEditing=false, onReplace, onRemove, onTransformChange, photoData }) {
+  const resolved = useImageUrl(src);
   return (
-    <div
-      className={`bl-torn-rect ${className}`}
-      style={{ transform: `rotate(${rotate}deg)` }}
-    >
-      <div className="bl-torn-rect-inner">
-        <DraggablePhoto
-          src={src} alt={alt}
-          className="bl-torn-img"
-          isEditing={isEditing}
-          onReplace={onReplace}
-          onRemove={onRemove}
-          onTransformChange={onTransformChange}
-          photoData={photoData}
-          objectFit="cover"
-        />
+    <div className="bl-torn-rect-outer" style={{ transform: `rotate(${rotate}deg)` }}>
+      <div
+        className={`bl-torn-rect ${className}`}
+      >
+        <div className="bl-torn-rect-inner">
+          <DraggablePhoto
+            src={src} alt={alt}
+            className="bl-torn-img"
+            isEditing={isEditing}
+            onReplace={onReplace}
+            onRemove={onRemove}
+            onTransformChange={onTransformChange}
+            photoData={photoData}
+            objectFit="contain"
+            hideRemoveBtn
+            disableToolbar
+          />
+        </div>
       </div>
+      {/* Remove button is a SIBLING of bl-torn-rect, outside its filter stacking context */}
+      {isEditing && resolved && (
+        <button
+          className="bl-dp-remove-btn bl-torn-remove"
+          onClick={e => { e.stopPropagation(); onRemove?.(); }}
+          title="Remove photo"
+        >✕</button>
+      )}
     </div>
   );
 });
@@ -306,58 +598,93 @@ const TornPhoto = memo(function TornPhoto({ src, alt='', className='', rotate=0,
 /* ─── Torn-paper circular photo — memoized ──────────────────── */
 const TornCircle = memo(function TornCircle({ src, alt='', className='', size=200, rotate=0, isEditing=false, onReplace, onRemove, onTransformChange, photoData }) {
   const uid = useRef(`tc${Math.random().toString(36).slice(2)}`).current;
+  const wrapRef = useRef(null);
+  const resolved = useImageUrl(src);
   const border = size + 20;
   const half = border / 2;
 
+  // When inside a sized pd-wrap, read the actual rendered dimensions
+  // so the SVG ring scales with the resizable container.
+  const [liveSize, setLiveSize] = useState(size);
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(entries => {
+      const { width, height } = entries[0].contentRect;
+      const s = Math.min(width, height);
+      if (s > 0) setLiveSize(s);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const ls = liveSize;
+  const lb = ls + 20;
+  const lh = lb / 2;
+
   return (
     <div
-      className={`bl-torn-circle ${className}`}
-      style={{ width: size, height: size, transform: `rotate(${rotate}deg)`, position: 'relative', flexShrink: 0 }}
+      ref={wrapRef}
+      className="bl-torn-circle-outer"
+      style={{ position: 'relative', display: 'inline-block', flexShrink: 0, width: size, height: size }}
     >
-      {/* Photo clipped to circle — sits on top */}
-      <div style={{
-        position: 'absolute',
-        top: 0, left: 0,
-        width: size, height: size,
-        borderRadius: '50%',
-        overflow: 'hidden',
-        zIndex: 1,
-      }}>
-        <DraggablePhoto
-          src={src} alt={alt}
-          isEditing={isEditing}
-          onReplace={onReplace}
-          onRemove={onRemove}
-          onTransformChange={onTransformChange}
-          photoData={photoData}
-          objectFit="cover"
-          style={{ width: '100%', height: '100%' }}
-        />
+      <div
+        className={`bl-torn-circle ${className}`}
+        style={{ width: '100%', height: '100%', transform: `rotate(${rotate}deg)`, position: 'relative', flexShrink: 0 }}
+      >
+        {/* Photo clipped to circle — sits on top */}
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0,
+          width: '100%', height: '100%',
+          borderRadius: '50%',
+          overflow: 'hidden',
+          zIndex: 1,
+        }}>
+          <DraggablePhoto
+            src={src} alt={alt}
+            isEditing={isEditing}
+            onReplace={onReplace}
+            onRemove={onRemove}
+            onTransformChange={onTransformChange}
+            photoData={photoData}
+            objectFit="cover"
+            hideRemoveBtn
+            disableToolbar
+            style={{ width: '100%', height: '100%' }}
+          />
+        </div>
+
+        {/* Torn paper ring — scales with live rendered size */}
+        <svg
+          viewBox={`0 0 ${lb} ${lb}`}
+          xmlns="http://www.w3.org/2000/svg"
+          style={{ position:'absolute', inset: -10, width: lb, height: lb, pointerEvents: 'none', zIndex: 2 }}
+          aria-hidden="true"
+        >
+          <defs>
+            <mask id={`${uid}ring`}>
+              <rect width={lb} height={lb} fill="white"/>
+              <circle cx={lh} cy={lh} r={ls / 2 - 2} fill="black"/>
+            </mask>
+          </defs>
+          <circle
+            cx={lh} cy={lh} r={lh - 1}
+            fill="white"
+            mask={`url(#${uid}ring)`}
+            style={{ filter: `url(#bl-torn-shared) drop-shadow(4px 7px 8px rgba(30,12,0,0.45))` }}
+          />
+        </svg>
       </div>
 
-      {/* Torn paper ring — only the border, not the fill, sits on top of photo */}
-      <svg
-        viewBox={`0 0 ${border} ${border}`}
-        xmlns="http://www.w3.org/2000/svg"
-        style={{ position:'absolute', inset: -10, width: border, height: border, pointerEvents: 'none', zIndex: 2 }}
-        aria-hidden="true"
-      >
-        <defs>
-          <mask id={`${uid}ring`}>
-            {/* white = show, black = hide */}
-            <rect width={border} height={border} fill="white"/>
-            {/* punch out the inner circle to show photo through */}
-            <circle cx={half} cy={half} r={size / 2 - 2} fill="black"/>
-          </mask>
-        </defs>
-        {/* Full circle with torn filter, masked to ring only */}
-        <circle
-          cx={half} cy={half} r={half - 1}
-          fill="white"
-          mask={`url(#${uid}ring)`}
-          style={{ filter: `url(#bl-torn-shared) drop-shadow(4px 7px 8px rgba(30,12,0,0.45))` }}
-        />
-      </svg>
+      {/* Remove button — SIBLING of bl-torn-circle, outside any filter stacking context */}
+      {isEditing && resolved && (
+        <button
+          className="bl-dp-remove-btn bl-torn-remove"
+          onClick={e => { e.stopPropagation(); onRemove?.(); }}
+          title="Remove photo"
+        >✕</button>
+      )}
     </div>
   );
 });
@@ -398,7 +725,7 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
   const photos    = couple?.lettersPhotos || [];
   const p         = (i) => photos[i]?.url || null;
   const lp        = couple?.pageContent?.lettersPage || {};
-  const s         = (field, fallback) => lp[field] ?? fallback;
+  const s         = (field, fallback) => lp[field] || fallback;
   const save      = (field, val) => onContentChange?.('lettersPage', { ...lp, [field]: val });
 
   // Keep a ref that always points to the latest photos array so transform
@@ -431,7 +758,7 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
   };
 
   /* ── Book state ─────────────────────────────────────────── */
-  const TOTAL = 6; // pages 0–5
+  const TOTAL = 7; // pages 0–6
   const [current, setCurrent] = useState(0);
   const [flipping, setFlipping] = useState(false);
   const [flippingFrom, setFlippingFrom] = useState(null);
@@ -487,7 +814,7 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
   };
 
   return (
-    <div className="bl-book-container">
+    <div className="bl-book-container" data-editing={isEditing || undefined}>
       {/* Shared SVG defs — one instance for all spine gradients */}
       <SpineDefs/>
 
@@ -513,10 +840,18 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
             onChangeTitleWord1={v => save('coverTitle1',v)}
             onChangeTitleWord2={v => save('coverTitle2',v)}
             onChangeSubtitle={v => save('coverSub',v)}
+            titleWord1Style={lp.style_coverTitle1 || {}}
+            titleWord2Style={lp.style_coverTitle2 || {}}
+            subtitleStyle={lp.style_coverSub || {}}
+            onStyleSaveTitleWord1={st => save('style_coverTitle1', st)}
+            onStyleSaveTitleWord2={st => save('style_coverTitle2', st)}
+            onStyleSaveSubtitle={st => save('style_coverSub', st)}
             isEditing={isEditing}
             onReplacePhoto={k => replacePhoto(0, k)}
             onRemovePhoto={() => removePhoto(0)}
             onTransformChange={t => savePhotoTransform(0, t)}
+            positions={lp.coverPositions || {}}
+            onPositionChange={(key, pos) => save('coverPositions', { ...(lp.coverPositions || {}), [key]: pos })}
           />
         </div>
 
@@ -526,35 +861,59 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
           <div className="bl-page-content bl-facts-layout">
             {/* Left: title + banners */}
             <div className="bl-facts-left">
-              <div className="bl-facts-title">
-                <EditableText as="h2" className="bl-script-xl"
-                  value={s('factsTitle',`3 Facts about ${name1}\n& ${name2}`)}
-                  isEditing={isEditing} onChange={v=>save('factsTitle',v)} multiline/>
-              </div>
+              <PositionDraggable id="bl-p1-title" isEditing={isEditing}
+                offsetX={lp.pos_p1_title?.offsetX??0} offsetY={lp.pos_p1_title?.offsetY??0} width={lp.pos_p1_title?.width??null} height={lp.pos_p1_title?.height??null} rotation={lp.pos_p1_title?.rotation??0}
+                onPositionChange={(_,pos)=>save('pos_p1_title',pos)} label="Move Title" className="pd-inline">
+                <div className="bl-facts-title">
+                  <EditableText as="h2" className="bl-script-xl"
+                    value={s('factsTitle',`3 Facts about ${name1}\n& ${name2}`)}
+                    isEditing={isEditing} onChange={v=>save('factsTitle',v)} multiline
+                    style={lp.style_factsTitle||{}} onStyleSave={st=>save('style_factsTitle',st)}/>
+                </div>
+              </PositionDraggable>
               <div className="bl-facts-banners">
-                <FactBanner className="bl-banner-1">
-                  <EditableText as="span" className="bl-banner-text"
-                    value={s('fact1',`They met in a local coffee shop.`)}
-                    isEditing={isEditing} onChange={v=>save('fact1',v)}/>
-                </FactBanner>
-                <FactBanner className="bl-banner-2">
-                  <EditableText as="span" className="bl-banner-text"
-                    value={s('fact2','They both love reading fiction books.')}
-                    isEditing={isEditing} onChange={v=>save('fact2',v)}/>
-                </FactBanner>
-                <FactBanner className="bl-banner-3">
-                  <EditableText as="span" className="bl-banner-text"
-                    value={s('fact3',`${name2} proposed during a concert.`)}
-                    isEditing={isEditing} onChange={v=>save('fact3',v)}/>
-                </FactBanner>
+                <PositionDraggable id="bl-p1-banner1" isEditing={isEditing}
+                  offsetX={lp.pos_p1_banner1?.offsetX??0} offsetY={lp.pos_p1_banner1?.offsetY??0} width={lp.pos_p1_banner1?.width??null} height={lp.pos_p1_banner1?.height??null} rotation={lp.pos_p1_banner1?.rotation??0}
+                  onPositionChange={(_,pos)=>save('pos_p1_banner1',pos)} label="Move Fact 1" className="pd-inline">
+                  <FactBanner className="bl-banner-1">
+                    <EditableText as="span" className="bl-banner-text"
+                      value={s('fact1',`They met in a local coffee shop.`)}
+                      isEditing={isEditing} onChange={v=>save('fact1',v)}
+                      style={lp.style_fact1||{}} onStyleSave={st=>save('style_fact1',st)}/>
+                  </FactBanner>
+                </PositionDraggable>
+                <PositionDraggable id="bl-p1-banner2" isEditing={isEditing}
+                  offsetX={lp.pos_p1_banner2?.offsetX??0} offsetY={lp.pos_p1_banner2?.offsetY??0} width={lp.pos_p1_banner2?.width??null} height={lp.pos_p1_banner2?.height??null} rotation={lp.pos_p1_banner2?.rotation??0}
+                  onPositionChange={(_,pos)=>save('pos_p1_banner2',pos)} label="Move Fact 2" className="pd-inline">
+                  <FactBanner className="bl-banner-2">
+                    <EditableText as="span" className="bl-banner-text"
+                      value={s('fact2','They both love reading fiction books.')}
+                      isEditing={isEditing} onChange={v=>save('fact2',v)}
+                      style={lp.style_fact2||{}} onStyleSave={st=>save('style_fact2',st)}/>
+                  </FactBanner>
+                </PositionDraggable>
+                <PositionDraggable id="bl-p1-banner3" isEditing={isEditing}
+                  offsetX={lp.pos_p1_banner3?.offsetX??0} offsetY={lp.pos_p1_banner3?.offsetY??0} width={lp.pos_p1_banner3?.width??null} height={lp.pos_p1_banner3?.height??null} rotation={lp.pos_p1_banner3?.rotation??0}
+                  onPositionChange={(_,pos)=>save('pos_p1_banner3',pos)} label="Move Fact 3" className="pd-inline">
+                  <FactBanner className="bl-banner-3">
+                    <EditableText as="span" className="bl-banner-text"
+                      value={s('fact3',`${name2} proposed during a concert.`)}
+                      isEditing={isEditing} onChange={v=>save('fact3',v)}
+                      style={lp.style_fact3||{}} onStyleSave={st=>save('style_fact3',st)}/>
+                  </FactBanner>
+                </PositionDraggable>
               </div>
             </div>
             {/* Right: photo */}
             <div className="bl-facts-right">
               <div className="bl-facts-photo-wrap">
-                <TornPhoto rotate={2} isEditing={isEditing} onReplace={k=>replacePhoto(1,k)} onRemove={()=>removePhoto(1)}
-                  onTransformChange={t=>savePhotoTransform(1,t)} photoData={photos[1]}
-                  src={p(1)} alt="couple" className="bl-facts-photo"/>
+                <PositionDraggable id="bl-p1-photo" isEditing={isEditing}
+                  offsetX={lp.pos_p1_photo?.offsetX??0} offsetY={lp.pos_p1_photo?.offsetY??0} width={lp.pos_p1_photo?.width??null} height={lp.pos_p1_photo?.height??null} rotation={lp.pos_p1_photo?.rotation??0}
+                  onPositionChange={(_,pos)=>save('pos_p1_photo',pos)} label="Move Photo" className="pd-inline">
+                  <TornPhoto rotate={2} isEditing={isEditing} onReplace={k=>replacePhoto(1,k)} onRemove={()=>removePhoto(1)}
+                    onTransformChange={t=>savePhotoTransform(1,t)} photoData={photos[1]}
+                    src={p(1)} alt="couple" className="bl-facts-photo"/>
+                </PositionDraggable>
               </div>
             </div>
           </div>
@@ -565,31 +924,51 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
           <Spine/>
           <div className="bl-page-content bl-messages-layout">
             {/* Note 1 — top left */}
-            <WashiNote rotate={-3} className="bl-note-1">
-              <EditableText as="p" className="bl-note-text" multiline
-                value={s('msg1','May you continue to love each other for the rest of your lives.')}
-                isEditing={isEditing} onChange={v=>save('msg1',v)}/>
-              <EditableText as="p" className="bl-note-sig"
-                value={s('msg1sig','- Shawn Garcia')}
-                isEditing={isEditing} onChange={v=>save('msg1sig',v)}/>
-            </WashiNote>
+            <PositionDraggable id="bl-p2-note1" isEditing={isEditing}
+              offsetX={lp.pos_p2_note1?.offsetX??0} offsetY={lp.pos_p2_note1?.offsetY??0} width={lp.pos_p2_note1?.width??null} height={lp.pos_p2_note1?.height??null} rotation={lp.pos_p2_note1?.rotation??0}
+              onPositionChange={(_,pos)=>save('pos_p2_note1',pos)} label="Move Note" className="pd-inline">
+              <WashiNote rotate={-3} className="bl-note-1">
+                <EditableText as="p" className="bl-note-text" multiline
+                  value={s('msg1','May you continue to love each other for the rest of your lives.')}
+                  isEditing={isEditing} onChange={v=>save('msg1',v)}
+                  style={lp.style_msg1||{}} onStyleSave={st=>save('style_msg1',st)}/>
+                <EditableText as="p" className="bl-note-sig"
+                  value={s('msg1sig','- Shawn Garcia')}
+                  isEditing={isEditing} onChange={v=>save('msg1sig',v)}
+                  style={lp.style_msg1sig||{}} onStyleSave={st=>save('style_msg1sig',st)}/>
+              </WashiNote>
+            </PositionDraggable>
             {/* Photo 1 — top right */}
-            <TornPhoto rotate={4} isEditing={isEditing} onReplace={k=>replacePhoto(2,k)} onRemove={()=>removePhoto(2)}
-              onTransformChange={t=>savePhotoTransform(2,t)} photoData={photos[2]}
-              src={p(2)} alt="couple" className="bl-msg-photo-tr"/>
+            <PositionDraggable id="bl-p2-photo1" isEditing={isEditing}
+              offsetX={lp.pos_p2_photo1?.offsetX??0} offsetY={lp.pos_p2_photo1?.offsetY??0} width={lp.pos_p2_photo1?.width??null} height={lp.pos_p2_photo1?.height??null} rotation={lp.pos_p2_photo1?.rotation??0}
+              onPositionChange={(_,pos)=>save('pos_p2_photo1',pos)} label="Move Photo" className="pd-inline">
+              <TornPhoto rotate={4} isEditing={isEditing} onReplace={k=>replacePhoto(2,k)} onRemove={()=>removePhoto(2)}
+                onTransformChange={t=>savePhotoTransform(2,t)} photoData={photos[2]}
+                src={p(2)} alt="couple" className="bl-msg-photo-tr"/>
+            </PositionDraggable>
             {/* Photo 2 — bottom left */}
-            <TornPhoto rotate={-5} isEditing={isEditing} onReplace={k=>replacePhoto(3,k)} onRemove={()=>removePhoto(3)}
-              onTransformChange={t=>savePhotoTransform(3,t)} photoData={photos[3]}
-              src={p(3)} alt="couple" className="bl-msg-photo-bl"/>
+            <PositionDraggable id="bl-p2-photo2" isEditing={isEditing}
+              offsetX={lp.pos_p2_photo2?.offsetX??0} offsetY={lp.pos_p2_photo2?.offsetY??0} width={lp.pos_p2_photo2?.width??null} height={lp.pos_p2_photo2?.height??null} rotation={lp.pos_p2_photo2?.rotation??0}
+              onPositionChange={(_,pos)=>save('pos_p2_photo2',pos)} label="Move Photo" className="pd-inline">
+              <TornPhoto rotate={-5} isEditing={isEditing} onReplace={k=>replacePhoto(3,k)} onRemove={()=>removePhoto(3)}
+                onTransformChange={t=>savePhotoTransform(3,t)} photoData={photos[3]}
+                src={p(3)} alt="couple" className="bl-msg-photo-bl"/>
+            </PositionDraggable>
             {/* Note 2 — bottom right */}
-            <WashiNote rotate={3} className="bl-note-2">
-              <EditableText as="p" className="bl-note-text" multiline
-                value={s('msg2','Happy Anniversary! Your love story is our favorite. We both love you.')}
-                isEditing={isEditing} onChange={v=>save('msg2',v)}/>
-              <EditableText as="p" className="bl-note-sig"
-                value={s('msg2sig','- Donna Stroupe')}
-                isEditing={isEditing} onChange={v=>save('msg2sig',v)}/>
-            </WashiNote>
+            <PositionDraggable id="bl-p2-note2" isEditing={isEditing}
+              offsetX={lp.pos_p2_note2?.offsetX??0} offsetY={lp.pos_p2_note2?.offsetY??0} width={lp.pos_p2_note2?.width??null} height={lp.pos_p2_note2?.height??null} rotation={lp.pos_p2_note2?.rotation??0}
+              onPositionChange={(_,pos)=>save('pos_p2_note2',pos)} label="Move Note" className="pd-inline">
+              <WashiNote rotate={3} className="bl-note-2">
+                <EditableText as="p" className="bl-note-text" multiline
+                  value={s('msg2','Happy Anniversary! Your love story is our favorite. We both love you.')}
+                  isEditing={isEditing} onChange={v=>save('msg2',v)}
+                  style={lp.style_msg2||{}} onStyleSave={st=>save('style_msg2',st)}/>
+                <EditableText as="p" className="bl-note-sig"
+                  value={s('msg2sig','- Donna Stroupe')}
+                  isEditing={isEditing} onChange={v=>save('msg2sig',v)}
+                  style={lp.style_msg2sig||{}} onStyleSave={st=>save('style_msg2sig',st)}/>
+              </WashiNote>
+            </PositionDraggable>
             {/* Leaf deco */}
             <div className="bl-msg-leaf" aria-hidden="true">
               <svg viewBox="0 0 90 160" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -613,19 +992,33 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
 
             {/* Top-left: text */}
             <div className="bl-wonderful-text">
-              <EditableText as="h2" className="bl-script-xl bl-wonderful-h"
-                value={s('wonderfulTitle','May you enjoy your wonderful day.')}
-                isEditing={isEditing} onChange={v=>save('wonderfulTitle',v)} multiline/>
-              <EditableText as="p" className="bl-wonderful-sub"
-                value={s('wonderfulSub',"Here's to more prosperous and joyous years to come.")}
-                isEditing={isEditing} onChange={v=>save('wonderfulSub',v)} multiline/>
+              <PositionDraggable id="bl-p3-text" isEditing={isEditing}
+                offsetX={lp.pos_p3_text?.offsetX??0} offsetY={lp.pos_p3_text?.offsetY??0} width={lp.pos_p3_text?.width??null} height={lp.pos_p3_text?.height??null} rotation={lp.pos_p3_text?.rotation??0}
+                onPositionChange={(_,pos)=>save('pos_p3_text',pos)} label="Move Title" className="pd-inline">
+                <EditableText as="h2" className="bl-script-xl bl-wonderful-h"
+                  value={s('wonderfulTitle','May you enjoy your wonderful day.')}
+                  isEditing={isEditing} onChange={v=>save('wonderfulTitle',v)} multiline
+                  style={lp.style_wonderfulTitle||{}} onStyleSave={st=>save('style_wonderfulTitle',st)}/>
+              </PositionDraggable>
+              <PositionDraggable id="bl-p3-sub" isEditing={isEditing}
+                offsetX={lp.pos_p3_sub?.offsetX??0} offsetY={lp.pos_p3_sub?.offsetY??0} width={lp.pos_p3_sub?.width??null} height={lp.pos_p3_sub?.height??null} rotation={lp.pos_p3_sub?.rotation??0}
+                onPositionChange={(_,pos)=>save('pos_p3_sub',pos)} label="Move Subtitle" className="pd-inline">
+                <EditableText as="p" className="bl-wonderful-sub"
+                  value={s('wonderfulSub',"Here's to more prosperous and joyous years to come.")}
+                  isEditing={isEditing} onChange={v=>save('wonderfulSub',v)} multiline
+                  style={lp.style_wonderfulSub||{}} onStyleSave={st=>save('style_wonderfulSub',st)}/>
+              </PositionDraggable>
             </div>
 
             {/* Top-right: circle photo */}
             <div className="bl-circ-tl-wrap">
-              <TornCircle size={260} rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(4,k)} onRemove={()=>removePhoto(4)}
-                onTransformChange={t=>savePhotoTransform(4,t)} photoData={photos[4]}
-                src={p(4)} alt="couple" className="bl-circ-tl"/>
+              <PositionDraggable id="bl-p3-circ1" isEditing={isEditing}
+                offsetX={lp.pos_p3_circ1?.offsetX??0} offsetY={lp.pos_p3_circ1?.offsetY??0} width={lp.pos_p3_circ1?.width??null} height={lp.pos_p3_circ1?.height??null} rotation={lp.pos_p3_circ1?.rotation??0}
+                onPositionChange={(_,pos)=>save('pos_p3_circ1',pos)} label="Move Photo" className="pd-inline">
+                <TornCircle size={260} rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(4,k)} onRemove={()=>removePhoto(4)}
+                  onTransformChange={t=>savePhotoTransform(4,t)} photoData={photos[4]}
+                  src={p(4)} alt="couple" className="bl-circ-tl"/>
+              </PositionDraggable>
             </div>
 
             {/* Bottom-left: circle photo + flower deco */}
@@ -645,16 +1038,24 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
                   ))}
                 </svg>
               </div>
-              <TornCircle size={260} rotate={2} isEditing={isEditing} onReplace={k=>replacePhoto(5,k)} onRemove={()=>removePhoto(5)}
-                onTransformChange={t=>savePhotoTransform(5,t)} photoData={photos[5]}
-                src={p(5)} alt="couple" className="bl-circ-bc"/>
+              <PositionDraggable id="bl-p3-circ2" isEditing={isEditing}
+                offsetX={lp.pos_p3_circ2?.offsetX??0} offsetY={lp.pos_p3_circ2?.offsetY??0} width={lp.pos_p3_circ2?.width??null} height={lp.pos_p3_circ2?.height??null} rotation={lp.pos_p3_circ2?.rotation??0}
+                onPositionChange={(_,pos)=>save('pos_p3_circ2',pos)} label="Move Photo" className="pd-inline">
+                <TornCircle size={260} rotate={2} isEditing={isEditing} onReplace={k=>replacePhoto(5,k)} onRemove={()=>removePhoto(5)}
+                  onTransformChange={t=>savePhotoTransform(5,t)} photoData={photos[5]}
+                  src={p(5)} alt="couple" className="bl-circ-bc"/>
+              </PositionDraggable>
             </div>
 
             {/* Bottom-right: circle photo */}
             <div className="bl-circ-br-wrap">
-              <TornCircle size={260} rotate={-2} isEditing={isEditing} onReplace={k=>replacePhoto(6,k)} onRemove={()=>removePhoto(6)}
-                onTransformChange={t=>savePhotoTransform(6,t)} photoData={photos[6]}
-                src={p(6)} alt="couple" className="bl-circ-br"/>
+              <PositionDraggable id="bl-p3-circ3" isEditing={isEditing}
+                offsetX={lp.pos_p3_circ3?.offsetX??0} offsetY={lp.pos_p3_circ3?.offsetY??0} width={lp.pos_p3_circ3?.width??null} height={lp.pos_p3_circ3?.height??null} rotation={lp.pos_p3_circ3?.rotation??0}
+                onPositionChange={(_,pos)=>save('pos_p3_circ3',pos)} label="Move Photo" className="pd-inline">
+                <TornCircle size={260} rotate={-2} isEditing={isEditing} onReplace={k=>replacePhoto(6,k)} onRemove={()=>removePhoto(6)}
+                  onTransformChange={t=>savePhotoTransform(6,t)} photoData={photos[6]}
+                  src={p(6)} alt="couple" className="bl-circ-br"/>
+              </PositionDraggable>
             </div>
 
           </div>
@@ -665,11 +1066,16 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
           <Spine/>
           <div className="bl-page-content bl-eternal-layout">
             {/* Large script text left */}
-            <div className="bl-eternal-text">
-              <EditableText as="h2" className="bl-script-xl bl-eternal-h"
-                value={s('eternalTitle','We wish you eternal love and happiness.')}
-                isEditing={isEditing} onChange={v=>save('eternalTitle',v)} multiline/>
-            </div>
+            <PositionDraggable id="bl-p4-text" isEditing={isEditing}
+              offsetX={lp.pos_p4_text?.offsetX??0} offsetY={lp.pos_p4_text?.offsetY??0} width={lp.pos_p4_text?.width??null} height={lp.pos_p4_text?.height??null} rotation={lp.pos_p4_text?.rotation??0}
+              onPositionChange={(_,pos)=>save('pos_p4_text',pos)} label="Move Text" className="pd-inline">
+              <div className="bl-eternal-text">
+                <EditableText as="h2" className="bl-script-xl bl-eternal-h"
+                  value={s('eternalTitle','We wish you eternal love and happiness.')}
+                  isEditing={isEditing} onChange={v=>save('eternalTitle',v)} multiline
+                  style={lp.style_eternalTitle||{}} onStyleSave={st=>save('style_eternalTitle',st)}/>
+              </div>
+            </PositionDraggable>
             {/* Large torn photo right */}
             <div className="bl-eternal-photo-wrap">
               {/* Sunflower watercolor behind photo */}
@@ -686,9 +1092,13 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
                   ))}
                 </svg>
               </div>
-              <TornPhoto rotate={-4} isEditing={isEditing} onReplace={k=>replacePhoto(7,k)} onRemove={()=>removePhoto(7)}
-                onTransformChange={t=>savePhotoTransform(7,t)} photoData={photos[7]}
-                src={p(7)} alt="couple" className="bl-eternal-photo"/>
+              <PositionDraggable id="bl-p4-photo" isEditing={isEditing}
+                offsetX={lp.pos_p4_photo?.offsetX??0} offsetY={lp.pos_p4_photo?.offsetY??0} width={lp.pos_p4_photo?.width??null} height={lp.pos_p4_photo?.height??null} rotation={lp.pos_p4_photo?.rotation??0}
+                onPositionChange={(_,pos)=>save('pos_p4_photo',pos)} label="Move Photo" className="pd-inline">
+                <TornPhoto rotate={-4} isEditing={isEditing} onReplace={k=>replacePhoto(7,k)} onRemove={()=>removePhoto(7)}
+                  onTransformChange={t=>savePhotoTransform(7,t)} photoData={photos[7]}
+                  src={p(7)} alt="couple" className="bl-eternal-photo"/>
+              </PositionDraggable>
             </div>
           </div>
         </div>
@@ -698,9 +1108,13 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
           <Spine/>
           <div className="bl-page-content bl-thankyou-layout">
             {/* Large torn landscape photo */}
-            <TornPhoto rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(8,k)} onRemove={()=>removePhoto(8)}
-              onTransformChange={t=>savePhotoTransform(8,t)} photoData={photos[8]}
-              src={p(8)} alt="couple on bench" className="bl-ty-photo"/>
+            <PositionDraggable id="bl-p5-photo" isEditing={isEditing}
+              offsetX={lp.pos_p5_photo?.offsetX??0} offsetY={lp.pos_p5_photo?.offsetY??0} width={lp.pos_p5_photo?.width??null} height={lp.pos_p5_photo?.height??null} rotation={lp.pos_p5_photo?.rotation??0}
+              onPositionChange={(_,pos)=>save('pos_p5_photo',pos)} label="Move Photo" className="pd-inline">
+              <TornPhoto rotate={-3} isEditing={isEditing} onReplace={k=>replacePhoto(8,k)} onRemove={()=>removePhoto(8)}
+                onTransformChange={t=>savePhotoTransform(8,t)} photoData={photos[8]}
+                src={p(8)} alt="couple on bench" className="bl-ty-photo"/>
+            </PositionDraggable>
             {/* Right column: flowers + banner */}
             <div className="bl-ty-right-col">
               {/* Blue flower top-left of page — absolute over photo */}
@@ -726,14 +1140,58 @@ function ButterflyLettersInner({ isEditing = false, onContentChange }) {
                 </svg>
               </div>
               {/* Pink banner */}
-              <div className="bl-ty-banner">
-                <EditableText as="h2" className="bl-ty-banner-title"
-                  value={s('tyTitle','Thank you for coming!')}
-                  isEditing={isEditing} onChange={v=>save('tyTitle',v)}/>
-                <EditableText as="p" className="bl-ty-banner-sub"
-                  value={s('tySub','Hope you had fun!')}
-                  isEditing={isEditing} onChange={v=>save('tySub',v)}/>
+              <PositionDraggable id="bl-p5-banner" isEditing={isEditing}
+                offsetX={lp.pos_p5_banner?.offsetX??0} offsetY={lp.pos_p5_banner?.offsetY??0} width={lp.pos_p5_banner?.width??null} height={lp.pos_p5_banner?.height??null} rotation={lp.pos_p5_banner?.rotation??0}
+                onPositionChange={(_,pos)=>save('pos_p5_banner',pos)} label="Move Banner">
+                <div className="bl-ty-banner">
+                  <EditableText as="h2" className="bl-ty-banner-title"
+                    value={s('tyTitle','Thank you for coming!')}
+                    isEditing={isEditing} onChange={v=>save('tyTitle',v)}
+                    style={lp.style_tyTitle||{}} onStyleSave={st=>save('style_tyTitle',st)}/>
+                  <EditableText as="p" className="bl-ty-banner-sub"
+                    value={s('tySub','Hope you had fun!')}
+                    isEditing={isEditing} onChange={v=>save('tySub',v)}
+                    style={lp.style_tySub||{}} onStyleSave={st=>save('style_tySub',st)}/>
+                </div>
+              </PositionDraggable>
+            </div>
+          </div>
+        </div>
+
+        {/* ── PAGE 6: Photo Gallery ─────────────────────── */}
+        <div className={pageClass(6)} style={{ zIndex: pageZ(6) }}>
+          <Spine/>
+          <div className="bl-page-content bl-gallery-layout">
+            {/* Title */}
+            <PositionDraggable id="bl-p6-title" isEditing={isEditing}
+              offsetX={lp.pos_p6_title?.offsetX??0} offsetY={lp.pos_p6_title?.offsetY??0} width={lp.pos_p6_title?.width??null} height={lp.pos_p6_title?.height??null} rotation={lp.pos_p6_title?.rotation??0}
+              onPositionChange={(_,pos)=>save('pos_p6_title',pos)} label="Move Title" className="pd-inline">
+              <div className="bl-gallery-title">
+                <EditableText as="h2" className="bl-script-xl"
+                  value={s('galleryTitle','Our Memories')}
+                  isEditing={isEditing} onChange={v=>save('galleryTitle',v)} multiline
+                  style={lp.style_galleryTitle||{}} onStyleSave={st=>save('style_galleryTitle',st)}/>
               </div>
+            </PositionDraggable>
+
+            {/* Gallery grid — 6 gallery frames */}
+            <div className="bl-gallery-grid">
+              {[9,10,11,12,13,14].map((photoIdx, i) => (
+                <PositionDraggable key={i} id={`bl-p6-gp${i}`} isEditing={isEditing}
+                  offsetX={lp[`pos_p6_gp${i}`]?.offsetX??0} offsetY={lp[`pos_p6_gp${i}`]?.offsetY??0} width={lp[`pos_p6_gp${i}`]?.width??null} height={lp[`pos_p6_gp${i}`]?.height??null} rotation={lp[`pos_p6_gp${i}`]?.rotation??0}
+                  onPositionChange={(_,pos)=>save(`pos_p6_gp${i}`,pos)} label="Move Photo" className="pd-inline">
+                  <GalleryPhoto
+                    src={p(photoIdx)}
+                    alt={`memory ${i + 1}`}
+                    photoData={photos[photoIdx]}
+                    isEditing={isEditing}
+                    onReplace={k => replacePhoto(photoIdx, k)}
+                    onRemove={() => removePhoto(photoIdx)}
+                    onTransformChange={t => savePhotoTransform(photoIdx, t)}
+                    className="bl-gallery-photo"
+                  />
+                </PositionDraggable>
+              ))}
             </div>
           </div>
         </div>

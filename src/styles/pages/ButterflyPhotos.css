@@ -6,6 +6,14 @@
   background: #2a0518;
 }
 
+/* In admin editing mode, allow PositionDraggable handles to overflow
+   their immediate stage container — but NOT the .agv-root (100vh container).
+   Keeping .agv-root at overflow:hidden ensures content cannot bleed into
+   adjacent sections in the AdminDashboard scroll layout. */
+.ad-section .agv-stage {
+  overflow: visible;
+}
+
 .agv-stage {
   position: relative;
   width: 100%;
@@ -388,7 +396,7 @@
 .agv-fp-remove-btn {
   position: absolute;
   top: 6px;
-  left: 6px;
+  right: 6px;
   width: 22px;
   height: 22px;
   border-radius: 50%;
@@ -411,7 +419,7 @@
 
 .agv-fp-zoom-btns {
   position: absolute;
-  top: 6px;
+  top: 34px;
   right: 6px;
   display: flex;
   flex-direction: column;
@@ -428,7 +436,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: none;
+  border: 1px solid rgba(255,255,255,0.25);
   background: rgba(0,0,0,0.72);
   color: #fff;
   font-size: 0.9rem;
@@ -442,7 +450,8 @@
   padding: 0;
 }
 .agv-fp-zoom-btn:hover {
-  background: rgba(233,30,140,0.85);
+  background: rgba(60,60,60,0.92);
+  border-color: rgba(255,255,255,0.5);
 }
 .agv-fp-zoom-val {
   font-size: 0.5rem;
@@ -476,9 +485,12 @@
   cursor: pointer;
   border: 2px dashed rgba(233, 30, 140, 0.55);
   transition: background 0.2s, border-color 0.2s;
+  /* Sit above the PositionDraggable selection layer */
+  position: relative;
+  z-index: 30;
 }
 .agv-fp-placeholder--editing:hover {
-  background: rgba(233, 30, 140, 0.15);
+  background: rgba(233, 30, 140, 0.2);
   border-color: rgba(233, 30, 140, 0.9);
 }
 
@@ -513,6 +525,12 @@
   align-items: stretch;
   overflow: hidden;
   padding: 0 !important;
+}
+
+/* Allow PositionDraggable handles to overflow in admin editing */
+.ad-section .agv-slide--hero,
+.ad-section .agv-slide {
+  overflow: visible;
 }
 
 .agv-hw-spotlight {
@@ -554,14 +572,13 @@
 .agv-hw-center-frame { flex: 0 0 34%; position: relative; max-width: 520px; }
 
 .agv-hw-title-overlay {
-  position: absolute;
-  top: 14%; left: 13%; width: 74%; height: 72%;
+  width: 100%;
+  height: 100%;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  z-index: 4;
   background: rgba(0,0,0,0.48);
   text-align: center; gap: 2px;
-  pointer-events: none;   
+  pointer-events: auto;
 }
 .agv-hw-eyebrow {
   font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
@@ -807,3 +824,20 @@
     flex: unset; width: 100%; border: none; padding: 0;
   }
 }
+
+
+/* ── PositionDraggable sized override — when user resizes a frame via
+   the resize handle, the FramedPhoto fills the wrapper instead of
+   using its aspect-ratio / max-size constraints ───────────────── */
+.pd-wrap--sized .agv-fp {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  aspect-ratio: unset !important;
+}
+
+/* NOTE: do NOT override agv-fp-inner top/left/right/bottom — those
+   percentage offsets are what positions the photo window INSIDE the
+   ornate frame border. Removing them would bleed the photo outside
+   the frame artwork. */
